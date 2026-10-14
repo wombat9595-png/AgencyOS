@@ -12,11 +12,12 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from lead_finder import STATUSES, validate_lead, parse_csv, duplicate_reasons
 from ai_drafts import generate_draft, DraftError
+from agent_center import migrate_agents, register_agent_routes
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.environ.get("AGENCYOS_DB", os.path.join(APP_DIR, "agencyos.db"))
+DB_PATH = os.environ.get("AGENCYOS_DB") or os.path.join(APP_DIR, ".development", "agencyos-phase2b.db")
 app = Flask(__name__)
-app.secret_key = os.environ.get("AGENCYOS_SECRET_KEY", "change-this-before-deployment")
+app.secret_key = os.environ.get("AGENCYOS_SECRET_KEY") or secrets.token_hex(32)
 app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
@@ -35,6 +36,7 @@ def close_db(_error=None):
         conn.close()
 
 def init_db():
+    os.makedirs(os.path.dirname(os.path.abspath(DB_PATH)), exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     conn.executescript("""
     CREATE TABLE IF NOT EXISTS users (
@@ -74,6 +76,7 @@ def init_db():
         token TEXT PRIMARY KEY, user_id INTEGER NOT NULL, rows_json TEXT NOT NULL,
         created_at REAL NOT NULL, FOREIGN KEY(user_id) REFERENCES users(id))""")
     conn.execute("CREATE INDEX IF NOT EXISTS leads_status_idx ON leads(status)")
+    migrate_agents(conn)
     conn.commit()
     conn.close()
 
@@ -353,6 +356,10 @@ def protect_forms():
 def oversized_upload(_error):
     return render_template('error.html', message='Upload is too large. Use a CSV smaller than 2 MB.'), 413
 
+@app.errorhandler(409)
+def conflicting_action(error):
+    return render_template('error.html', message=error.description), 409
+
 @app.errorhandler(400)
 def bad_request(error):
     return render_template('error.html', message=error.description), 400
@@ -445,6 +452,8 @@ def import_preview(token):
     return render_template('import_preview.html', rows=rows, token=token,
                            valid=sum(not row['errors'] for row in rows), invalid=sum(bool(row['errors']) for row in rows))
 
+
+register_agent_routes(app, db, login_required)
 
 if __name__ == "__main__":
     init_db()

@@ -1,7 +1,7 @@
 {% extends "base.html" %}{% block title %}Overview · AgencyOS{% endblock %}{% block page_heading %}Overview{% endblock %}
 {% block content %}
 <div class="welcome-row"><div><span class="eyebrow">YOUR COMMAND CENTRE</span><h1>Build better websites.<br><em>Run a smarter agency.</em></h1><p class="muted">A clear view of your leads, work and money records.</p></div><a class="btn primary" href="{{ url_for('leads') }}">＋ Add a lead</a></div>
-<p><a class="btn secondary" href="{{ url_for('lead_finder') }}">Import and review leads →</a></p><div class="stat-grid">
+<p><a class="btn secondary" href="{{ url_for('lead_finder') }}">Import and review leads →</a> <a class="btn secondary" href="{{ url_for('agent_center') }}">Agent Control Center →</a></p><div class="stat-grid">
 <div class="stat-card"><div class="stat-top"><span>LEADS & CLIENTS</span><span class="stat-icon">◎</span></div><strong>{{ counts.leads }}</strong><small>Contacts in your pipeline</small></div>
 <div class="stat-card"><div class="stat-top"><span>QUOTES</span><span class="stat-icon">▤</span></div><strong>{{ counts.quotes }}</strong><small>Quotes created</small></div>
 <div class="stat-card"><div class="stat-top"><span>WEBSITE PROJECTS</span><span class="stat-icon">⌘</span></div><strong>{{ counts.projects }}</strong><small>Projects tracked</small></div>

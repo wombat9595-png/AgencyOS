@@ -40,11 +40,30 @@ with tempfile.TemporaryDirectory(dir=root, prefix='.smoke-') as temporary:
             page = post('/login', {'username':'synthetic-owner','password':'synthetic-smoke-password'})
             assert 'Build better websites' in page
             post('/leads', {'business_name':'HTTP Synthetic Studio','location':'Sydney'})
-            for path in ('/', '/leads','/outreach','/quotes','/invoices','/projects','/settings','/lead-finder','/static/style.css'):
+            for path in ('/', '/leads','/outreach','/quotes','/invoices','/projects','/settings','/lead-finder','/agents','/agents/tasks/new','/static/style.css'):
                 with opener.open(base + path) as response:
                     assert response.status == 200, path
             with opener.open(base + '/') as response:
                 assert b'HTTP Synthetic Studio' in response.read()
+            page = post('/agents/tasks/new', {'agent_id':'lead-research','lead_id':'1',
+                        'title':'HTTP agent smoke','mode':'local','instructions':'Review enquiry options'})
+            assert 'Queued' in page
+            def task_post(path, fields):
+                with opener.open(base + '/agents/tasks/1') as response:
+                    page = response.read().decode()
+                fields['csrf_token'] = re.search(r'name="csrf_token" value="([^"]+)"',page)[1]
+                with opener.open(base + path, data=parse.urlencode(fields).encode()) as response:
+                    assert response.status == 200
+                    return response.read().decode()
+            page = task_post('/agents/tasks/1/run', {})
+            assert 'Awaiting review' in page and 'No website was fetched or inspected' in page
+            page = task_post('/agents/tasks/1/review', {'decision':'Approved'})
+            assert 'Future action proposal' in page
+            page = task_post('/agents/tasks/1/action-requests', {'action_type':'email','description':'Synthetic proposal only'})
+            assert 'Pending' in page
+            page = task_post('/agents/approvals/1/decide', {'decision':'Rejected'})
+            assert 'Rejected' in page and 'not executed' in page
+            print('PASS: local agent task assignment, run, result review and separate action rejection; no external requests')
             print('PASS: real HTTP server, owner setup, login, lead creation, dashboard, all workspace pages and stylesheet')
         finally:
             process.terminate()

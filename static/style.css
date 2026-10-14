@@ -8,3 +8,16 @@
 .filter-grid{grid-template-columns:repeat(3,minmax(0,1fr));align-items:end}
 td .btn{padding:6px 9px;margin-top:6px}
 @media(max-width:650px){.filter-grid{grid-template-columns:1fr}}
+
+/* Phase 2B controls inherit the established AgencyOS visual identity. */
+.agent-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.agent-details{padding:18px 21px;overflow-wrap:anywhere}
+.agent-details .helper{padding:0}
+.agent-history{padding:18px 21px 18px 42px;color:var(--muted)}
+.agent-history li{padding:8px}.agent-history p{margin:5px 0}
+.check-label{display:flex!important;align-items:flex-start;gap:9px!important;line-height:1.6}
+.check-label input{width:auto;flex-shrink:0}
+.task-progress{width:100%;height:10px;accent-color:var(--accent);margin-bottom:22px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:1050px){.agent-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){.agent-grid{grid-template-columns:1fr}}
