@@ -226,7 +226,7 @@ Best,
                     draft = ''
             elif request.form.get('draft_mode', 'template') != 'template':
                 flash('Choose Template or AI draft.', 'error')
-                draft = '' 
+                draft = ''
     leads_rows = conn.execute("SELECT id,business_name,contact_name,email FROM leads ORDER BY business_name").fetchall()
     session.pop("last_outreach_draft", None)
     return render_template("outreach.html", leads=leads_rows, selected=selected, draft=draft)
