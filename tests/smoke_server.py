@@ -1,0 +1,51 @@
+"""Launch the real server with an isolated synthetic database and exercise HTTP."""
+import http.cookiejar
+import os
+from pathlib import Path
+import re
+import subprocess
+import sys
+import tempfile
+import time
+from urllib import request, parse
+
+root = Path(__file__).resolve().parents[1]
+with tempfile.TemporaryDirectory(dir=root, prefix='.smoke-') as temporary:
+    environment = dict(os.environ, AGENCYOS_DB=str(Path(temporary) / 'synthetic.db'),
+                       AGENCYOS_SECRET_KEY='smoke-test-only', PORT='5057')
+    with open(Path(temporary) / 'server.log', 'w+') as log:
+        process = subprocess.Popen([sys.executable, 'app.py'], cwd=root, env=environment, stdout=log, stderr=log)
+        try:
+            opener = request.build_opener(request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+            base = 'http://127.0.0.1:5057'
+            for attempt in range(50):
+                try:
+                    with opener.open(base + '/setup', timeout=1) as response:
+                        page = response.read().decode()
+                    break
+                except OSError:
+                    if process.poll() is not None:
+                        raise RuntimeError('Server exited during startup')
+                    time.sleep(.1)
+            else:
+                raise RuntimeError('Server did not become ready')
+            def post(path, fields):
+                with opener.open(base + path) as response:
+                    page = response.read().decode()
+                fields['csrf_token'] = re.search(r'name="csrf_token" value="([^"]+)"',page)[1]
+                with opener.open(base + path, data=parse.urlencode(fields).encode()) as response:
+                    assert response.status == 200
+                    return response.read().decode()
+            post('/setup', {'username':'synthetic-owner','password':'synthetic-smoke-password'})
+            page = post('/login', {'username':'synthetic-owner','password':'synthetic-smoke-password'})
+            assert 'Build better websites' in page
+            post('/leads', {'business_name':'HTTP Synthetic Studio','location':'Sydney'})
+            for path in ('/', '/leads','/outreach','/quotes','/invoices','/projects','/settings','/lead-finder','/static/style.css'):
+                with opener.open(base + path) as response:
+                    assert response.status == 200, path
+            with opener.open(base + '/') as response:
+                assert b'HTTP Synthetic Studio' in response.read()
+            print('PASS: real HTTP server, owner setup, login, lead creation, dashboard, all workspace pages and stylesheet')
+        finally:
+            process.terminate()
+            process.wait(timeout=10)

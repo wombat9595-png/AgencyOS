@@ -1,15 +1,23 @@
 import os
 import sqlite3
+import json
+import secrets
+import hmac
+import time
 from functools import wraps
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation
-from flask import Flask, g, redirect, render_template, request, session, url_for, flash
+from flask import Flask, g, redirect, render_template, request, session, url_for, flash, abort, Response
 from werkzeug.security import check_password_hash, generate_password_hash
+
+from lead_finder import STATUSES, validate_lead, parse_csv, duplicate_reasons
+from ai_drafts import generate_draft, DraftError
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.environ.get("AGENCYOS_DB", os.path.join(APP_DIR, "agencyos.db"))
 app = Flask(__name__)
 app.secret_key = os.environ.get("AGENCYOS_SECRET_KEY", "change-this-before-deployment")
+app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
@@ -58,6 +66,14 @@ def init_db():
       created_at TEXT NOT NULL
     );
     """)
+    columns = {row[1] for row in conn.execute("PRAGMA table_info(leads)")}
+    for name in ('location', 'source'):
+        if name not in columns:
+            conn.execute(f"ALTER TABLE leads ADD COLUMN {name} TEXT NOT NULL DEFAULT ''")
+    conn.execute("""CREATE TABLE IF NOT EXISTS lead_imports (
+        token TEXT PRIMARY KEY, user_id INTEGER NOT NULL, rows_json TEXT NOT NULL,
+        created_at REAL NOT NULL, FOREIGN KEY(user_id) REFERENCES users(id))""")
+    conn.execute("CREATE INDEX IF NOT EXISTS leads_status_idx ON leads(status)")
     conn.commit()
     conn.close()
 
@@ -90,7 +106,7 @@ def setup():
         else:
             try:
                 conn.execute("INSERT INTO users(username,password_hash,created_at) VALUES(?,?,?)",
-                             (username, generate_password_hash(password, method="pbkdf2:sha256"), datetime.utcnow().isoformat()))
+                             (username, generate_password_hash(password, method="pbkdf2:sha256"), datetime.now(timezone.utc).isoformat()))
                 conn.commit()
                 flash("Owner account created. Sign in to continue.", "success")
                 return redirect(url_for("login"))
@@ -137,20 +153,30 @@ def dashboard():
 def leads():
     conn = db()
     if request.method == "POST":
-        name = request.form.get("business_name", "").strip()
-        if not name:
-            flash("Business name is required.", "error")
+        row, errors = validate_lead(request.form)
+        row['source'] = row['source'] or 'Manual entry'
+        if errors:
+            flash('; '.join(errors), 'error')
         else:
-            conn.execute("""INSERT INTO leads(business_name,contact_name,email,website,industry,status,notes,created_at)
-                VALUES(?,?,?,?,?,?,?,?)""", (
-                name, request.form.get("contact_name","").strip(), request.form.get("email","").strip(),
-                request.form.get("website","").strip(), request.form.get("industry","").strip(),
-                request.form.get("status","New"), request.form.get("notes","").strip(), datetime.utcnow().isoformat()))
+            insert_lead(conn, row)
             conn.commit()
             flash("Lead saved.", "success")
             return redirect(url_for("leads"))
-    rows = conn.execute("SELECT * FROM leads ORDER BY id DESC").fetchall()
-    return render_template("leads.html", leads=rows)
+    query = request.args.get('q', '').strip()[:254]
+    conditions, params = [], []
+    if query:
+        pattern = '%' + query.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_') + '%'
+        conditions.append("(" + " OR ".join(f"{field} LIKE ? ESCAPE '\\'" for field in ('business_name', 'contact_name', 'email', 'website', 'industry', 'location', 'source')) + ")")
+        params.extend([pattern] * 7)
+    filters = {field: request.args.get(field, '').strip()[:254] for field in ('status', 'industry', 'location', 'source')}
+    for field, value in filters.items():
+        if value:
+            conditions.append(f"{field} = ?")
+            params.append(value)
+    sql = "SELECT * FROM leads" + (" WHERE " + " AND ".join(conditions) if conditions else '') + " ORDER BY id DESC"
+    rows = conn.execute(sql, params).fetchall()
+    options = {field: [r[0] for r in conn.execute(f"SELECT DISTINCT {field} FROM leads WHERE {field} != '' ORDER BY {field}")] for field in ('industry', 'location', 'source')}
+    return render_template("leads.html", leads=rows, statuses=STATUSES, query=query, filters=filters, options=options)
 
 @app.route("/leads/<int:lead_id>/delete", methods=["POST"])
 @login_required
@@ -189,9 +215,20 @@ Would you be open to a short chat?
 
 Best,
 [Your name]"""
-            session["last_outreach_draft"] = draft
+            if tone not in ('friendly', 'professional', 'direct') or len(offer) > 1000:
+                flash('Choose a supported tone and an offer of at most 1,000 characters.', 'error')
+                draft = ''
+            elif request.form.get('draft_mode', 'template') == 'ai':
+                try:
+                    draft = generate_draft(selected, offer, tone)
+                except DraftError as exc:
+                    flash(str(exc), 'error')
+                    draft = ''
+            elif request.form.get('draft_mode', 'template') != 'template':
+                flash('Choose Template or AI draft.', 'error')
+                draft = '' 
     leads_rows = conn.execute("SELECT id,business_name,contact_name,email FROM leads ORDER BY business_name").fetchall()
-    draft = draft or session.pop("last_outreach_draft", "")
+    session.pop("last_outreach_draft", None)
     return render_template("outreach.html", leads=leads_rows, selected=selected, draft=draft)
 
 @app.route("/quotes", methods=["GET", "POST"])
@@ -204,7 +241,7 @@ def quotes():
         title = request.form.get("title","").strip()
         try:
             amount = Decimal(request.form.get("amount","0")).quantize(Decimal("0.01"))
-            cents = int(amount * 100)
+            cents = int(amount * 100) if amount.is_finite() and amount <= Decimal("1000000000") else -1
         except (InvalidOperation, ValueError):
             cents = -1
         if not client or not title or cents < 0:
@@ -212,7 +249,7 @@ def quotes():
         else:
             conn.execute("""INSERT INTO quotes(lead_id,client_name,title,amount_cents,status,notes,created_at)
                 VALUES(?,?,?,?,?,?,?)""", (request.form.get("lead_id") or None, client, title, cents,
-                request.form.get("status","Draft"), request.form.get("notes","").strip(), datetime.utcnow().isoformat()))
+                request.form.get("status","Draft"), request.form.get("notes","").strip(), datetime.now(timezone.utc).isoformat()))
             conn.commit()
             flash("Quote saved.", "success")
             return redirect(url_for("quotes"))
@@ -237,7 +274,7 @@ def invoices():
         reference = request.form.get("reference","").strip()
         try:
             amount = Decimal(request.form.get("amount","0")).quantize(Decimal("0.01"))
-            cents = int(amount * 100)
+            cents = int(amount * 100) if amount.is_finite() and amount <= Decimal("1000000000") else -1
         except (InvalidOperation, ValueError):
             cents = -1
         if not client or not reference or cents < 0:
@@ -245,7 +282,7 @@ def invoices():
         else:
             conn.execute("""INSERT INTO invoices(client_name,reference,amount_cents,status,due_date,notes,created_at)
                 VALUES(?,?,?,?,?,?,?)""", (client, reference, cents, request.form.get("status","Unpaid"),
-                request.form.get("due_date",""), request.form.get("notes","").strip(), datetime.utcnow().isoformat()))
+                request.form.get("due_date",""), request.form.get("notes","").strip(), datetime.now(timezone.utc).isoformat()))
             conn.commit()
             flash("Invoice record saved.", "success")
             return redirect(url_for("invoices"))
@@ -274,7 +311,7 @@ def projects():
             conn.execute("""INSERT INTO projects(client_name,project_name,status,due_date,website_url,notes,created_at)
                 VALUES(?,?,?,?,?,?,?)""", (client, name, request.form.get("status","Planning"),
                 request.form.get("due_date",""), request.form.get("website_url","").strip(),
-                request.form.get("notes","").strip(), datetime.utcnow().isoformat()))
+                request.form.get("notes","").strip(), datetime.now(timezone.utc).isoformat()))
             conn.commit()
             flash("Project saved.", "success")
             return redirect(url_for("projects"))
@@ -294,6 +331,120 @@ def project_status(project_id):
 @login_required
 def settings():
     return render_template("settings.html")
+
+def csrf_token():
+    if 'csrf_token' not in session:
+        session['csrf_token'] = secrets.token_urlsafe(32)
+    return session['csrf_token']
+
+@app.context_processor
+def template_helpers():
+    return {'csrf_token': csrf_token}
+
+@app.before_request
+def protect_forms():
+    if request.method == 'POST':
+        expected = session.get('csrf_token', '')
+        supplied = request.form.get('csrf_token', '')
+        if not expected or not hmac.compare_digest(expected, supplied):
+            abort(400, description='Form expired or invalid. Reload the page and try again.')
+
+@app.errorhandler(413)
+def oversized_upload(_error):
+    return render_template('error.html', message='Upload is too large. Use a CSV smaller than 2 MB.'), 413
+
+@app.errorhandler(400)
+def bad_request(error):
+    return render_template('error.html', message=error.description), 400
+
+def insert_lead(conn, row):
+    fields = ('business_name', 'contact_name', 'email', 'website', 'industry', 'location', 'source', 'status', 'notes')
+    conn.execute('INSERT INTO leads(' + ','.join(fields) + ',created_at) VALUES(' + ','.join('?' for _ in range(10)) + ')',
+                 tuple(row[field] for field in fields) + (datetime.now(timezone.utc).isoformat(),))
+
+@app.route('/leads/<int:lead_id>/status', methods=['POST'])
+@login_required
+def lead_status(lead_id):
+    status = request.form.get('status', '')
+    if status not in STATUSES:
+        abort(400, description='Invalid lead status.')
+    cursor = db().execute('UPDATE leads SET status=? WHERE id=?', (status, lead_id))
+    if not cursor.rowcount:
+        abort(404)
+    db().commit()
+    flash('Lead status updated.', 'success')
+    return redirect(url_for('leads'))
+
+@app.route('/lead-finder/sample.csv')
+@login_required
+def sample_csv():
+    return Response('business_name,contact_name,email,website,industry,location,source\nExample Studio,Alex,alex@example.com,https://example.com,Design,Sydney,User research\n',
+                    mimetype='text/csv', headers={'Content-Disposition': 'attachment; filename=agencyos-leads-sample.csv'})
+
+@app.route('/lead-finder', methods=['GET', 'POST'])
+@login_required
+def lead_finder():
+    if request.method == 'POST':
+        upload = request.files.get('csv_file')
+        source = request.form.get('source', '').strip()
+        if not upload or not upload.filename or not upload.filename.lower().endswith('.csv'):
+            flash('Choose a .csv file.', 'error')
+        elif not source or len(source) > 254 or any(ord(c) < 32 for c in source):
+            flash('Enter a source of 1–254 characters, such as your directory export or research list.', 'error')
+        else:
+            try:
+                rows = parse_csv(upload.read(), source, db().execute('SELECT * FROM leads').fetchall())
+            except ValueError as exc:
+                flash(str(exc), 'error')
+            else:
+                token = secrets.token_urlsafe(32)
+                conn = db()
+                conn.execute('DELETE FROM lead_imports WHERE created_at < ?', (time.time() - 3600,))
+                conn.execute('INSERT INTO lead_imports VALUES(?,?,?,?)', (token, session['user_id'], json.dumps(rows), time.time()))
+                conn.commit()
+                return redirect(url_for('import_preview', token=token))
+    return render_template('lead_finder.html')
+
+@app.route('/lead-finder/preview/<token>', methods=['GET', 'POST'])
+@login_required
+def import_preview(token):
+    conn = db()
+    if request.method == 'POST':
+        conn.execute('BEGIN IMMEDIATE')
+    batch = conn.execute('SELECT * FROM lead_imports WHERE token=? AND user_id=?', (token, session['user_id'])).fetchone()
+    if not batch or batch['created_at'] < time.time() - 3600:
+        conn.rollback()
+        flash('Import preview expired or already completed. Upload the CSV again.', 'error')
+        return redirect(url_for('lead_finder'))
+    rows = json.loads(batch['rows_json'])
+    if request.method == 'POST':
+        selected = set(request.form.getlist('selected'))
+        allowed = set(request.form.getlist('allow_duplicate'))
+        existing = list(conn.execute('SELECT * FROM leads').fetchall())
+        imported, skipped, rejected = 0, 0, 0
+        for item in rows:
+            row = item['data']
+            if item['errors']:
+                rejected += 1
+                continue
+            number = str(item['number'])
+            if number not in selected:
+                skipped += 1
+                continue
+            duplicate = any(duplicate_reasons(row, other) for other in existing)
+            if (duplicate or item['duplicates']) and number not in allowed:
+                skipped += 1
+                continue
+            insert_lead(conn, row)
+            existing.append(row)
+            imported += 1
+        conn.execute('DELETE FROM lead_imports WHERE token=?', (token,))
+        conn.commit()
+        flash(f'Import complete: {imported} imported, {rejected} rejected (invalid), {skipped} skipped (unselected or duplicate).', 'success')
+        return redirect(url_for('leads'))
+    return render_template('import_preview.html', rows=rows, token=token,
+                           valid=sum(not row['errors'] for row in rows), invalid=sum(bool(row['errors']) for row in rows))
+
 
 if __name__ == "__main__":
     init_db()
