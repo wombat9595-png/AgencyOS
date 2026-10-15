@@ -168,7 +168,7 @@ def register_agent_routes(app, get_db, login_required):
             event(conn, cursor.lastrowid, 'Task assigned. Saved lead details captured; no work started.')
             conn.commit()
             return redirect(url_for('agent_task_detail', task_id=cursor.lastrowid))
-        return render_template('agent_task_new.html', agents=conn.execute("SELECT * FROM agents WHERE availability='available' AND enabled=1").fetchall(),
+        return render_template('agent_task_new.html', agents=conn.execute("SELECT * FROM agents WHERE id='lead-research' AND availability='available' AND enabled=1").fetchall(),
                                leads=conn.execute('SELECT id,business_name FROM leads ORDER BY business_name').fetchall(), lead_id=request.args.get('lead_id', type=int))
 
     @app.route('/agents/tasks/<int:task_id>')

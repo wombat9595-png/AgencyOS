@@ -14,6 +14,8 @@
     <nav>
       <a href="{{ url_for('dashboard') }}">◫ <span>Overview</span></a>
       <a href="{{ url_for('agent_center') }}">✦ <span>Agent Control Center</span></a>
+      <a href="{{ url_for('discovery_page') }}">⌕ <span>Business Discovery</span></a>
+      <a href="{{ url_for('workflows') }}">✦ <span>Research queue</span></a>
       <a href="{{ url_for('lead_finder') }}">⌕ <span>Lead Finder</span></a>
       <a href="{{ url_for('leads') }}">◎ <span>Leads & clients</span></a>
       <a href="{{ url_for('outreach') }}">↗ <span>AI outreach drafts</span></a>
@@ -29,7 +31,7 @@
     <section class="content">
       {% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}{% for category, message in messages %}<div class="flash {{ category }}">{{ message }}</div>{% endfor %}{% endif %}{% endwith %}
       {% block content %}{% endblock %}
-      <footer>AGENCYOS <span>·</span> PHASE 2 <span>·</span> LOCAL-FIRST WORKSPACE</footer>
+      <footer>AGENCYOS <span>·</span> PHASE 3 <span>·</span> LOCAL-FIRST WORKSPACE</footer>
     </section>
   </main>
 </div>

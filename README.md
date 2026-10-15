@@ -1,152 +1,169 @@
-# AgencyOS — Phase 2B Agent Control Center
+# AgencyOS — Phase 3: source-based discovery, research and outreach
 
-A local-first Python/Flask/SQLite agency workspace. The existing dashboard, owner login, manual leads, review-only outreach, quotes, internal invoice records, and website projects remain available. The existing dark visual identity is retained.
+A local-first Flask/SQLite agency workspace. Phase 3 preserves login, dashboard, CSV Lead Finder, duplicate review, Phase 2B Agent Control Center and saved tasks, quick outreach drafts, quotes, invoices and projects, with the existing visual design.
 
-## Phase 2 features
+**Delivery status:** the OSM discovery adapter and approval workflow are implemented, but **live discovery is disabled by default**. Current provider policies could not be verified from the development environment: official sites returned proxy HTTP 403 on 15 October 2026. No live business search or paid AI call was performed. Tests use fictional businesses and mocked external services. No fake live results or demo businesses are inserted into your database.
 
-- Dedicated Lead Finder CSV upload with validation, source attribution and an import preview.
-- Explicit confirmation before saving leads. Invalid rows are rejected individually; valid rows can still be imported.
-- Duplicate hints against existing leads and earlier valid CSV rows, based on normalised business names, case-insensitive email addresses, and website domains (ignoring `www.`).
-- Likely duplicates are unselected by default. To import one intentionally, select both its import checkbox and its duplicate approval checkbox.
-- Confirmation rechecks duplicates against the current database, runs in a transaction, and consumes the preview so it cannot be imported twice. New duplicates without approval are skipped.
-- Final imported, rejected and skipped counts; row-specific validation messages appear in the preview.
-- Lead search across business/contact names, email, website, industry, location and source; exact filters for status, industry, location and source.
-- Lead status updates, source/date display, and direct links to existing outreach drafts.
-- Optional configurable OpenAI-compatible AI draft adapter; no automatic emails, scraping, payments or publication.
-- CSRF protection for all POST forms, upload limits and escaped preview content. Financial inputs now reject non-finite or oversized amounts safely.
+## Install on your MacBook
 
-## Install and run on your MacBook
+Download branch `agencyos-phase3` using GitHub's **Code → Download ZIP**. Extract into a **new folder**; keep your old application and databases intact. Requires Python 3.13; if needed, install it from [python.org](https://www.python.org/downloads/macos/).
 
-Requires Python 3.10 or newer. Open Terminal in the updated AgencyOS folder:
+Open Terminal in the extracted project folder:
 
 ```sh
-python3 -m venv .venv
+python3.13 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
-export AGENCYOS_SECRET_KEY="$(python -c 'import secrets; print(secrets.token_hex(32))')"
 mkdir -p .development
-export AGENCYOS_DB="$PWD/.development/agencyos-phase2b.db"
+export AGENCYOS_DB="$PWD/.development/agencyos-phase3.db"
+export AGENCYOS_SECRET_KEY="$(python -c 'import secrets; print(secrets.token_hex(32))')"
 python app.py
 ```
 
-Open `http://127.0.0.1:5000/setup` to create a development owner account. Then sign in. This command uses a separate development database and does not touch a Phase 1 database. Keep the terminal open; Control+C stops the server. `PORT` can change the default port 5000.
+Open `http://127.0.0.1:5000/setup`, create a development owner account, then sign in. Start with fictional leads. The app binds to your Mac only. Keep Terminal open; Control+C stops the server. If port 5000 is occupied, set `export PORT=5001` before starting and use that port in your browser.
 
-The secret key controls signed sessions; use a strong stable private key for ongoing use. If no secret key is configured, Phase 2B generates a private random session key for the current process; restarting then signs you out. There is no shared hard-coded session key. Never commit secret values. No `.env` loader is included: export variables in the shell that starts the app.
+Without `AGENCYOS_DB`, Phase 3 defaults to `.development/agencyos-phase3.db`, not the Phase 2A or Phase 2B database. An explicit `AGENCYOS_DB` always selects that file, so **do not point it at your original database**. Without a secret key, the app generates a private process-specific key; a restart signs you out. For ongoing use, supply a strong stable secret securely. No `.env` loader is included.
 
-### Existing data and migrations
+## Start the Phase 3 worker
 
-The uploaded project did not include `agencyos.db`, so no original customer records were available or used during development.
-
-Do not overwrite or delete your original database. First stop the old application and back up its database. For example, from the old application's folder:
+The worker is a separate local process that performs queued work. Open a **second Terminal**, move into the same project folder, and run:
 
 ```sh
-cp -p agencyos.db agencyos-before-phase2.db
+source .venv/bin/activate
+export AGENCYOS_DB="$PWD/.development/agencyos-phase3.db"
+python manage.py worker --watch
 ```
 
-If SQLite journal/WAL files exist, use SQLite's backup mechanism or ensure a clean shutdown before copying. Keep the backup securely outside source control.
+Set the same optional provider and policy variables in BOTH Terminals before starting their processes. The worker must use the same database as the app. A provider/configuration mismatch requires fresh approval rather than making a call with different settings.
 
-To check compatibility without modifying the original, copy that backup into the updated project's `.development` folder, export `AGENCYOS_DB` to the copy, and start the updated app. Using real customer data requires your approval; the automated tests use synthetic data only.
+For a single job instead of continuous polling:
 
-On startup, an idempotent additive migration adds `location` and `source` columns to `leads`, a status index, and a `lead_imports` table for previews. It preserves existing IDs, values, timestamps, account password hashes, quotes, invoices and projects. Existing source/location fields remain blank; the UI labels blank sources as legacy records. It never deletes the database or recreates existing tables. Back up before any migration. If later restoring the Phase 1 app, use the preserved original database/backup; Phase 1 can otherwise read the added lead columns but lacks the new workflow.
-
-Phase 2B defaults to `.development/agencyos-phase2b.db`, separate from the Phase 2A `agencyos.db` and `agencyos-dev.db` files. `AGENCYOS_DB` still selects an explicit database path. Do not point it at your original database; test with a backed-up copy only when you approve using those records.
-
-## Phase 2B — Agent Control Center
-
-Download branch **agencyos-phase2b** into a separate folder; leave your Phase 2A folder and database intact. Use the MacBook commands above to run the new version with its separate development database. Create a new development owner account and use synthetic leads initially.
-
-### First agent: Lead Research
-
-1. Sign in and add or import a synthetic lead.
-2. Open **Agent Control Center** in the sidebar. Rename, enable or disable the Lead Research Agent as needed.
-3. Click **Assign a task**, select the lead, enter a title and optional brief, and choose **Local suggestions** or **AI model**. You can also click **Research lead** in the lead list.
-4. Local tasks are queued; click **Run task**. Local analysis makes no external requests and needs no AI key.
-5. AI tasks first show **Awaiting AI approval**. Review the exact saved fields, brief, provider endpoint and model; approve the data sharing and potential charge for **one** model request, then click **Run task**. Task creation and approval alone make no model request.
-6. Review the result and choose **Approve result** or **Reject result**. Approving a result does not approve any email, purchase or website publication.
-
-The agent analyses a saved snapshot of business name, website, industry and location, plus your brief. It never changes the lead. Stored email address, contact name and notes are excluded. Your brief is sent in AI mode, so do not put private information in it. Editing or deleting a lead later does not alter a task's approved snapshot.
-
-Local mode produces recorded facts, planning suggestions and limitations. AI mode requests recommendations and verification questions from your configured model. Neither mode fetches or audits a website. A recorded website URL is not evidence of site quality. AI output may still contain mistakes; always check its claims before use. Output is displayed as escaped plain text, never interpreted as commands or executable HTML.
-
-### Progress and task safety
-
-The task list supports status filtering and links to task details. Each task has progress and a timestamped event history:
-
-`Queued → Running (25%) → Awaiting review (100%) → Approved or Rejected`
-
-AI tasks require approval before entering Queued. Failures end in Failed; unstarted tasks can be Cancelled. Progress shows stages, not live token streaming or an estimated completion time. Execution happens during your **Run task** request, not in a background scheduler. You may open the task in another tab and refresh to monitor it. Task details include a refresh button; the server supports concurrent requests.
-
-Repeated/concurrent Run clicks cannot run the same task twice. Failed tasks are not automatically retried; explicitly create another task if needed. Changed provider, endpoint, model or API credential invalidates a queued AI approval. If the app stops mid-run, its task may remain Running. After two minutes you can explicitly mark an interrupted run Failed. Check provider usage before creating a replacement: an earlier AI request may already have been charged. Do not mark a genuinely active request interrupted.
-
-### Separate action approvals
-
-After approving a result you can record an exact **email**, **spending** or **publishing** proposal and approve or reject it separately. Decisions and timestamps are retained in the task history. A decision cannot be silently changed by repeating a request.
-
-**These are approval records only. No email, payment or publishing executor exists.** Even an approved proposal does not execute anything. Model text cannot approve actions, select tools or change task states. Future executors must validate ownership and a fresh approval of an exact structured action, including recipient/content, amount/currency/vendor or destination/artifact; these descriptive records alone must not be treated as executable authorisation.
-
-The first agent is runnable. Lead discovery, website audit, outreach, website builder and project manager cards are explicit **planned** entries and cannot be enabled or assigned work yet. Existing Phase 2A outreach drafts remain available on their original page. Adding a future runnable agent requires a developer to implement and register its handler and approval policy; changing a database row does not create a working agent.
-
-### Real AI integration
-
-The same HTTPS OpenAI-compatible connection serves outreach and lead research. Supply the four `AGENCYOS_AI_*` variables documented below in the shell that starts the app. No keys are stored in source or task records; task approvals store only a configuration fingerprint. Never put API keys in task briefs or the database.
-
-For example, if you explicitly choose OpenAI API access and approve its pricing, its chat-completions endpoint is `https://api.openai.com/v1/chat/completions`; use an available compatible model such as `gpt-4.1-mini`. Enter your own API credential securely in Terminal, not in code or chat. API usage can require separate billing from a chat subscription. No live provider was contacted during development, and your account/model access remains unverified.
-
-Requests preserve HTTPS certificate checks, reject redirects, limit response size and use a 20-second network timeout. Research requests cap output at 900 tokens. The cap does not guarantee a dollar price or total provider usage. Invalid configuration prevents approval; provider errors fail the task safely without exposing secrets or raw responses. There is no automatic retry.
-
-### Database compatibility
-
-Phase 2B adds `agents`, `agent_tasks`, `agent_events` and `agent_approvals` plus a task index. Seed agents are inserted only if missing, preserving renamed agents, settings and existing task history. The migration does not reset or drop any Phase 2A records. Tasks and event/approval history persist in the selected database across restarts; processes and live calls do not. Result/snapshot data can include business information, so protect database backups. There is no task deletion/export UI yet.
-
-## Lead Finder CSV workflow
-
-Sign in, open **Lead Finder**, and download the sample CSV. Supply a source label and upload a UTF-8 comma-delimited file (UTF-8 BOM is accepted).
-
-Supported headers:
-
-```csv
-business_name,contact_name,email,website,industry,location,source,notes,status
-Synthetic Studio,Alex,alex@example.com,https://example.com,Design,Sydney,Authorised research,Review manually,New
+```sh
+python manage.py worker
 ```
 
-`business_name` is required; all other columns are optional. Header names may use spaces or underscores and are case-insensitive. Unknown or repeated columns are rejected. Empty email/website fields are allowed. Supplied email addresses must have a basic valid structure; websites must be HTTP/HTTPS URLs without embedded credentials. Text fields are limited to 254 characters, notes to 4,000. Industry/location are free text, not verified categories or addresses. Supported statuses: New, Contacted, Interested, Client, Not a fit. Blank status defaults to New. Blank per-row source uses the upload source label.
+The worker makes no automatic email, payment or publishing action. It does not create recurring jobs or invent tasks. `--watch` executes tasks you explicitly queued/approved. Stop with Control+C; do not run it if you do not want approved queued jobs to execute.
 
-Limits: 1,000 lead rows, 2 MB total request size. Oversized files, bad encodings, malformed quoting or unsupported headers are rejected without creating leads. Invalid individual rows remain visible with reasons. CSV row numbers in the preview count data rows, not physical lines (quoted multiline notes may span lines).
+## Working workflows
 
-Review the preview, select valid rows, approve intentional duplicates where appropriate, and confirm. The result reports imported, rejected (invalid), and skipped (unselected/duplicate) rows. Uploading alone never modifies the lead table. Previews belong to the signed-in owner, expire after one hour, and are removed on confirmation. Cancel returns without importing; expired previews are cleaned up during subsequent uploads. Preview data is stored in the selected SQLite database, so protect backups accordingly.
+### 1. Business discovery (policy verification required for live calls)
 
-Duplicate checks are conservative hints, not proof: distinct businesses may share a name/domain, and spelling variations may evade detection. Rows are never silently merged or used to overwrite existing leads. Search filters combine with AND; clear filters to see all records. Existing manual entry and deletion remain available.
+Open **Business Discovery**. Enter a city/region and country (Canberra, ACT, Australia is prefilled), industry, and 1–20 maximum candidates. You may search anywhere, subject to source coverage. Optional targeting: business-name keyword and whether a usable website URL is listed.
 
-## Outreach and optional AI configuration
+A task is prepared without a network request. After provider setup, review and approve its input; the worker resolves the place using Nominatim, then queries a **10 km radius around the resolved centre** using Overpass. Results show the resolved location/centre, source record links, retrieval timestamps, attribution and potential duplicates. At most 60 matching OSM records are examined; filtering may yield fewer candidates than requested. This is not an exhaustive search of a city, region or industry.
 
-Use **Draft email** on a lead. Template drafts run locally without credentials. Selecting AI without configuration shows a clear error. Neither option sends email; copy and review drafts before using them elsewhere.
+Supported aliases map to explicit OSM tags: plumbing (`craft=plumber`), landscaping (`craft=gardener`), electricians, cafes, restaurants, dentists, hairdressers and builders. A custom documented `craft`, `shop`, `amenity`, `office` or `healthcare` tag may be supplied. Category aliases are search interpretations of tags, not independently verified business classifications. Arbitrary Overpass queries are not accepted.
 
-The optional provider uses the OpenAI-compatible chat-completions request/response format. Before enabling it, choose and approve a provider and any costs yourself. Configure these environment variables securely:
+Candidates stay outside the leads table until you explicitly approve each import. Duplicates are flagged by name, email/domain and source identity; they are rechecked at import, in a transaction. Intentional duplicates require an additional approval. Completed decisions cannot be replayed. No candidate overwrites an existing lead. Missing addresses, email and website fields stay unknown; a missing source website is **not proof that the business has no website**. No email addresses are guessed.
 
-- `AGENCYOS_AI_PROVIDER`: `openai-compatible`
-- `AGENCYOS_AI_ENDPOINT`: full HTTPS chat-completions endpoint
-- `AGENCYOS_AI_MODEL`: the provider's model identifier
-- `AGENCYOS_AI_API_KEY`: your private credential; never put it in source or chat
+#### Confirm policies before enabling live discovery
 
-No default paid endpoint/model is configured. No external AI calls were made in development. AI is invoked only after you select AI draft and submit the form. It sends business name, contact name, industry, location, website, your offer and tone to the configured provider. It does not send the stored email address, source or notes. Approve this data sharing before using real leads. HTTPS verification remains enabled, redirects are rejected, and requests time out after 20 seconds. Configuration, network, HTTP and malformed-response errors are shown without exposing keys or provider response bodies. API keys are read from the process environment, not stored in SQLite. Review every generated claim; AI output is not verified research.
+The shipped default is disabled. Read [PROVIDER_POLICIES.md](PROVIDER_POLICIES.md), verify the current policies and intended CRM use yourself, and obtain any required permission. If review is unavailable or terms do not permit the planned usage, **leave it disabled**.
 
-## Tests
+After actual verification, record your attestation (substitute your name and a real operator contact; these are not API secrets):
 
-From the project folder with the virtual environment activated:
+```sh
+python manage.py policy-review \
+  --reviewer "Your name" \
+  --contact "your-contact@example.com" \
+  --i-have-verified-current-policies
+export AGENCYOS_OSM_POLICY_FILE="$PWD/.development/osm-policy.json"
+```
+
+This command records **your** review. It does not fetch policies or verify them automatically. It refuses to overwrite an existing review file. For a later review, choose a new `--output` filename and update the environment variable. Records expire after 30 days; changes invalidate existing discovery approval.
+
+Default endpoint limits are conservative application ceilings, **not a claim that current provider terms allow every search**: minimum two seconds between requests per service, maximum 20 requests per service per UTC day, 24-hour location cache, one-hour query cache, 20-second provider network timeout and 2 MB response limit. The review command accepts a longer `--interval` (up to 60 seconds) and lower `--daily-limit`. If policies require other limits or terms the implementation cannot satisfy, do not enable that public endpoint. Use an appropriately permitted service through a separately reviewed adapter instead.
+
+A real operator contact identifies the app's requests. HTTP 429/503 blocks further service calls for an hour; there is no automatic retry. If you run multiple independent databases/app installations, their local usage counters do not coordinate: run a single worker/database for this small-scale public-service configuration. Provider-side restrictions take precedence.
+
+**Attribution:** © OpenStreetMap contributors, [ODbL 1.0](https://www.openstreetmap.org/copyright). Source links, retrieved dates and attribution are retained with candidates and imported evidence. Preserve attribution when copying/exporting records. Public redistribution of an adapted database may require ODbL share-alike compliance. Source visibility does not grant marketing consent or remove privacy obligations.
+
+### 2. Evidence research
+
+From a lead, open **Evidence research**. You can:
+
+- Use saved lead fields only; the report will say no external source was inspected.
+- Add an authorised source URL and exact quote manually. It is labelled **Owner supplied**, not independently verified. Its timestamp is the submission time, not a claimed historical observation date.
+- Prepare an optional public HTTPS homepage inspection. Confirm permitted use, then separately approve the task. Set `AGENCYOS_WEBSITE_FETCH=1` in both shells only after confirming authorised use.
+
+Website inspection fetches robots.txt and at most one HTTPS homepage. It respects robots restrictions, rejects redirects, custom ports, credentials, private/reserved IPs and internal destinations, pins the connection to a validated public IP while checking the TLS hostname/certificate, and bounds size/time. It refuses operation with an outbound proxy because safe destination pinning cannot then be guaranteed. It does not bypass site restrictions. Robots permission alone is not legal authorisation.
+
+The tool records the actual source URL, timestamp, content hash, title, H1, description, HTML language and a bounded visible excerpt. UTF-8 decoding is used, with replacement for invalid bytes. No JavaScript runs; it does not measure page speed, accessibility, SEO rankings or whole-site quality. Failures create no quality diagnosis. A missing tag is reported only as absent from the retrieved homepage HTML at that time.
+
+Inspect results require approval before their evidence becomes selectable for research. Directory evidence is marked as source-reported; manual quotes are labelled owner-supplied. Select up to 10 evidence items and choose local analysis or AI suggestions. Inputs are saved as an immutable snapshot. Source observations, recorded lead details, suggestions, questions needing verification and possible outreach angles are displayed separately.
+
+AI never creates the source observations. Its suggestions must reference real selected evidence IDs or be labelled general advice with no supporting source; invented IDs and malformed structured output fail the task. Model suggestions can still be wrong: check them before approving. There is no automatic fact checker or guarantee of truth.
+
+### 3. Approved research → saved outreach
+
+Approve a research result, then choose **Prepare draft from this research**, or open **Research-based drafts** from the existing outreach page. Choose local drafting (no provider cost) or an approved AI request. Local drafts use actual inspected titles when available and otherwise make no inspection claims.
+
+Every generation produces a separate saved draft linked to its approved research snapshot. Review it as Needs review, Approved or Rejected; optionally set a **manual follow-up review date**. History records each review. The original quick template/AI drafts page remains available; legacy quick AI drafts now also require explicit approval of charges/data sharing, but only the new research-based flow stores history.
+
+No draft is sent automatically. Follow-up suggestions are reminders to review suitability/consent, not scheduled messages. Future sending must implement applicable consent/legal requirements, unsubscribe handling, suppression lists, rate limits and explicit authorisation of exact recipients/content. Nothing here guarantees customer acquisition or revenue.
+
+## AI provider configuration and charges
+
+Local analysis/drafting and manual/CSV workflows require no AI provider. Live AI research/drafts use the existing HTTPS OpenAI-compatible chat-completions adapter. Configure in both app and worker shells:
+
+- `AGENCYOS_AI_PROVIDER=openai-compatible`
+- `AGENCYOS_AI_ENDPOINT`: your approved full HTTPS chat-completions endpoint
+- `AGENCYOS_AI_MODEL`: your approved compatible model
+- `AGENCYOS_AI_API_KEY`: your private credential
+
+Do not put keys in code, task briefs, source evidence, screenshots or chat. No keys are saved in task records. A private configuration fingerprint invalidates approval if provider settings or the key change. HTTPS verification is preserved; API redirects are rejected, response size is bounded, and errors avoid exposing keys/raw provider responses.
+
+For example, OpenAI's chat-completions endpoint is `https://api.openai.com/v1/chat/completions`; select a compatible model and confirm your account access and current pricing. API billing may be separate from a chat subscription. No account was connected or charged during development.
+
+Phase 3 AI tasks need explicit approval of their full input snapshot and potential charge. Maximum 20 Phase 3 AI calls per database per UTC day, one call per job, no automatic retry, task inputs at most 24,000 serialised characters, up to 900 output tokens for research and 600 for drafts. These are usage ceilings, **not an exact dollar spending cap**. Set provider-side spending controls where available. Review charges before replacing interrupted/failed jobs. Existing Phase 2B research/quick draft routes retain their separate original limits; Phase 3's daily counter is not an account-wide billing meter.
+
+## Queue reliability and future automation
+
+Jobs have real persisted states, progress stages and event history:
+
+`Awaiting approval → Queued → Running → Awaiting review → Approved / Rejected`
+
+Local jobs may enter Queued directly. Unstarted jobs may be Cancelled. Failures end Failed. Workers claim jobs transactionally; overlapping workers cannot claim the same queued job. Completion, candidates/evidence/drafts and task status are committed together. A result is not persisted after its worker loses the lease. Queue views show the latest 100 jobs.
+
+A worker crash may leave an uncertain external request. After its five-minute lease expires, the next worker pass marks it **Interrupted**, never automatically requeues it. Check provider usage and explicitly create/approve a replacement if needed. This is an **at-most-once attempt policy**, not guaranteed completion or guaranteed exactly-once behaviour at an external service. No automated retry makes a second potentially charged call.
+
+Phase 3 adds `not_before`, registered task handlers, transaction-based claims, usage reservations and independent worker execution as foundations for scheduling and future multi-agent work. There is **no enabled scheduler** and no arbitrary model tool execution. Lead discovery and saved outreach are functional flows, subject to configuration. Website builder, project manager and full audit agents remain clearly planned. Phase 2B tasks remain available on their existing routes; they are not silently converted into queued Phase 3 tasks.
+
+The old email/spending/publishing approval records remain record-only; no executor exists even for approved proposals.
+
+## Database backups and compatibility
+
+Your original database was not supplied and was not used during development. All tests use separate temporary synthetic databases.
+
+Stop the old app and worker before backing up. Use SQLite's backup mechanism if WAL/journal files exist. For a cleanly stopped database, a copy such as this is suitable (run in the old folder):
+
+```sh
+cp -p agencyos.db agencyos-before-phase3.db
+```
+
+Keep backups securely outside Git. To evaluate real records later, approve that use yourself, copy a backup into the **new** folder and point `AGENCYOS_DB` at the copy. Keep the original untouched. Do not run old/new applications concurrently against one database.
+
+Migrations add Phase 3 job, event, candidate, evidence, draft/history, cache, usage and migration tables. They do not drop/recreate core tables or erase Phase 2B tasks/results. Existing Lead Discovery/Outreach planned entries are upgraded once; user settings are retained thereafter. Evidence/drafts retain their snapshots if a lead is later deleted; nothing restores a deleted lead silently.
+
+Passwords, keys, databases, caches, review/contact files, virtual environments and ZIPs are excluded from Git. Test credentials are fictional fixtures, never real account credentials.
+
+## Manual and CSV Lead Finder
+
+The original manual leads and CSV import/review workflow remains available even without live discovery or AI. CSV: UTF-8, up to 1,000 leads and 2 MB request size, required `business_name`; optional `contact_name,email,website,industry,location,source,notes,status`. Download a sample inside Lead Finder. Review invalid rows and possible duplicates before confirmation. Websites must be HTTP/HTTPS without embedded credentials. Lead search, filtering, status changes and quick outreach links are preserved.
+
+## Tests and verification
 
 ```sh
 python -m unittest discover -s tests -v
 python tests/smoke_server.py
 ```
 
-The unit/integration tests create isolated temporary SQLite databases with synthetic data. They cover login/logout and CSRF, all workspace pages, lead entry/deletion, quote relationships and money, invoice/project status changes, template outreach, CSV validation/preview/confirmation, duplicate review and rechecking, replay/expiry/owner isolation, filters/statuses, escaped content, additive migration preservation, and mocked AI success/errors. They never call a paid provider or touch the default database.
+Tests use fictional records and mocked discovery, website and AI responses. They cover existing login/dashboard/leads/quotes/invoices/projects/Phase 2B tasks, policy gating, API request/response parsing, cache/quotas/backoff, candidate duplicates and approvals, evidence provenance, AI reference validation, immutable snapshots, saved outreach reviews, queue ownership/concurrency/interruption, errors, SSRF restrictions and migration preservation. Python 3.13 now reports unclosed SQLite connections; test fixtures were updated to close them explicitly.
 
-The HTTP smoke check starts the actual Flask server on port 5057 with a temporary synthetic database, exercises owner setup, login, lead creation, dashboard, all workspace pages and CSS, also runs a local agent task through assignment, execution, result review and action-proposal rejection, then stops it and removes its data. Leave port 5057 free when running this check.
+The HTTP smoke test starts the actual local server on port 5057 using a temporary database, verifies the original workflows and invokes the real worker in a separate process for local research and saved drafting. It stops the server and removes its synthetic database afterward.
 
-Validated in the cloud with Python 3.12 and Flask 3.1.3: 39 automated tests passed, plus the real HTTP smoke check. Phase 2B tests additionally cover agent settings, task state transitions, required AI consent, changed-configuration reapproval, concurrent/repeated runs, provider failures, result review, separate action decisions, owner isolation, CSRF, escaped output, interrupted-run recovery, snapshots and migration preservation. No browser visual testing, live AI provider testing or original customer-database testing was performed.
+See [TEST_RESULTS.md](TEST_RESULTS.md) for the final verified versions and counts. Live provider operation and browser visual testing are not claimed.
 
-## Remaining limitations
+## Boundaries
 
-This is a single-owner local development app, not a production deployment. There is no password reset, comprehensive security audit trail, fuzzy duplicate scoring, automatic lead scraping, message sending, payment processing, public hosting or automated site generation. Quotes/invoices remain internal records, not tax invoices or payment collection. CSV validation does not verify deliverability, website ownership or consent. Previews are bounded but rendered in one table; there is no pagination. Large existing lead databases may make duplicate checks slow.
-
-Before public deployment, add rate limiting, HTTPS, production secret management, account recovery, audit logging and a security review. The app binds only to loopback by default. External Google Fonts are retained from Phase 1; fallback fonts apply offline. Dependencies retain the existing Flask version range rather than a new lockfile.
+This is a single-owner local app, not a public production service. No deployment, payments, sending or website publication is included. Directory coverage and records may be incomplete/outdated. Missing contact information remains unknown. No autonomous revenue guarantee is possible. Before public hosting, add a security review, robust recovery, rate limiting, audit controls and production deployment configuration. The existing optional Google Fonts styling is retained; local fallback fonts work offline.

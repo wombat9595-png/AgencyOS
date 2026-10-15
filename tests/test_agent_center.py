@@ -1,3 +1,4 @@
+from contextlib import closing
 import json
 import os
 import sqlite3
@@ -224,10 +225,10 @@ class AgentCenterTest(unittest.TestCase):
     def test_interrupted_recovery_does_not_retry_a_paid_call(self):
         location = self.create().location
         self.assertEqual(self.post(location+'/recover').status_code,409)
-        with sqlite3.connect(application.DB_PATH) as conn:
+        with closing(sqlite3.connect(application.DB_PATH)) as conn, conn:
             conn.execute("UPDATE agent_tasks SET status='Running',started_at=?",(time.time(),))
         self.assertEqual(self.post(location+'/recover').status_code,409)
-        with sqlite3.connect(application.DB_PATH) as conn:
+        with closing(sqlite3.connect(application.DB_PATH)) as conn, conn:
             conn.execute('UPDATE agent_tasks SET started_at=?',(time.time()-121,))
         self.assertIn(b'Mark interrupted run',self.client.get(location).data)
         self.assertEqual(self.post(location+'/recover').status_code,302)
@@ -236,7 +237,7 @@ class AgentCenterTest(unittest.TestCase):
 
     def test_snapshot_survives_lead_change_and_deletion(self):
         location = self.create().location
-        with sqlite3.connect(application.DB_PATH) as conn:
+        with closing(sqlite3.connect(application.DB_PATH)) as conn, conn:
             conn.execute("UPDATE leads SET business_name='Changed'")
         self.post('/leads/1/delete')
         task = self.rows('agent_tasks')[0]
@@ -286,7 +287,7 @@ class AgentCenterTest(unittest.TestCase):
         self.post('/projects', {'client_name':'Synthetic','project_name':'Legacy synthetic site'})
         original_tables = ('users','leads','quotes','invoices','projects','lead_imports')
         before = {table:[tuple(row) for row in self.rows(table)] for table in original_tables}
-        with sqlite3.connect(application.DB_PATH) as conn:
+        with closing(sqlite3.connect(application.DB_PATH)) as conn, conn:
             for table in ('agent_approvals','agent_events','agent_tasks','agents'):
                 conn.execute('DROP TABLE '+table)
         application.init_db()
@@ -301,7 +302,7 @@ class AgentCenterTest(unittest.TestCase):
         result = subprocess.run([sys.executable,'-c',code],cwd=Path(application.APP_DIR),env=environment,
                                 capture_output=True,text=True,check=True)
         path,private = json.loads(result.stdout)
-        self.assertEqual(Path(path),Path(application.APP_DIR)/'.development'/'agencyos-phase2b.db')
+        self.assertEqual(Path(path),Path(application.APP_DIR)/'.development'/'agencyos-phase3.db')
         self.assertTrue(private)
 
     def test_overlapping_ai_requests_make_only_one_model_call(self):
@@ -339,7 +340,7 @@ class AgentCenterTest(unittest.TestCase):
 
     def test_repeat_run_during_running_state_is_blocked(self):
         location = self.create().location
-        with sqlite3.connect(application.DB_PATH) as conn:
+        with closing(sqlite3.connect(application.DB_PATH)) as conn, conn:
             conn.execute("UPDATE agent_tasks SET status='Running',started_at=?",(time.time(),))
         with patch('agent_center.local_analysis') as local:
             self.assertEqual(self.post(location+'/run').status_code,409)

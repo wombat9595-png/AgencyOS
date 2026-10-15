@@ -13,9 +13,11 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from lead_finder import STATUSES, validate_lead, parse_csv, duplicate_reasons
 from ai_drafts import generate_draft, DraftError
 from agent_center import migrate_agents, register_agent_routes
+from phase3_store import migrate as migrate_phase3
+from phase3 import register as register_phase3
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.environ.get("AGENCYOS_DB") or os.path.join(APP_DIR, ".development", "agencyos-phase2b.db")
+DB_PATH = os.environ.get("AGENCYOS_DB") or os.path.join(APP_DIR, ".development", "agencyos-phase3.db")
 app = Flask(__name__)
 app.secret_key = os.environ.get("AGENCYOS_SECRET_KEY") or secrets.token_hex(32)
 app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024
@@ -77,6 +79,7 @@ def init_db():
         created_at REAL NOT NULL, FOREIGN KEY(user_id) REFERENCES users(id))""")
     conn.execute("CREATE INDEX IF NOT EXISTS leads_status_idx ON leads(status)")
     migrate_agents(conn)
+    migrate_phase3(conn)
     conn.commit()
     conn.close()
 
@@ -220,6 +223,9 @@ Best,
 [Your name]"""
             if tone not in ('friendly', 'professional', 'direct') or len(offer) > 1000:
                 flash('Choose a supported tone and an offer of at most 1,000 characters.', 'error')
+                draft = ''
+            elif request.form.get('draft_mode', 'template') == 'ai' and request.form.get('approve_ai') != 'yes':
+                flash('Approve the AI charge and sharing of lead details before generating an AI draft.', 'error')
                 draft = ''
             elif request.form.get('draft_mode', 'template') == 'ai':
                 try:
@@ -454,6 +460,7 @@ def import_preview(token):
 
 
 register_agent_routes(app, db, login_required)
+register_phase3(app, db, login_required, insert_lead)
 
 if __name__ == "__main__":
     init_db()

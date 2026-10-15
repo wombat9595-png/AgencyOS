@@ -1,3 +1,4 @@
+from contextlib import closing
 import io
 import json
 import os
@@ -36,7 +37,7 @@ class AgencyOSTest(unittest.TestCase):
         return response
 
     def rows(self, table):
-        with sqlite3.connect(application.DB_PATH) as conn:
+        with closing(sqlite3.connect(application.DB_PATH)) as conn, conn:
             conn.row_factory = sqlite3.Row
             return conn.execute('SELECT * FROM ' + table).fetchall()
 
@@ -138,13 +139,13 @@ class AgencyOSTest(unittest.TestCase):
         self.assertEqual(self.client.get(response.location).status_code, 302)
         with self.client.session_transaction() as session:
             session['user_id'] = 1
-        with sqlite3.connect(application.DB_PATH) as conn:
+        with closing(sqlite3.connect(application.DB_PATH)) as conn, conn:
             conn.execute('UPDATE lead_imports SET created_at=0')
         self.assertEqual(self.post(response.location, {'selected': ['1']}).status_code, 302)
         self.assertEqual(len(self.rows('leads')), 0)
 
     def test_migration_preserves_legacy_records(self):
-        with sqlite3.connect(application.DB_PATH) as conn:
+        with closing(sqlite3.connect(application.DB_PATH)) as conn, conn:
             conn.execute('DROP TABLE leads')
             conn.execute("CREATE TABLE leads(id INTEGER PRIMARY KEY, business_name TEXT NOT NULL,contact_name TEXT DEFAULT '',email TEXT DEFAULT '',website TEXT DEFAULT '',industry TEXT DEFAULT '',status TEXT DEFAULT 'New',notes TEXT DEFAULT '',created_at TEXT NOT NULL)")
             conn.execute("INSERT INTO leads(id,business_name,created_at) VALUES(42,'Legacy','2024-01-01')")
@@ -165,14 +166,14 @@ class AgencyOSTest(unittest.TestCase):
     def test_missing_ai_configuration(self):
         self.post('/leads', {'business_name': 'Synthetic'})
         with patch.dict(os.environ, {}, clear=True):
-            response = self.post('/outreach', {'lead_id': '1', 'draft_mode': 'ai'})
+            response = self.post('/outreach', {'lead_id': '1', 'draft_mode': 'ai', 'approve_ai': 'yes'})
         self.assertIn(b'AI drafting is not configured', response.data)
         self.assertNotIn(b'Subject: Quick idea', response.data)
 
     def test_ai_route_uses_selected_lead_and_stays_draft_only(self):
         self.post('/leads', {'business_name': 'Synthetic', 'location': 'Sydney'})
         with patch('app.generate_draft', return_value='Subject: Reviewed synthetic draft') as provider:
-            response = self.post('/outreach', {'lead_id': '1', 'draft_mode': 'ai', 'offer': 'Website design', 'tone': 'professional'})
+            response = self.post('/outreach', {'lead_id': '1', 'draft_mode': 'ai', 'approve_ai': 'yes', 'offer': 'Website design', 'tone': 'professional'})
         self.assertIn(b'Subject: Reviewed synthetic draft', response.data)
         self.assertIn(b'Not sent', response.data)
         self.assertEqual(provider.call_args.args[0]['location'], 'Sydney')

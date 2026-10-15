@@ -40,7 +40,7 @@ with tempfile.TemporaryDirectory(dir=root, prefix='.smoke-') as temporary:
             page = post('/login', {'username':'synthetic-owner','password':'synthetic-smoke-password'})
             assert 'Build better websites' in page
             post('/leads', {'business_name':'HTTP Synthetic Studio','location':'Sydney'})
-            for path in ('/', '/leads','/outreach','/quotes','/invoices','/projects','/settings','/lead-finder','/agents','/agents/tasks/new','/static/style.css'):
+            for path in ('/', '/leads','/outreach','/quotes','/invoices','/projects','/settings','/lead-finder','/agents','/agents/tasks/new','/workflows','/discovery','/research?lead_id=1','/outreach/history','/static/style.css'):
                 with opener.open(base + path) as response:
                     assert response.status == 200, path
             with opener.open(base + '/') as response:
@@ -63,6 +63,16 @@ with tempfile.TemporaryDirectory(dir=root, prefix='.smoke-') as temporary:
             assert 'Pending' in page
             page = task_post('/agents/approvals/1/decide', {'decision':'Rejected'})
             assert 'Rejected' in page and 'not executed' in page
+            page=post('/research?lead_id=1',{'lead_id':'1','mode':'local'})
+            assert 'Queued' in page
+            subprocess.run([sys.executable,'manage.py','worker'],cwd=root,env=environment,check=True,capture_output=True)
+            page=task_post('/workflows/1/decision',{'decision':'Approved'})
+            assert 'Unverified opportunities' in page
+            post('/outreach/history',{'research_id':'1','mode':'local'})
+            subprocess.run([sys.executable,'manage.py','worker'],cwd=root,env=environment,check=True,capture_output=True)
+            page=task_post('/outreach/history/1/review',{'status':'Approved','follow_up_date':'2027-01-15'})
+            assert 'Draft #1' in page and 'Nothing sent' in page
+            print('PASS: Phase 3 real HTTP queue, separate worker process, local research, approved-research drafting and saved review history')
             print('PASS: local agent task assignment, run, result review and separate action rejection; no external requests')
             print('PASS: real HTTP server, owner setup, login, lead creation, dashboard, all workspace pages and stylesheet')
         finally:
