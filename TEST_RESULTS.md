@@ -1,35 +1,47 @@
-# Phase 3 validation
+# Phase 4 milestones 1–3 validation
 
-Validation used Python **3.13.5**, Flask **3.1.3** and SQLite **3.46.1** on Linux. This establishes Python 3.13 execution, not a claim that the developer operated a MacBook or tested a browser visually. The cloud interpreter lacked ensurepip; its isolated environment was prepared with uv using the declared Flask requirement. The macOS README uses the Python.org distribution's normal venv/pip workflow.
+Validated on Linux with **Python 3.13.5**, **Flask 3.1.3** and **SQLite 3.46.1**. This establishes actual Python 3.13 execution, not MacBook or visual-browser validation. The cloud Python 3.13 environment was created outside the repository with uv; the MacBook README uses the normal Python.org venv/pip workflow.
 
-## Automated checks
+## Final checks
 
-- `python -m unittest discover -s tests -v`: **73 tests passed**.
-- `python tests/smoke_server.py`: **passed**, with a real Flask process, authenticated HTTP requests and a separate real worker process.
-- Dependency consistency and Git whitespace checks passed.
+- `python -m unittest discover -s tests -v`: **106 tests passed**, no failures, skips or expected failures reported (30.108 seconds in the final run).
+- `python tests/smoke_server.py`: **passed** using real local HTTP, authenticated forms and separately restarted worker processes.
+- `uv pip check --python /workspace/.agencyos/venv313/bin/python`: all seven installed dependency packages compatible.
+- `git diff --check`: passed.
 
-The unit/integration suite retains coverage of login/logout, CSRF, dashboard, manual/CSV leads, duplicate review, quotes/invoice amounts and statuses, projects, template/AI draft errors, Phase 2B agent states/approvals and preserved task history.
+The previous 73 tests remain, including preservation/migration coverage for legacy records and tasks. One existing assertion was updated intentionally: the default database is now `.development/agencyos-phase4.db`, separate from Phase 3.
 
-New coverage includes:
+## New automated coverage (33 tests)
 
-- Disabled/missing/expired OSM policy records and explicit operator attestation; review files cannot be overwritten.
-- Search input validation, Overpass query construction, real provider JSON mapping, contact fields left blank when missing/invalid, caching, limits, HTTP failures/backoff and incomplete results.
-- Candidate approval/rejection, source timestamps/URLs, duplicate rechecking and prevention of repeated imports.
-- Selected source evidence, owner-supplied versus inspected evidence labels, immutable snapshots, approval of inspected observations, and rejection of invented AI evidence references.
-- Explicit AI consent, configuration-change reapproval, one request per job, daily limits and no fake output after failure.
-- Local and mocked-AI research, approved research required for drafting, saved draft versions/reviews and manual follow-up dates. Quick AI drafts also require cost approval.
-- Queue ownership, overlapping claims, deferred readiness, cancellation, interrupted leases without automatic requeue, disabled agents and pending/input limits.
-- HTTPS/robots opt-in, private-IP rejection, proxy refusal, redirect blocking, public-IP/TLS-host pin selection, content extraction and provenance.
-- Authentication/ownership checks, CSRF and escaping of untrusted evidence.
-- Additive upgrades from a synthetic Phase 2B database, unchanged saved legacy task content and an untouched original synthetic backup, plus repeatable migrations.
+- Authentication, CSRF, ownership and escaped untrusted source content.
+- Immutable qualification snapshots, real deterministic output, atomic research handoff, review replay prevention and zero-cost ledger entries.
+- Emergency pause across new/legacy queue claims and mutation endpoints; audit callback pause before a subsequent dispatch.
+- Atomic budget reservation, changed-reservation rejection, unknown/negative costs and conservative unresolved reservations.
+- Concurrent worker claims, expired leases, bounded local recovery and refusal to auto-retry external audits.
+- Persistent local schedules, disabled schedules, missed-slot handling and worker execution independent of a browser session.
+- Australian offline location schedules, state/city/industry filtering, source expiry and cross-batch provider/ID deduplication.
+- Licensed candidate staging/import, evidence timestamps, provenance, blank contact fields, qualification reasons, expired permission refusal and all-or-nothing validation.
+- Duplicate checks across separate datasets and existing CRM leads; no silent merge/overwrite.
+- Audit permission/configuration gate, expiry/input-change reapproval, disabled-agent refusal and no fabricated failed output.
+- Owner review required before audit evidence becomes available to existing research; changed website invalidates audit-based qualification points.
+- Actual static HTML extraction against mocked transport responses; verified scoped 404s, metadata/viewport findings, hashes, contact links and separate recommendations.
+- Robots restrictions per path, slower crawl refusal, bounded same-origin traversal and exclusion of queries/downloads/external links.
+- Redirect/error uncertainty, base URL handling, malformed URLs, valueless HTML attributes and compressed-body refusal before metadata analysis.
+- Repeatable migrations and preservation of owner audit-agent enable/disable choice.
 
-The HTTP smoke test additionally exercises original agent result review and separate action rejection, Phase 3 local research through the worker, approved-research drafting, and saved draft review/history.
+Existing transport tests additionally cover private/reserved DNS rejection, TLS hostname/IP pinning and proxy refusal. External providers and network results are mocked; fixtures are not real business discoveries.
 
-## Deliberately not claimed
+## Real-process smoke coverage
 
-- **No live OSM discovery:** official policy/documentation hosts returned proxy HTTP 403. Live discovery remains disabled until a real operator review confirms current permitted use and setup. Mocked records are test fixtures, not live search results.
-- **No paid AI calls:** external models were mocked, including failures. Real account access, pricing and model compatibility require operator setup and an approved live check.
-- **No real customer records:** all records were fictional and all development/tests used temporary separate databases. An original customer database was not supplied.
-- **No live website inspection:** external fetches were mocked. The disabled-by-default fetcher needs explicit permitted-use confirmation and a supported direct network.
-- **No emails/payments/publication or public deployment.** Action approvals and reminders do not execute those actions.
-- **No browser visual test, complete security audit, autonomous revenue validation or active recurring scheduler.**
+The smoke runner starts the actual Flask app with a temporary synthetic database. It exercises owner setup/login, the existing dashboard/pages/styles and earlier task flows. For Phase 4 it assigns qualification through HTTP, starts a separate worker, checks the local research handoff, enables a persistent local schedule, restarts workers, pauses before a claim and resumes work. All smoke processes stop and their temporary databases are removed.
+
+## Not claimed
+
+- No real business data, live discovery, paid AI call, live website audit, email, invoice issue, charge, publication or public deployment was performed.
+- No current nationwide provider licence was independently verified; official policy pages were blocked by the outbound proxy during planning. Offline imports require owner-reviewed permission records. Public OSM automation remains separately gated, not promoted to nationwide scraping.
+- The current website transport refuses outbound proxy use. Live audits need permission, explicit task approval and a supported safe direct network. Mocked success does not prove live connectivity.
+- No always-on daemon, cloud hosting, production security/legal certification, complete accessibility/performance audit or autonomous revenue validation is included.
+- The new zero-dollar ledger applies to Phase 4 tasks, not preserved legacy paid-AI routes. No positive-cost Phase 4 executor is installed.
+- Original customer databases were not selected or modified. Migration tests use synthetic originals/copies.
+
+Original Phase 3 results are retained in [TEST_RESULTS_PHASE3.md](TEST_RESULTS_PHASE3.md). Operational details and remaining work are documented in [PHASE4.md](PHASE4.md).

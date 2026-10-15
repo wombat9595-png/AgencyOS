@@ -72,6 +72,32 @@ with tempfile.TemporaryDirectory(dir=root, prefix='.smoke-') as temporary:
             subprocess.run([sys.executable,'manage.py','worker'],cwd=root,env=environment,check=True,capture_output=True)
             page=task_post('/outreach/history/1/review',{'status':'Approved','follow_up_date':'2027-01-15'})
             assert 'Draft #1' in page and 'Nothing sent' in page
+            # Phase 4: real HTTP assignment, process restart, schedule handoff and pause.
+            for path in ('/agency','/discovery/licensed'):
+                with opener.open(base+path) as response:
+                    assert response.status==200
+            def manager_post(path,fields):
+                with opener.open(base+'/agency') as response:
+                    fields['csrf_token']=re.search(r'name="csrf_token" value="([^"]+)"',response.read().decode())[1]
+                with opener.open(base+path,data=parse.urlencode(fields).encode()) as response:
+                    assert response.status==200
+                    return response.read().decode()
+            page=manager_post('/agency/queue',{'lead_id':'1','kind':'qualification','handoff':'yes'})
+            assert 'Queued' in page
+            for _ in range(2):
+                subprocess.run([sys.executable,'manage.py','worker','--phase4'],cwd=root,env=environment,check=True,capture_output=True)
+            with opener.open(base+'/agency/jobs/1') as response:
+                assert b'Awaiting review' in response.read()
+            with opener.open(base+'/agency/jobs/2') as response:
+                assert b'Deterministic local research' in response.read()
+            manager_post('/agency/schedules',{'lead_id':'1','hours':'24','confirm':'yes'})
+            subprocess.run([sys.executable,'manage.py','worker','--phase4'],cwd=root,env=environment,check=True,capture_output=True)
+            manager_post('/agency/pause',{'paused':'1'})
+            stopped=subprocess.run([sys.executable,'manage.py','worker','--phase4'],cwd=root,env=environment,check=True,capture_output=True,text=True)
+            assert 'No queued task' in stopped.stdout
+            manager_post('/agency/pause',{'paused':'0'})
+            subprocess.run([sys.executable,'manage.py','worker','--phase4'],cwd=root,env=environment,check=True,capture_output=True)
+            print('PASS: Phase 4 HTTP assignment, immutable qualification, local research handoff, persistent schedules, separate worker restarts and emergency pause')
             print('PASS: Phase 3 real HTTP queue, separate worker process, local research, approved-research drafting and saved review history')
             print('PASS: local agent task assignment, run, result review and separate action rejection; no external requests')
             print('PASS: real HTTP server, owner setup, login, lead creation, dashboard, all workspace pages and stylesheet')

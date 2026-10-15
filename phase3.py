@@ -21,7 +21,7 @@ def approval_hash(job):
 
 def available_evidence(conn,user_id,lead_id):
     return conn.execute("""SELECT e.* FROM p3_evidence e LEFT JOIN p3_jobs j ON j.id=e.job_id
-        WHERE e.user_id=? AND e.lead_id=? AND (e.origin IN ('Owner supplied','OSM directory') OR j.status='Approved') ORDER BY e.id DESC""",(user_id,lead_id)).fetchall()
+        WHERE e.user_id=? AND e.lead_id=? AND (e.origin IN ('Owner supplied','OSM directory','Licensed directory','Approved technical audit') OR j.status='Approved') ORDER BY e.id DESC""",(user_id,lead_id)).fetchall()
 
 def lead_snapshot(lead):
     return {key:lead[key] for key in ('business_name','website','industry','location')}

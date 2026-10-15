@@ -102,6 +102,10 @@ def block_service(conn, service, seconds):
 
 def claim(conn):
     conn.execute('BEGIN IMMEDIATE')
+    from phase4_store import paused
+    if paused(conn):
+        conn.commit()
+        return None
     # At-most-once is preferable to silently repeating a charged request after a crash.
     expired=conn.execute("SELECT id FROM p3_jobs WHERE status='Running' AND lease_until<?",(time.time(),)).fetchall()
     for row in expired:

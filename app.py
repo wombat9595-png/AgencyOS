@@ -15,9 +15,12 @@ from ai_drafts import generate_draft, DraftError
 from agent_center import migrate_agents, register_agent_routes
 from phase3_store import migrate as migrate_phase3
 from phase3 import register as register_phase3
+from phase4 import register as register_phase4
+from phase4_store import migrate as migrate_phase4
+from phase4_data import migrate as migrate_phase4_data
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.environ.get("AGENCYOS_DB") or os.path.join(APP_DIR, ".development", "agencyos-phase3.db")
+DB_PATH = os.environ.get("AGENCYOS_DB") or os.path.join(APP_DIR, ".development", "agencyos-phase4.db")
 app = Flask(__name__)
 app.secret_key = os.environ.get("AGENCYOS_SECRET_KEY") or secrets.token_hex(32)
 app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024
@@ -80,6 +83,8 @@ def init_db():
     conn.execute("CREATE INDEX IF NOT EXISTS leads_status_idx ON leads(status)")
     migrate_agents(conn)
     migrate_phase3(conn)
+    migrate_phase4(conn)
+    migrate_phase4_data(conn)
     conn.commit()
     conn.close()
 
@@ -461,6 +466,7 @@ def import_preview(token):
 
 register_agent_routes(app, db, login_required)
 register_phase3(app, db, login_required, insert_lead)
+register_phase4(app, db, login_required, insert_lead)
 
 if __name__ == "__main__":
     init_db()

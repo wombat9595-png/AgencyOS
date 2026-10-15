@@ -16,7 +16,7 @@ class FactsParser(HTMLParser):
         super().__init__(convert_charrefs=True)
         self.title=[];self.h1=[];self.text=[];self.description='';self.lang='';self.in_title=False;self.in_h1=False;self.hidden=0
     def handle_starttag(self,tag,attrs):
-        attrs=dict(attrs)
+        attrs={key:(value or '') for key,value in attrs}
         if tag in ('script','style','noscript'):self.hidden+=1
         if tag=='title':self.in_title=True
         if tag=='h1':self.in_h1=True
@@ -34,6 +34,7 @@ class FactsParser(HTMLParser):
 
 def normalise_origin(url):
     try:
+        if not isinstance(url,str) or any(ord(c)<33 for c in url) or '\\' in url:raise ValueError()
         parts=urlsplit(url)
         if parts.scheme!='https' or not parts.hostname or parts.username or parts.password or parts.port not in (None,443):raise ValueError()
         host=parts.hostname.encode('idna').decode('ascii')
@@ -67,6 +68,8 @@ def public_get(url, maximum, allowed_type):
             conn.request('GET',path,headers={'User-Agent':'AgencyOSResearch/3.0','Accept':allowed_type,'Accept-Encoding':'identity'})
             response=conn.getresponse()
             if 300<=response.status<400:raise WorkflowError('Website redirected. No redirect was followed; review the destination manually.')
+            if response.getheader('Content-Encoding','identity').lower() not in ('','identity'):
+                raise WorkflowError('Compressed website responses are unsupported; no HTML findings can be made.')
             content_type=response.getheader('Content-Type','').split(';')[0].lower()
             if response.status==200 and content_type not in allowed_type.split(','):
                 raise WorkflowError('The inspected response is not a supported text document.')

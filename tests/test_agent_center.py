@@ -302,7 +302,7 @@ class AgentCenterTest(unittest.TestCase):
         result = subprocess.run([sys.executable,'-c',code],cwd=Path(application.APP_DIR),env=environment,
                                 capture_output=True,text=True,check=True)
         path,private = json.loads(result.stdout)
-        self.assertEqual(Path(path),Path(application.APP_DIR)/'.development'/'agencyos-phase3.db')
+        self.assertEqual(Path(path),Path(application.APP_DIR)/'.development'/'agencyos-phase4.db')
         self.assertTrue(private)
 
     def test_overlapping_ai_requests_make_only_one_model_call(self):
