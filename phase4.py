@@ -95,7 +95,7 @@ def register(app, get_db, login_required, insert_lead):
     def pause_actions():
         # Applies to legacy action endpoints too. Login/logout and the pause switch
         # remain available so the owner can recover. GET pages stay accessible.
-        if request.method=='POST' and request.endpoint not in ('agency_pause','login','logout','setup'):
+        if request.method=='POST' and request.endpoint not in ('agency_pause','login','logout','setup','sales_provider_event','sales_record_reply','sales_suppress','sales_cancel'):
             if store.paused(get_db()):
                 raise WorkflowError('Emergency pause active. Resume in Agency Manager before making changes.')
 

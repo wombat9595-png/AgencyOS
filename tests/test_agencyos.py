@@ -216,7 +216,8 @@ class ProviderTest(unittest.TestCase):
     def test_mock_provider_success_and_errors(self):
         config = {'AGENCYOS_AI_PROVIDER':'openai-compatible','AGENCYOS_AI_API_KEY':'synthetic-key','AGENCYOS_AI_ENDPOINT':'https://provider.example/chat/completions','AGENCYOS_AI_MODEL':'test-model'}
         lead = {k: 'Synthetic' for k in ('business_name','contact_name','industry','location','website')}
-        with patch.dict(os.environ,config), patch('ai_drafts.request.build_opener') as opener:
+        # Test the transport in isolation; Phase 5 grant enforcement has separate tests.
+        with patch.dict(os.environ,config), patch('sales_ai.require_grant'), patch('ai_drafts.request.build_opener') as opener:
             response = opener.return_value.open.return_value.__enter__.return_value
             response.read.return_value = json.dumps({'choices':[{'message':{'content':'Subject: Synthetic\nDraft'}}]}).encode()
             self.assertEqual(generate_draft(lead,'Offer','friendly'),'Subject: Synthetic\nDraft')

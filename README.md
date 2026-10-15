@@ -1,69 +1,88 @@
-# AgencyOS — Phase 4, milestones 1–3
+# AgencyOS — Phase 5: coordinated sales workflow
 
-Working local coordination, Australian licensed-data intake and evidence-backed website audits, built on Phase 3. The existing dashboard, CRM, financial tools, projects and earlier task history are preserved. This is a local single-owner development application, not a public deployment.
+Built from Phase 4 commit `d55468a`, preserving the dashboard styling, earlier modules and records. Phase 5 connects approved research, outreach drafts, correspondence, internal follow-up reviews, proposals, versioned AUD quotes and owner-attested acceptance/project briefs.
 
-**No nationwide live discovery provider is approved or enabled.** The new discovery workflow searches owner-authorised CSV datasets locally. No real business data or results are seeded. Qualification/research uses explicit local rules, not pretend model responses. Audits perform actual HTTP checks when separately authorised; development tests mock those requests.
+**Live email is disabled: no live sender adapter is installed.** The email provider is explicitly a mock for testing the integration boundary. Local agents perform real work on saved records; they do not claim simulated business discoveries, replies or customer agreements. Optional AI writing/interpretation is implemented behind exact-request approval and budgets, but was validated only with mocked provider responses. Default AI budget is zero.
 
-## MacBook installation: use a new folder
+## MacBook installation — new folder and database
 
-Install Python 3.13 from [python.org](https://www.python.org/downloads/macos/) if `python3.13 --version` is unavailable. macOS may offer command-line tools when Git is first used. Keep your previous AgencyOS folders/databases intact.
+Install Python 3.13 from [python.org](https://www.python.org/downloads/macos/) if `python3.13 --version` is unavailable. Git may prompt you to install macOS command-line tools. Keep all older folders/databases unchanged.
 
 ```sh
-git clone --branch agencyos-phase4 --single-branch https://github.com/wombat9595-png/AgencyOS.git AgencyOS-Phase4
-cd AgencyOS-Phase4
+git clone --branch agencyos-phase5 --single-branch https://github.com/wombat9595-png/AgencyOS.git AgencyOS-Phase5
+cd AgencyOS-Phase5
 python3.13 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
 mkdir -p .development
-export AGENCYOS_DB="$PWD/.development/agencyos-phase4.db"
+export AGENCYOS_DB="$PWD/.development/agencyos-phase5.db"
 export AGENCYOS_WEBSITE_FETCH=0
+export AGENCYOS_AI_PROVIDER=""
 unset AGENCYOS_OSM_POLICY_FILE
 python app.py
 ```
 
-Alternatively download the `agencyos-phase4` ZIP from GitHub into a **new folder**, open Terminal there, and begin at the `python3.13 -m venv` command. No API key is needed. Do not point `AGENCYOS_DB` at an original database; it overrides the new default Phase 4 path.
+Alternatively download the Phase 5 branch ZIP into a **new** folder, open Terminal there, and begin at the venv command. No API key is needed for the local workflow.
 
-The server prints its local address. Use its `/setup` path to create your development owner account, then sign in. It listens only on your computer. For an occupied port, set `export PORT=5001` before startup. The app generates a private in-memory session key; restarting signs you out. Persistent sessions require a securely supplied `AGENCYOS_SECRET_KEY`; `.env` files are not automatically loaded.
+The app prints its local address; open its `/setup` path, create a development owner account and sign in. It binds to your computer only. If port 5000 is occupied, set `export PORT=5001` before starting. A private in-memory session key is generated; restarting signs you out. Persistent sessions require a securely supplied `AGENCYOS_SECRET_KEY`. `.env` files are not automatically loaded.
 
-## Start the Phase 4 worker
+The default database is `.development/agencyos-phase5.db`. An existing `AGENCYOS_DB` overrides that default: do not point it at an original customer database. Use a backup copy only for migration trials.
 
-In a second Terminal in your new Phase 4 folder:
+## Start the sales worker
+
+Open a second Terminal in your new Phase 5 folder:
 
 ```sh
 source .venv/bin/activate
-export AGENCYOS_DB="$PWD/.development/agencyos-phase4.db"
+export AGENCYOS_DB="$PWD/.development/agencyos-phase5.db"
 export AGENCYOS_WEBSITE_FETCH=0
+export AGENCYOS_AI_PROVIDER=""
 unset AGENCYOS_OSM_POLICY_FILE
-python manage.py worker --phase4 --watch
+python manage.py worker --phase5 --watch
 ```
 
-Both processes must select the same database. `--phase4` is important: omitting it selects the older Phase 3 queue, which can contain separately approved AI/discovery tasks. For one iteration omit `--watch`. Close the browser freely; keep the worker running and the Mac awake. No always-on system service is installed. Stop with Control+C.
+The app and worker must use the same database. `--phase5` processes sales work and internal follow-up reviews. Existing `--phase4` remains available for Phase 4 research/audits; no phase flag selects the legacy Phase 3 queue. Do not combine phase flags.
 
-## Use the milestones
+Browser closure does not stop the worker. Keep both Terminal processes running and your Mac awake; no always-on service is installed. Stop with Control+C. Multiple Phase 5 workers can process independent opportunities; jobs within one opportunity are serialized.
 
-1. Add a fictional lead, or import the synthetic CSV described in [PHASE4.md](PHASE4.md).
-2. Open **Agency Manager**, assign qualification and optionally enable its local research handoff. Inspect inputs, score reasons, results and history.
-3. Enable a local recurring qualification/research schedule. **Licensed discovery** also supports scheduled offline searches by state, city and industry, without external calls or automatic CRM imports.
-4. Try **Emergency pause**. New claims and action forms stop; already dispatched requests may finish. Resume permits queued approved work again.
-5. Prepare audits only for websites you are authorised to inspect. They remain awaiting approval with fetching disabled. Read [PHASE4.md](PHASE4.md) before enabling real requests.
+## Safe end-to-end test in the UI
 
-The Phase 4 queue has a zero-dollar ceiling and no paid executor. Existing optional Phase 3 AI routes remain separate and outside this ledger; do not configure/run them under this milestone's no-charge authorisation. No email, invoice sender, payment, website builder, publication or deployment executor is added here. Existing manual financial statuses are not proof of customer agreement or bank payment.
+Use only fictional data. Leave AI budgets/rates at zero, provider **Mock**, website fetch off, and optional AI credentials unconfigured.
 
-## Tests
+1. In **Leads & clients**, create `Fictional Studio`, email `prospect@example.com`, industry `Design`, location `Sydney`. Website can be blank; no URL does not mean the business lacks a website.
+2. In **Sales team → Sender, GST and optional AI configuration**, set sender `owner@example.com`, provider **Mock**, GST **Not registered**, and save with all AI limits zero. These fictional sender details are not verified email authentication.
+3. Create `Fictional one-page package`, category **one-page**, AUD `100.00`, **one-off**, scope `One fictional service page`, exclusions `Hosting, domain, publication and payments`. This is a test price, not a recommended commercial price.
+4. Start a sales opportunity for the fictional lead, select that package, **Create local research**, **Local drafting**, and approve the lead for internal work. Mark it **fictional test workflow**.
+5. Refresh the opportunity after the worker runs. Review the saved facts and select **Approve research and queue outreach**. The worker generates an actual local draft.
+6. Review the draft, enter `prospect@example.com` and approve it. A correspondence record is created, but nothing is sent. Review the exact sender/recipient/subject/body, then explicitly queue **mock dispatch**. The worker records **Mock accepted**, not real delivery.
+7. Optionally schedule a 1-hour **internal review**, then record `Fictional test: what does the package include?` as an owner-recorded reply. The original remains labelled owner-recorded, not provider-verified. The reply stops stale follow-up reviews. After classification, review the interpretation and prepare a local reply draft. Do not mistake generated text for an actual customer reply.
+8. Enter fictional requirements and a source such as `Synthetic test fixture, not a real agreement`. Queue a local proposal. Review it and approve it; the worker creates an itemised AUD quote. One-off and recurring totals remain separate.
+9. Approve the quote version and prepare correspondence. No real email is sent. For this fictional test only, record explicit fictional acceptance evidence, its source and the customer name, and confirm project creation. The app creates one project brief linked to that exact quote hash. It does not generate a website, invoice or payment.
+10. Inspect history, original correspondence, quote versions and the Phase 6 project brief. Try **Agency Manager → Emergency pause** on another pending workflow, then resume or cancel it.
+
+Mock dispatch accepts only explicitly fictional workflows and reserved test domains (`example.com`, `example.org`, `example.net`, or `.test`, `.invalid`, `.example`). It allows at most one attempt per recipient per UTC day and ten per owner/day. Do not use real business addresses. These protections are not marketing consent or provider permission.
+
+## Automated validation
 
 ```sh
 source .venv/bin/activate
 python -m unittest discover -s tests -v
 python tests/smoke_server.py
+python tests/smoke_sales.py
 python -m pip check
 ```
 
-Tests use fictional records, temporary databases and mocked external providers. The HTTP smoke test uses real local server/worker processes without external requests. Python 3.13 is validated on Linux, not represented as a MacBook/visual browser test. Results: [TEST_RESULTS.md](TEST_RESULTS.md).
+Tests use synthetic records, temporary databases and mocked external providers. Both smoke runners launch actual local servers and separate worker processes. `smoke_sales.py` also exercises concurrent workers, signed mock events, reply handoffs, proposals, quotes, acceptance and pause/restart. No external API call or customer contact is required. Python 3.13 was tested on Linux, not represented as a physical MacBook or visual-browser test.
 
-## Preservation and further information
+## Controls and limitations
 
-Stop app/workers before copying the selected database to a secure backup outside Git. Keep originals untouched. Test an upgrade only on a copy selected explicitly with `AGENCYOS_DB`; do not run an older app against an upgraded copy. Phase 4 migrations are additive and preserve existing records.
+- No live email, invoice issuance, payment, website generation, publication or public deployment executor is added.
+- All production AI transport calls require a one-use exact-request capability from an approved/budgeted Phase 5 job. Legacy direct AI routes are deliberately blocked; existing local drafting and historical AI records remain available.
+- Optional AI requires current model/pricing configuration, positive owner-authorised limits and separate per-job approval. Do not activate paid calls under this release's development authorisation.
+- Provider policy, consent/privacy, SPF/DKIM/DMARC and sender verification are not established by filling settings. Amazon SES is a candidate, not a connected/approved provider. No live activation switch exists.
+- Acceptance records are **owner-attested evidence**, not independent customer identity verification. An editable legacy Accepted status does not create a project.
+- Workers operate while running; 24/7 hosting, operational monitoring and automatic backup are future deployment work. Revenue is not guaranteed or reported as earned by a draft/quote.
 
-- [PHASE4.md](PHASE4.md): architecture, data format, controls, limits, costs and limitations.
-- [PROVIDER_POLICIES.md](PROVIDER_POLICIES.md): preserved Phase 3 provider review status; no current online provider approval is claimed.
-- [README_PHASE3.md](README_PHASE3.md): original Phase 3 documentation, retained for reference. Its database/worker commands are historical; use the instructions above for Phase 4.
+Stop app and workers before copying the selected database to a secure backup outside Git. Preserve originals. Migrations add sales tables; trial older data only on a copy. Never run older versions against an upgraded copy.
+
+Details: [PHASE5.md](PHASE5.md), [TEST_RESULTS.md](TEST_RESULTS.md). Historical instructions/results remain in [README_PHASE4.md](README_PHASE4.md), [TEST_RESULTS_PHASE4.md](TEST_RESULTS_PHASE4.md), and the retained Phase 3 documents.

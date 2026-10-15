@@ -18,9 +18,11 @@ from phase3 import register as register_phase3
 from phase4 import register as register_phase4
 from phase4_store import migrate as migrate_phase4
 from phase4_data import migrate as migrate_phase4_data
+from sales_store import migrate as migrate_sales
+from sales import register as register_sales
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.environ.get("AGENCYOS_DB") or os.path.join(APP_DIR, ".development", "agencyos-phase4.db")
+DB_PATH = os.environ.get("AGENCYOS_DB") or os.path.join(APP_DIR, ".development", "agencyos-phase5.db")
 app = Flask(__name__)
 app.secret_key = os.environ.get("AGENCYOS_SECRET_KEY") or secrets.token_hex(32)
 app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024
@@ -85,6 +87,7 @@ def init_db():
     migrate_phase3(conn)
     migrate_phase4(conn)
     migrate_phase4_data(conn)
+    migrate_sales(conn)
     conn.commit()
     conn.close()
 
@@ -357,7 +360,7 @@ def template_helpers():
 
 @app.before_request
 def protect_forms():
-    if request.method == 'POST':
+    if request.method == 'POST' and request.endpoint != 'sales_provider_event':
         expected = session.get('csrf_token', '')
         supplied = request.form.get('csrf_token', '')
         if not expected or not hmac.compare_digest(expected, supplied):
@@ -467,6 +470,7 @@ def import_preview(token):
 register_agent_routes(app, db, login_required)
 register_phase3(app, db, login_required, insert_lead)
 register_phase4(app, db, login_required, insert_lead)
+register_sales(app, db, login_required)
 
 if __name__ == "__main__":
     init_db()

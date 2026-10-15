@@ -13,6 +13,7 @@
     <div class="nav-label">WORKSPACE</div>
     <nav>
       <a href="{{ url_for('dashboard') }}">◫ <span>Overview</span></a>
+      <a href="{{ url_for('sales_home') }}">↗ <span>Sales team</span></a>
       <a href="{{ url_for('agency_manager') }}">✦ <span>Agency Manager</span></a>
       <a href="{{ url_for('licensed_discovery') }}">⌕ <span>Licensed discovery</span></a>
       <a href="{{ url_for('agent_center') }}">✦ <span>Agent Control Center</span></a>
@@ -33,7 +34,7 @@
     <section class="content">
       {% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}{% for category, message in messages %}<div class="flash {{ category }}">{{ message }}</div>{% endfor %}{% endif %}{% endwith %}
       {% block content %}{% endblock %}
-      <footer>AGENCYOS <span>·</span> PHASE 4 <span>·</span> LOCAL-FIRST WORKSPACE</footer>
+      <footer>AGENCYOS <span>·</span> PHASE 5 <span>·</span> LOCAL-FIRST WORKSPACE</footer>
     </section>
   </main>
 </div>

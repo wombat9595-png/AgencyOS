@@ -25,6 +25,8 @@ def provider_settings():
 
 def request_chat(system_prompt, user_content, max_tokens=600):
     _provider, key, endpoint, model = provider_settings()
+    from sales_ai import require_grant
+    require_grant(system_prompt,user_content,max_tokens)
     payload = {'model': model, 'messages': [
         {'role': 'system', 'content': system_prompt},
         {'role': 'user', 'content': user_content}], 'max_tokens': max_tokens}

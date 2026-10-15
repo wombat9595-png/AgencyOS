@@ -11,9 +11,10 @@ from phase3_store import stamp
 def main():
     parser=argparse.ArgumentParser(description='AgencyOS local maintenance; never sends email or publishes websites.')
     commands=parser.add_subparsers(dest='command',required=True)
-    worker=commands.add_parser('worker',help='Run the selected queue (legacy Phase 3, or --phase4)')
+    worker=commands.add_parser('worker',help='Run the selected queue: --phase5 sales, --phase4 research, or legacy Phase 3')
+    worker.add_argument('--phase5',action='store_true',help='Process sales workflow jobs and internal follow-up reviews; no live email')
     worker.add_argument('--phase4',action='store_true',help='Process Phase 4 local schedules/jobs and approved audits ONLY; no legacy AI/discovery calls')
-    worker.add_argument('--watch',action='store_true',help='Poll until Control+C; --phase4 also runs owner-enabled local schedules')
+    worker.add_argument('--watch',action='store_true',help='Poll until Control+C; selected phase also processes its enabled internal schedules')
     review=commands.add_parser('policy-review',help='Record YOUR current review of all three provider policies; does not verify them automatically')
     review.add_argument('--reviewer',required=True);review.add_argument('--contact',required=True)
     review.add_argument('--output',default='.development/osm-policy.json')
@@ -35,7 +36,10 @@ def main():
         print('Recorded your attestation at',path,'. Set AGENCYOS_OSM_POLICY_FILE in BOTH app and worker shells. This command did not fetch or independently verify policies.')
         return
     import app
-    if args.phase4:
+    if args.phase4 and args.phase5:parser.error('Choose --phase4 or --phase5, not both.')
+    if args.phase5:
+        from sales_engine import worker_once
+    elif args.phase4:
         from phase4 import worker_once
     else:
         from phase3 import worker_once

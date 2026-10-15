@@ -293,7 +293,8 @@ class AgentCenterTest(unittest.TestCase):
         application.init_db()
         for table in original_tables:
             self.assertEqual([tuple(row) for row in self.rows(table)],before[table],table)
-        self.assertEqual(len(self.rows('agents')),6)
+        self.assertEqual(len(self.rows('agents')),8)
+        self.assertTrue({'sales-replies','sales-proposals'} <= {row['id'] for row in self.rows('agents')})
         self.assertEqual(self.client.get('/agents').status_code,200)
 
     def test_default_database_is_separate_and_session_key_is_private(self):
@@ -302,7 +303,7 @@ class AgentCenterTest(unittest.TestCase):
         result = subprocess.run([sys.executable,'-c',code],cwd=Path(application.APP_DIR),env=environment,
                                 capture_output=True,text=True,check=True)
         path,private = json.loads(result.stdout)
-        self.assertEqual(Path(path),Path(application.APP_DIR)/'.development'/'agencyos-phase4.db')
+        self.assertEqual(Path(path),Path(application.APP_DIR)/'.development'/'agencyos-phase5.db')
         self.assertTrue(private)
 
     def test_overlapping_ai_requests_make_only_one_model_call(self):
