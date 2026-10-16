@@ -211,7 +211,7 @@ class WorkflowTest(unittest.TestCase):
         self.assertEqual(self.client.get(location).status_code,404)
         self.assertEqual(self.approve(location).status_code,404)
         self.assertEqual(self.review(location).status_code,404)
-        self.assertEqual(self.research(evidence_ids=['1']).status_code,400)
+        self.assertEqual(self.research(evidence_ids=['1']).status_code,404)
         self.assertEqual(self.post('/outreach/history/1/review',{'status':'Approved'}).status_code,404)
 
     def test_cancelled_tasks_do_not_execute_and_bad_validation(self):

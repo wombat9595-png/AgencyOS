@@ -58,7 +58,7 @@ def main():
         print('Phase 10 local staging maintenance | database '+app.DB_PATH,flush=True)
         from p10_release import maintenance_once
         while True:
-            checked=maintenance_once(app.DB_PATH,Path(app.APP_DIR)/'output'/'staging')
+            checked=maintenance_once(app.DB_PATH,Path(os.environ.get('AGENCYOS_STAGING_ROOT',Path(app.APP_DIR)/'output'/'staging')))
             print('Checked '+str(checked)+' current release(s); failures create owner-visible alerts. No repair or deployment performed.',flush=True)
             if not args.watch:break
             time.sleep(3600)

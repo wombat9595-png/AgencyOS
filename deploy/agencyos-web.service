@@ -1,0 +1,23 @@
+[Unit]
+Description=AgencyOS private WSGI service
+After=network.target
+OnFailure=agencyos-failure@%n.service
+
+[Service]
+User=agencyos
+Group=agencyos
+WorkingDirectory=/opt/agencyos
+EnvironmentFile=/etc/agencyos/production.env
+ExecStart=/opt/agencyos/.venv/bin/gunicorn --bind 127.0.0.1:8000 --workers 1 --threads 4 --timeout 45 wsgi:app
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=60
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/agencyos
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,23 @@
+[Unit]
+Description=AgencyOS phase %i worker
+After=agencyos-web.service
+OnFailure=agencyos-failure@%n.service
+
+[Service]
+User=agencyos
+Group=agencyos
+WorkingDirectory=/opt/agencyos
+EnvironmentFile=/etc/agencyos/production.env
+ExecStart=/opt/agencyos/.venv/bin/python manage.py worker --phase%i --watch
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=90
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/agencyos
+
+[Install]
+WantedBy=multi-user.target

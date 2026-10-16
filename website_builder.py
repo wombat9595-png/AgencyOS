@@ -11,6 +11,7 @@ import time
 from flask import abort, redirect, render_template, request, session, url_for
 from phase3_store import WorkflowError, stamp
 import sales_store as store
+from static_safety import static_errors
 
 THEMES = {
     'coastal': dict(label='Coastal', ink='#17324d', accent='#197a78', paper='#f4f8f7', muted='#536b73'),
@@ -178,6 +179,7 @@ def quality_check(pages, brief, content):
     errors=[]; warnings=[]
     parsers={}
     for slug,html in pages.items():
+        errors.extend(slug+': '+error for error in static_errors(html))
         parser=_Audit(); parser.feed(html); parsers[slug]=parser
         for link in parser.links:
             if link.startswith('#') and link[1:] not in parser.ids:

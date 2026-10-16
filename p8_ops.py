@@ -1,6 +1,7 @@
 """Phase 8 local orchestration, wall-clock schedules, and operations summaries."""
 import json
 import time
+import uuid
 from contextlib import closing
 from datetime import date, datetime, time as dt_time, timedelta, timezone
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
@@ -34,6 +35,9 @@ def migrate(conn):
       UNIQUE(user_id,local_date));
     CREATE INDEX IF NOT EXISTS p8_schedule_due_idx ON p8_schedules(enabled,next_run_utc);
     ''')
+    columns={row[1] for row in conn.execute('PRAGMA table_info(agent_tasks)')}
+    for name,definition in (('recovery_count','INTEGER NOT NULL DEFAULT 0'),('run_token','TEXT')):
+        if name not in columns:conn.execute('ALTER TABLE agent_tasks ADD COLUMN '+name+' '+definition)
 
 
 def _valid_time(value):
@@ -132,14 +136,20 @@ def worker_once(path):
             return False
         create_scheduled_tasks(conn)
         conn.execute('BEGIN IMMEDIATE')
+        for old in conn.execute("SELECT id,recovery_count FROM agent_tasks WHERE status='Running' AND mode='local' AND agent_id='lead-research' AND started_at<?",(time.time()-300,)).fetchall():
+            state='Queued' if old['recovery_count']<3 else 'Failed'
+            conn.execute('UPDATE agent_tasks SET status=?,recovery_count=recovery_count+1,run_token=NULL,error=?,updated_at=? WHERE id=?',
+                         (state,'Expired local task lease recovered; no external action was retried.',datetime.now(timezone.utc).isoformat(),old['id']))
+            conn.execute('INSERT INTO agent_events(task_id,message,created_at) VALUES(?,?,?)',(old['id'],'Recovered expired local task; state '+state,datetime.now(timezone.utc).isoformat()))
         task=conn.execute('''SELECT t.* FROM agent_tasks t JOIN agents a ON a.id=t.agent_id
             WHERE t.status='Queued' AND t.mode='local' AND t.agent_id='lead-research' AND a.enabled=1
             ORDER BY t.id LIMIT 1''').fetchone()
         if not task:
             conn.commit()
             return False
-        changed=conn.execute("UPDATE agent_tasks SET status='Running',progress=10,started_at=?,updated_at=? WHERE id=? AND status='Queued'",
-                             (time.time(),datetime.now(timezone.utc).isoformat(),task['id'])).rowcount
+        run_token=uuid.uuid4().hex
+        changed=conn.execute("UPDATE agent_tasks SET status='Running',progress=10,started_at=?,updated_at=?,run_token=? WHERE id=? AND status='Queued'",
+                             (time.time(),datetime.now(timezone.utc).isoformat(),run_token,task['id'])).rowcount
         if not changed:
             conn.rollback();return False
         conn.execute('INSERT INTO agent_events(task_id,message,created_at) VALUES(?,?,?)',
@@ -150,12 +160,12 @@ def worker_once(path):
             if not isinstance(result,str) or not result.strip() or len(result)>12000:
                 raise ValueError('Invalid local result.')
         except Exception:
-            conn.execute("UPDATE agent_tasks SET status='Failed',error=?,updated_at=? WHERE id=? AND status='Running'",
-                         ('Local task failed. Review configuration and create an explicit replacement.',datetime.now(timezone.utc).isoformat(),task['id']))
+            conn.execute("UPDATE agent_tasks SET status='Failed',error=?,updated_at=? WHERE id=? AND status='Running' AND run_token=?",
+                         ('Local task failed. Review configuration and create an explicit replacement.',datetime.now(timezone.utc).isoformat(),task['id'],run_token))
             message='Local handler failed; no automatic retry was performed.'
         else:
-            conn.execute("UPDATE agent_tasks SET status='Awaiting review',progress=100,result=?,updated_at=? WHERE id=? AND status='Running'",
-                         (result,datetime.now(timezone.utc).isoformat(),task['id']))
+            conn.execute("UPDATE agent_tasks SET status='Awaiting review',progress=100,result=?,updated_at=? WHERE id=? AND status='Running' AND run_token=?",
+                         (result,datetime.now(timezone.utc).isoformat(),task['id'],run_token))
             message='Local task completed. Owner review is required; no actions were executed.'
         conn.execute('INSERT INTO agent_events(task_id,message,created_at) VALUES(?,?,?)',
                      (task['id'],message,datetime.now(timezone.utc).isoformat()))

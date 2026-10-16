@@ -4,6 +4,8 @@ import hmac
 import json
 import os
 import secrets
+import sqlite3
+from production_security import secret
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from io import BytesIO
@@ -101,7 +103,7 @@ def verify_stripe(raw_body, header, secret, tolerance=300, now=None):
 
 
 def _fernet():
-    key = os.environ.get('AGENCYOS_BANK_ENCRYPTION_KEY', '')
+    key = secret('AGENCYOS_BANK_ENCRYPTION_KEY')
     if not key or Fernet is None:
         return None
     try:
@@ -162,7 +164,7 @@ def register(app, get_db, login_required):
             flash('One or more business configuration fields are too long.', 'error')
         else:
             bank = [request.form.get(k, '').strip() for k in ('account_name','bsb','account_number')]
-            ciphertext = ''
+            ciphertext = conn.execute('SELECT bank_ciphertext FROM p7_control WHERE id=1').fetchone()[0]
             if any(bank):
                 cipher = _fernet()
                 if not cipher or not all(bank) or len(bank[0]) > 160 or len(bank[1]) > 12 or len(bank[2]) > 32:
@@ -325,7 +327,7 @@ def register(app, get_db, login_required):
             else:
                 payment_id='mock-tx-'+secrets.token_hex(12)
                 event=dict(id='mock-evt-'+secrets.token_hex(12),type='payment.succeeded',data=dict(object=dict(id=payment_id,invoice_id=link['invoice_id'],amount=amount,currency='aud')))
-                sig=sign_mock(event,os.environ.get('AGENCYOS_PAYMENT_WEBHOOK_SECRET','local-test-secret'))
+                sig=sign_mock(event,secret('AGENCYOS_PAYMENT_WEBHOOK_SECRET') or secrets.token_hex(32))
                 response=apply_event(conn,'mock',event,sig)
                 flash('Synthetic payment event '+response+'.', 'success' if response in ('Applied','Duplicate') else 'error')
                 conn.commit()
@@ -337,16 +339,18 @@ def register(app, get_db, login_required):
         raw=request.get_data(cache=True)
         try: payload=json.loads(raw)
         except Exception: abort(400)
+        if not isinstance(payload,dict) or len(raw)>100000:abort(400)
         if provider=='mock':
-            secret=os.environ.get('AGENCYOS_PAYMENT_WEBHOOK_SECRET','local-test-secret')
+            signing_secret=secret('AGENCYOS_PAYMENT_WEBHOOK_SECRET')
             signature=request.headers.get('X-AgencyOS-Signature','')
-            valid=verify_mock(payload,signature,secret)
+            valid=verify_mock(payload,signature,signing_secret)
         elif provider=='stripe_test':
-            secret=os.environ.get('AGENCYOS_STRIPE_TEST_WEBHOOK_SECRET','')
-            valid=verify_stripe(raw,request.headers.get('Stripe-Signature',''),secret)
+            signing_secret=secret('AGENCYOS_STRIPE_TEST_WEBHOOK_SECRET')
+            valid=verify_stripe(raw,request.headers.get('Stripe-Signature',''),signing_secret)
         else: abort(404)
         if not valid: abort(400)
-        result=apply_event(get_db(),provider,payload,signature if provider=='mock' else request.headers.get('Stripe-Signature',''))
+        conn=get_db();conn.execute('BEGIN IMMEDIATE')
+        result=apply_event(conn,provider,payload,signature if provider=='mock' else request.headers.get('Stripe-Signature',''))
         get_db().commit()
         return {'result':result},200
 
@@ -360,33 +364,49 @@ def apply_event(conn, provider, payload, signature):
     """Accept only locally verified payloads; record each event once."""
     event_id=payload.get('id','')
     event_type=payload.get('type','')
-    if not event_id or not event_type:
+    if not isinstance(event_id,str) or not 1<=len(event_id)<=200 or not isinstance(event_type,str) or not 1<=len(event_type)<=100:
         return 'Rejected'
     raw=json.dumps(payload,sort_keys=True,separators=(',',':'))
     digest=hashlib.sha256(raw.encode()).hexdigest()
     try:
         event_pk=conn.execute('INSERT INTO p7_payment_events(provider,external_event_id,event_type,payload_hash,payload_json,verified_at) VALUES(?,?,?,?,?,?)',
                               (provider,event_id,event_type,digest,raw,stamp())).lastrowid
-    except Exception:
-        return 'Duplicate'
-    obj=payload.get('data',{}).get('object',{})
-    invoice_id=obj.get('invoice_id') or obj.get('metadata',{}).get('agencyos_invoice_id')
+    except sqlite3.IntegrityError:
+        previous=conn.execute('SELECT payload_hash FROM p7_payment_events WHERE provider=? AND external_event_id=?',(provider,event_id)).fetchone()
+        return 'Duplicate' if previous and previous[0]==digest else 'Rejected'
+    data=payload.get('data',{})
+    obj=data.get('object',{}) if isinstance(data,dict) else {}
+    if not isinstance(obj,dict):obj={}
+    if provider=='stripe_test' and (payload.get('livemode') is not False or
+        (event_type=='checkout.session.completed' and obj.get('payment_status')!='paid') or
+        (event_type=='payment_intent.succeeded' and obj.get('status')!='succeeded')):
+        conn.execute("UPDATE p7_payment_events SET result='Rejected test-mode or unpaid event' WHERE id=?",(event_pk,));return 'Rejected'
+    metadata=obj.get('metadata',{})
+    invoice_id=obj.get('invoice_id') or (metadata.get('agencyos_invoice_id') if isinstance(metadata,dict) else None)
+    if type(invoice_id) not in (int,str) or not str(invoice_id).isdigit():invoice_id=None
+    else:invoice_id=int(invoice_id)
     if not invoice_id:
         conn.execute("UPDATE p7_payment_events SET result='Unmatched' WHERE id=?",(event_pk,)); return 'Unmatched'
     invoice=conn.execute('SELECT * FROM p7_invoices WHERE id=? AND synthetic=1',(invoice_id,)).fetchone()
     if not invoice:
         conn.execute("UPDATE p7_payment_events SET result='Unmatched' WHERE id=?",(event_pk,)); return 'Unmatched'
     amount=obj.get('amount_received',obj.get('amount_total',obj.get('amount',0)))
-    currency=(obj.get('currency') or '').lower()
+    currency=obj.get('currency') or ''
+    currency=currency.lower() if isinstance(currency,str) else ''
     charge_event=event_type in ('payment.succeeded','payment_intent.succeeded','checkout.session.completed')
     if type(amount) is not int or amount<=0 or currency not in ('aud',) or (charge_event and invoice['status'] not in ('Approved (test)','Partially paid')):
         conn.execute("UPDATE p7_payment_events SET result='Needs review' WHERE id=?",(event_pk,)); return 'Needs review'
     if event_type in ('payment.succeeded','payment_intent.succeeded','checkout.session.completed'):
-        txn=obj.get('id') or event_id
+        txn=(obj.get('payment_intent') if event_type=='checkout.session.completed' else obj.get('id')) or event_id
+        if not isinstance(txn,str) or len(txn)>200:return 'Rejected'
+        existing=conn.execute('SELECT * FROM p7_payments WHERE transaction_id=?',(txn,)).fetchone()
+        if existing:
+            result='Duplicate transaction' if existing['invoice_id']==invoice_id and existing['amount_cents']==amount else 'Needs review'
+            conn.execute('UPDATE p7_payment_events SET result=? WHERE id=?',(result,event_pk));return 'Duplicate' if result=='Duplicate transaction' else result
         try:
             conn.execute("INSERT INTO p7_payments(invoice_id,transaction_id,amount_cents,currency,source,evidence_id,created_at) VALUES(?,?,?,?,?,?,?)",
                          (invoice_id,txn,amount,'AUD','provider_verified',event_id,stamp()))
-        except Exception:
+        except sqlite3.IntegrityError:
             conn.execute("UPDATE p7_payment_events SET result='Duplicate transaction' WHERE id=?",(event_pk,)); return 'Duplicate'
         sum_paid=conn.execute("SELECT COALESCE(SUM(amount_cents),0) FROM p7_payments WHERE invoice_id=? AND status='Verified'",(invoice_id,)).fetchone()[0]
         if sum_paid>invoice['total_cents']:
@@ -399,6 +419,9 @@ def apply_event(conn, provider, payload, signature):
         conn.execute("UPDATE p7_payment_events SET result='Applied' WHERE id=?",(event_pk,)); return 'Applied'
     if event_type in ('charge.refunded','refund.updated'):
         amount=obj.get('amount_refunded',amount)
+        paid=conn.execute('SELECT COALESCE(SUM(amount_cents),0) FROM p7_payments WHERE invoice_id=?',(invoice_id,)).fetchone()[0]
+        if type(amount) is not int or amount<=0 or amount>paid:
+            conn.execute("UPDATE p7_payment_events SET result='Needs review' WHERE id=?",(event_pk,));return 'Needs review'
         conn.execute('INSERT OR IGNORE INTO p7_refunds(invoice_id,external_id,amount_cents,status,event_id) VALUES(?,?,?,?,?)',
                      (invoice_id,obj.get('id') or event_id,amount,obj.get('status','verified'),event_pk))
         total_refunded=conn.execute("SELECT COALESCE(SUM(amount_cents),0) FROM p7_refunds WHERE invoice_id=? AND status IN ('verified','succeeded','complete')",(invoice_id,)).fetchone()[0]

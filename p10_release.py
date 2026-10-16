@@ -11,6 +11,7 @@ from typing import Protocol
 from flask import abort, redirect, request, session, url_for
 from phase3_store import WorkflowError, stamp
 import sales_store as store
+from static_safety import static_errors
 
 SLUG = re.compile(r'^[a-z0-9-]{1,40}$')
 MAX_PAGE_BYTES = 1_000_000
@@ -62,6 +63,9 @@ class LocalStagingAdapter:
         for slug, html in pages.items():
             if not isinstance(slug, str) or not SLUG.fullmatch(slug) or not isinstance(html, str):
                 raise WorkflowError('Generated page names or content are invalid.')
+            if static_errors(html):raise WorkflowError('Active markup or unapproved resource detected; staging stopped.')
+            for page in pages:
+                html=html.replace('?page='+page+'"',page+'.html"').replace("?page="+page+"'",page+".html'")
             raw = html.encode('utf-8')
             if not raw or len(raw) > MAX_PAGE_BYTES or re.search(rb'<\s*script\b', raw, re.I):
                 raise WorkflowError('Page size limit exceeded or active script found; staging stopped.')
@@ -111,6 +115,9 @@ def health_check(conn, release, root):
         manifest = json.loads(release['manifest_json'])
         if not isinstance(manifest, dict) or not isinstance(manifest.get('files'), dict):
             raise ValueError('invalid manifest')
+        disk_manifest=artifact/'manifest.json'
+        if disk_manifest.is_symlink() or disk_manifest.stat().st_size>100000 or json.loads(disk_manifest.read_text())!=manifest:
+            raise ValueError('changed manifest')
     except (WorkflowError, ValueError, TypeError, OSError):
         artifact=None
         manifest={'files':{}}
@@ -121,12 +128,13 @@ def health_check(conn, release, root):
             continue
         path = artifact / filename
         try:
+            if path.is_symlink() or path.stat().st_size>MAX_PAGE_BYTES:raise OSError('Unsafe artifact')
             raw = path.read_bytes()
         except OSError:
             details['errors'].append('Missing file: ' + filename)
             continue
         actual = hashlib.sha256(raw).hexdigest()
-        ok = actual == expected and len(raw) <= MAX_PAGE_BYTES and not re.search(rb'<\s*script\b', raw, re.I)
+        ok = actual == expected and len(raw) <= MAX_PAGE_BYTES and not static_errors(raw.decode('utf-8',errors='replace'))
         details['files'].append(dict(filename=filename, ok=ok, sha256=actual))
         if not ok:
             details['errors'].append('Integrity or static-content check failed: ' + filename)
@@ -163,7 +171,7 @@ def maintenance_once(database, staging_root):
 
 
 def register(app, get_db, login_required, app_dir):
-    root = lambda: Path(app.config.get('AGENCYOS_STAGING_ROOT', Path(app_dir) / 'output' / 'staging'))
+    root = lambda: Path(app.config.get('AGENCYOS_STAGING_ROOT', os.environ.get('AGENCYOS_STAGING_ROOT',Path(app_dir) / 'output' / 'staging')))
 
     def owned_site(site_id):
         row=get_db().execute('''SELECT s.*,f.id flow_id FROM p6_sites s
@@ -193,6 +201,10 @@ def register(app, get_db, login_required, app_dir):
         if not qa.get('passed'):
             raise WorkflowError('A version with failed QA cannot be staged.')
         pages=json.loads(item['pages_json'] or '{}')
+        import website_builder
+        brief=json.loads(conn.execute('SELECT brief_json FROM p5_project_briefs WHERE id=?',(site['brief_id'],)).fetchone()[0])
+        if not website_builder.quality_check(pages,brief,json.loads(item['content_json']))['passed']:
+            raise WorkflowError('Source QA changed; staging requires a freshly valid approved artifact.')
         artifact,manifest=LocalStagingAdapter(root()).stage(site_id,version,pages)
         relative=str(artifact.relative_to(Path(root()).resolve()))
         conn.execute('BEGIN IMMEDIATE')
@@ -220,10 +232,9 @@ def register(app, get_db, login_required, app_dir):
         conn=get_db();site=owned_site(site_id);release=owned_release(release_id)
         if release['site_id']!=site_id or request.form.get('confirm')!='yes':
             raise WorkflowError('Confirm rollback to a previously staged release for this same site.')
-        latest=conn.execute('SELECT * FROM p10_checks WHERE release_id=? ORDER BY id DESC LIMIT 1',(release_id,)).fetchone()
-        if not latest or latest['result']!='passed':
-            raise WorkflowError('Run a successful integrity check for the target release before rollback.')
         conn.execute('BEGIN IMMEDIATE')
+        if health_check(conn,release,root())['result']!='passed':
+            conn.commit();raise WorkflowError('Rollback blocked: current target files failed integrity checks.')
         conn.execute("UPDATE p10_releases SET status='Staged' WHERE site_id=? AND status='Current'",(site_id,))
         conn.execute("UPDATE p10_releases SET status='Current' WHERE id=?",(release_id,))
         conn.execute('INSERT INTO p10_events(owner_id,site_id,release_id,kind,message,created_at) VALUES(?,?,?,?,?,?)',

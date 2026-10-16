@@ -136,7 +136,7 @@ class AgencyOSTest(unittest.TestCase):
         response = self.upload('business_name\nSynthetic\n')
         with self.client.session_transaction() as session:
             session['user_id'] = 999
-        self.assertEqual(self.client.get(response.location).status_code, 302)
+        self.assertEqual(self.client.get(response.location).status_code, 404)
         with self.client.session_transaction() as session:
             session['user_id'] = 1
         with closing(sqlite3.connect(application.DB_PATH)) as conn, conn:

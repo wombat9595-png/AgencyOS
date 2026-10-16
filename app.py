@@ -25,6 +25,8 @@ import runtime_status
 import phase7_billing
 import p8_ops
 import p10_release
+import production_security
+import production_ops
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = runtime_status.database_path(os.environ.get("AGENCYOS_DB"))
@@ -33,10 +35,11 @@ app.secret_key = os.environ.get("AGENCYOS_SECRET_KEY") or secrets.token_hex(32)
 app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+production_security.configure(app)
 
 def db():
     if "db" not in g:
-        g.db = sqlite3.connect(DB_PATH)
+        g.db = sqlite3.connect(DB_PATH, timeout=15)
         g.db.row_factory = sqlite3.Row
         g.db.execute("PRAGMA foreign_keys = ON")
     return g.db
@@ -98,6 +101,8 @@ def init_db():
     p8_ops.migrate(conn)
     p10_release.migrate(conn)
     runtime_status.migrate(conn)
+    production_security.migrate(conn)
+    production_ops.migrate(conn)
     conn.commit()
     conn.close()
 
@@ -122,7 +127,6 @@ def login_required(fn):
 
 @app.route("/setup", methods=["GET", "POST"])
 def setup():
-    init_db()
     conn = db()
     if conn.execute("SELECT COUNT(*) FROM users").fetchone()[0] > 0:
         return redirect(url_for("login"))
@@ -144,15 +148,20 @@ def setup():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    init_db()
     if request.method == "POST":
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
+        if len(username)>254 or len(password)>1024 or not production_security.allow_login(db(),app.secret_key,username,request.remote_addr or ''):
+            return render_template('error.html',message='Too many sign-in attempts. Try again in 15 minutes.'),429,{'Retry-After':'900'}
         user = db().execute("SELECT * FROM users WHERE username=?", (username,)).fetchone()
-        if user and check_password_hash(user["password_hash"], password):
+        owner=db().execute('SELECT MIN(id) FROM users').fetchone()[0]
+        if user and user['id']==owner and check_password_hash(user["password_hash"], password):
             session.clear()
             session["user_id"] = user["id"]
             session["username"] = user["username"]
+            session['authenticated_at']=time.time()
+            session.permanent=True
+            production_security.audit(db(),'login_success',user['id']);db().commit()
             return redirect(url_for("dashboard"))
         flash("Invalid username or password.", "error")
     return render_template("login.html")
@@ -403,6 +412,8 @@ def conflicting_action(error):
 
 @app.errorhandler(400)
 def bad_request(error):
+    from werkzeug.exceptions import SecurityError
+    if isinstance(error,SecurityError):return Response('Invalid request host.',status=400,mimetype='text/plain')
     return render_template('error.html', message=error.description), 400
 
 def insert_lead(conn, row):
@@ -495,6 +506,8 @@ def import_preview(token):
 
 
 register_agent_routes(app, db, login_required)
+production_security.install(app,db)
+production_ops.register(app,db)
 register_phase3(app, db, login_required, insert_lead)
 register_phase4(app, db, login_required, insert_lead)
 register_sales(app, db, login_required)

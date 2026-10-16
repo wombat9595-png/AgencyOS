@@ -4,18 +4,18 @@ Branch: `codex/agencyos-production-prep`. Starting remote checkpoint: `8df0f2f`.
 
 ## Current milestone
 
-M1 audit and independently verified baseline complete; M2 security/infrastructure in progress.
+M1/M2 complete; M3 integrations and launch controls in progress.
 
 ## Milestones
 
 - [x] M1: inspected source, phase reports, schemas, queues and integration boundaries; compared source tree with remote checkpoint; independently ran Python 3.13.16 baseline: 212 tests passed (50.204s). See `PRODUCTION_READINESS_AUDIT.md`.
-- [ ] M2: confirmed vulnerability fixes, strict production configuration, WSGI/supervision, encrypted backup/restore, health/alerts and migration tooling.
+- [x] M2: strict production session/host/bootstrap configuration, single-owner boundary, durable login throttles, audit metadata; public mock-secret removal and Stripe payment provenance fixes; active-markup/release navigation/rollback checks; stale local worker recovery; Gunicorn/systemd/nginx preparation; encrypted online backup/isolated restore and alerts. **224 tests passed (54.283s)**; actual Gunicorn provisioning/login/health/host/backup/restore smoke passed. Dependency audit found seven advisories in cryptography 46.0.7; upgraded to 50.0.2 and reran audit: no known vulnerabilities. `pip check` passed.
 - [ ] M3: verified official provider research, Canberra discovery controls, email sandbox and DNS/eligibility/unsubscribe preparation, website delivery and payment hardening.
 - [ ] M4: owner launch dashboard, accelerated operations workload, complete synthetic lifecycle, security/browser evidence, final readiness report and pushed branch.
 
 ## Bugs and security concerns
 
-Initial audit: login throttling absent; installation-wide records require single-owner enforcement; public mock payment secret; incomplete payment provenance/deduplication; stale local tasks; static release navigation/integrity/rollback gaps. Fixes and executed tests will be added at each milestone.
+Confirmed initial gaps above were addressed in M2. A strict-host rejection initially triggered the HTML error renderer without a valid URL adapter; fixed to return a plain 400. Cross-owner requests now uniformly reject unknown/secondary-owner sessions; two legacy assertions were updated to require the stronger boundary. Current limitations: Linux service runtime, public TLS, off-host backup destination and external notification delivery are not configured/tested.
 
 ## External dependencies and spending
 

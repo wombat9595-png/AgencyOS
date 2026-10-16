@@ -1,0 +1,14 @@
+[Unit]
+Description=AgencyOS local worker, budget and backup alerts
+OnFailure=agencyos-failure@%n.service
+[Service]
+Type=oneshot
+User=agencyos
+WorkingDirectory=/opt/agencyos
+EnvironmentFile=/etc/agencyos/production.env
+ExecStart=/opt/agencyos/.venv/bin/python production.py check --database /var/lib/agencyos/agencyos.sqlite3
+ExecStart=/opt/agencyos/.venv/bin/python manage.py maintain --phase10 --database /var/lib/agencyos/agencyos.sqlite3
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/agencyos
