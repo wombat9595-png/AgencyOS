@@ -285,10 +285,13 @@ def register(app, get_db, login_required):
         latest=versions[0] if versions else None
         brief=json.loads(project['brief_json'])
         website_job=conn.execute("SELECT * FROM p5_jobs WHERE flow_id=? AND kind='website' ORDER BY id DESC LIMIT 1",(project['flow_id'],)).fetchone()
+        releases=conn.execute('SELECT * FROM p10_releases WHERE site_id=? ORDER BY id DESC',(site['id'],)).fetchall() if site else []
+        checks={release['id']:conn.execute('SELECT * FROM p10_checks WHERE release_id=? ORDER BY id DESC LIMIT 1',(release['id'],)).fetchone() for release in releases}
+        alerts=conn.execute('SELECT * FROM p10_alerts WHERE owner_id=? AND (release_id IN (SELECT id FROM p10_releases WHERE site_id=?) OR release_id IS NULL) ORDER BY id DESC LIMIT 20',(session['user_id'],site['id'] if site else -1)).fetchall()
         return render_template('website_project.html',project=project,site=site,versions=versions,latest=latest,website_job=website_job,
                                brief=brief,themes=THEMES,
                                content=json.loads(latest['content_json']) if latest else {},
-                               qa=json.loads(latest['qa_json']) if latest else {})
+                               qa=json.loads(latest['qa_json']) if latest else {},releases=releases,checks=checks,release_alerts=alerts)
 
     @app.route('/projects/<int:project_id>/website/generate', methods=['POST'])
     @login_required

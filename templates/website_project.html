@@ -27,4 +27,4 @@ Scope:
 </section>{% endif %}
 
 {% if versions %}<section class="panel section-gap"><div class="panel-heading"><h2>Saved versions and comparison</h2><span class="count">{{ versions|length }}</span></div><div class="version-list">{% for version in versions %}<article><div><strong>v{{ version.version }} · {{ version.theme|title }} · {{ version.status }}</strong><small>{{ version.created_at }}{% if version.revision_note %} · {{ version.revision_note }}{% endif %}</small></div><div class="preview-actions"><a href="{{ url_for('website_preview',site_id=site.id,version=version.version) }}">Preview</a><details><summary>Compare content</summary><pre>{{ version.content_json|tojson(indent=2) }}</pre></details>{% if not loop.first %}<form method="post" action="{{ url_for('website_restore',site_id=site.id,version=version.version) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn secondary">Restore as new review version</button></form>{% endif %}</div></article>{% endfor %}</div></section>{% endif %}
-{% endblock %}
+{% include "website_releases.html" %}{% endblock %}

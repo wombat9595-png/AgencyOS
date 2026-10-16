@@ -31,6 +31,10 @@ def main():
     review.add_argument('--output',default='.development/osm-policy.json')
     review.add_argument('--interval',type=float,default=2);review.add_argument('--daily-limit',type=int,default=20)
     review.add_argument('--i-have-verified-current-policies',action='store_true',required=True)
+    maintain=commands.add_parser('maintain',help='Check local Phase 10 staging artifacts; records integrity alerts but never repairs or publishes')
+    maintain.add_argument('--phase10',action='store_true',required=True)
+    maintain.add_argument('--watch',action='store_true',help='Repeat local checks hourly; checks each current release at most once per UTC day')
+    maintain.add_argument('--database',help='Explicit SQLite path; relative paths resolve under the checkout')
     args=parser.parse_args()
     if args.command=='policy-review':
         import re
@@ -45,6 +49,19 @@ def main():
         except FileExistsError:parser.error('Review file already exists. Use a new --output filename; previous reviews are preserved.')
         os.chmod(path,0o600)
         print('Recorded your attestation at',path,'. Set AGENCYOS_OSM_POLICY_FILE in BOTH app and worker shells. This command did not fetch or independently verify policies.')
+        return
+    if args.command=='maintain':
+        import app
+        import runtime_status
+        if args.database:app.DB_PATH=runtime_status.database_path(args.database)
+        if not Path(app.DB_PATH).is_file():parser.error('Selected database does not exist: '+app.DB_PATH+'. Start app.py with the same AGENCYOS_DB.')
+        print('Phase 10 local staging maintenance | database '+app.DB_PATH,flush=True)
+        from p10_release import maintenance_once
+        while True:
+            checked=maintenance_once(app.DB_PATH,Path(app.APP_DIR)/'output'/'staging')
+            print('Checked '+str(checked)+' current release(s); failures create owner-visible alerts. No repair or deployment performed.',flush=True)
+            if not args.watch:break
+            time.sleep(3600)
         return
     import app
     import runtime_status

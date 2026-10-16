@@ -1,0 +1,24 @@
+<section class="panel section-gap" id="local-staging">
+  <span class="eyebrow">PHASE 10 · LOCAL STAGING</span>
+  <h2>Private staging and integrity checks</h2>
+  <p>Staging writes approved static files to this computer only. It does not publish, upload, configure DNS, provision TLS, or make a site public.</p>
+  {% if latest and latest.status=='Approved' and site.active_version==latest.version and not releases|selectattr('version','equalto',latest.version)|list %}
+  <form method="post" action="{{ url_for('stage_approved_version',site_id=site.id,version=latest.version) }}" class="stack">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label class="check-label"><input type="checkbox" name="confirm" value="yes" required> Stage this exact approved version privately on this computer.</label>
+    <button class="btn secondary">Create local staging release</button>
+  </form>
+  {% endif %}
+  {% for release in releases %}
+  <article class="agent-details">
+    <h3>Release #{{ release.id }} · source v{{ release.version }} · {{ release.status }}</h3>
+    <p>Local artifact: <code>{{ release.artifact_path }}</code> · created {{ release.created_at }}</p>
+    <form method="post" action="{{ url_for('check_release',release_id=release.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn secondary">Run local integrity check</button></form>
+    {% if checks.get(release.id) %}<p>Latest check: <strong>{{ checks[release.id].result }}</strong> · {{ checks[release.id].checked_at }}</p><pre class="draft">{{ checks[release.id].details_json }}</pre>{% else %}<p>No integrity check recorded yet.</p>{% endif %}
+    {% if release.status!='Current' and checks.get(release.id) and checks[release.id].result=='passed' %}
+    <form method="post" action="{{ url_for('rollback_release',site_id=site.id,release_id=release.id) }}" class="stack"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label class="check-label"><input type="checkbox" name="confirm" value="yes" required> Make this previously checked release the current local staging version.</label><button class="btn secondary">Roll back local staging pointer</button></form>
+    {% endif %}
+  </article>
+  {% else %}<p>No local staging releases.</p>{% endfor %}
+  {% if release_alerts %}<h3>Maintenance alerts</h3>{% for alert in release_alerts %}<p><strong>{{ alert.severity }}</strong> · {{ alert.created_at }} · {{ alert.message }}</p>{% endfor %}{% endif %}
+</section>

@@ -24,6 +24,7 @@ import website_builder
 import runtime_status
 import phase7_billing
 import p8_ops
+import p10_release
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = runtime_status.database_path(os.environ.get("AGENCYOS_DB"))
@@ -95,6 +96,7 @@ def init_db():
     website_builder.migrate(conn)
     phase7_billing.migrate(conn)
     p8_ops.migrate(conn)
+    p10_release.migrate(conn)
     runtime_status.migrate(conn)
     conn.commit()
     conn.close()
@@ -497,6 +499,7 @@ register_phase3(app, db, login_required, insert_lead)
 register_phase4(app, db, login_required, insert_lead)
 register_sales(app, db, login_required)
 website_builder.register(app, db, login_required)
+p10_release.register(app, db, login_required, APP_DIR)
 phase7_billing.register(app, db, login_required)
 p8_ops.register(app, db, login_required, lambda: DB_PATH)
 
