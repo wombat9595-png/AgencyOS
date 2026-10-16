@@ -66,3 +66,7 @@ The private launcher forces sending **off**. Saving a policy or requesting `gmai
 Engineering QA is already automated. You do not need to repeat the test suite or debug the setup. Your participation is limited to the real account authorisation, accurate business/tax details, customer commitments, independent receipt confirmation and final publication/delivery approvals.
 
 For a “Not Found” page or a previously copied URL, see [startup recovery](STARTUP_RECOVERY.md). The main dashboard URLs now accept an optional final slash.
+
+## Cannot sign in?
+
+Open **Recover AgencyOS Login.command** to back up and reset the existing owner account in the selected database. Do not create another account or workspace. See [login recovery](LOGIN_RECOVERY.md). Your password is entered only in the local window.

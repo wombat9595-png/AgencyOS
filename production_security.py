@@ -37,6 +37,7 @@ def configure(app):
 def migrate(conn):
     conn.executescript('''CREATE TABLE IF NOT EXISTS security_rate (
       key TEXT PRIMARY KEY, starts REAL NOT NULL, attempts INTEGER NOT NULL);
+    CREATE TABLE IF NOT EXISTS security_password_resets(user_id INTEGER PRIMARY KEY,reset_at REAL NOT NULL);
     CREATE TABLE IF NOT EXISTS security_audit (
       id INTEGER PRIMARY KEY, actor INTEGER, event TEXT NOT NULL, object_json TEXT NOT NULL, created_at REAL NOT NULL);
     ''')
@@ -73,9 +74,15 @@ def install(app,get_db):
         if session.get('user_id'):
             owner=get_db().execute('SELECT id FROM users ORDER BY id LIMIT 1').fetchone()
             if not owner or owner[0]!=session['user_id']:
-                if request.endpoint in ('login','logout'):session.clear()
+                if request.endpoint in ('login','logout'):
+                    session.clear();return None
                 else:abort(404)
             issued=session.get('authenticated_at')
+            reset=get_db().execute('SELECT reset_at FROM security_password_resets WHERE user_id=?',(session['user_id'],)).fetchone()
+            if reset and (issued is None or issued<=reset[0]):
+                session.clear()
+                if request.endpoint in ('login','logout'):return None
+                return __import__('flask').redirect('/login')
             if (issued is not None and time.time()-issued>28800) or (app.config['PRODUCTION_MODE'] and issued is None):
                 session.clear();return __import__('flask').redirect('/login')
 

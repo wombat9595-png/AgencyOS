@@ -1,0 +1,12 @@
+{
+  "date": "2026-10-17",
+  "base_commit": "40e800a47d10defe2d9c58564f92e22b2b13e2b7",
+  "files": {
+    "owner_recovery.py": "1ce1802010fc210bd7ef953d0e8ee6a2744f809d50f138a27c9431c854f614f4",
+    "production_security.py": "c25dc85998a6bf02bc3246db885cb37b6d08f67cd02f527efb64b63345f76681",
+    "Launch AgencyOS.command": "74c6b443b689215aa17df32ab62df68b5c299ec09baa32e72eef9156c4997694",
+    "Recover AgencyOS Login.command": "75f71e03f4985c2c5fdee0005dda8ded1ef7dc27edd7ecd3f46fb3b825892459",
+    "tests/test_owner_recovery.py": "1705dd0a2ab5a8a8ebef6220c522411c84cc496c366635bd7fcdf540657a75b3",
+    "tests/smoke_owner_recovery.py": "2467c290e3cb00ab1f357c1f880198b61ec7498d1ce724150089def520064c4b"
+  }
+}

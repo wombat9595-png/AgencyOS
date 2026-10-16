@@ -19,4 +19,8 @@ if [ ! -f .venv-first-sale/.requirements-ready ] || [ "$(cat .venv-first-sale/.r
   .venv-first-sale/bin/python -m pip install -r requirements-local.lock
   printf '%s\n' "$agencyos_requirements" > .venv-first-sale/.requirements-ready
 fi
-.venv-first-sale/bin/python local_run.py
+if [ "${1:-}" = "--recover-login" ]; then
+  .venv-first-sale/bin/python owner_recovery.py
+else
+  .venv-first-sale/bin/python local_run.py "$@"
+fi
