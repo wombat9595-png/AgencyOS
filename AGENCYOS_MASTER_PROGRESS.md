@@ -4,10 +4,10 @@ Updated: 2026-10-16 (Australia/Sydney)
 
 ## Current state
 
-- **Current phase:** Phase 9 — Authorized discovery and compliant outreach.
+- **Current phase:** Phase 10 — Hosting, publication, maintenance and production preparation.
 - **Current branch:** `codex/agencyos-phases6-11`.
 - **Baseline:** GitHub `agencyos-phase5` at `497e950ee4c4fabcbb3a897053cc4890cb24f20f`, matching the Phase 5 commit specified in the program.
-- **Latest completed checkpoint:** Phase 7 `4542dcd` (published; invoice drafts, synthetic PDFs and verified test reconciliation; tree `42acb4e`).
+- **Latest completed checkpoint:** Phase 8 `68fd0d9b1deb8d3352aa1b2efd9322b6488b97fe` (published; unified operations and local orchestration).
 - **Environment:** Local workspace checkout, not the user's MacBook. No pre-existing database was present in the workspace.
 - **External actions:** None. Live email, paid AI, real invoices/payments, public deployment and customer publication remain disabled.
 
@@ -24,6 +24,9 @@ Updated: 2026-10-16 (Australia/Sydney)
 - [x] Phase 7 validation: **195 automated tests passed**; HTTP/worker and Chromium workflow checks passed; synthetic A4 invoice generated and visually reviewed. Details: `PHASE7.md`, `PHASE7_FINAL_VALIDATION.md`, and `output/pdf/`.
 - [x] Phase 8: unified Operations view, dedicated local Phase 8 worker, owner-scoped recurring local-time schedules and daily summaries, with queue pressure and emergency-pause controls.
 - [x] Phase 8 validation: **204 automated tests passed** (9 focused Phase 8 tests); server and sales smoke checks passed; Chromium workflow passed with Operations navigation; `pip check` and diff checks passed. Details: `PHASE8.md` and `PHASE8_FINAL_VALIDATION.md`.
+- [x] Phase 8 checkpoint published to `codex/agencyos-phases6-11` at `68fd0d9b1deb8d3352aa1b2efd9322b6488b97fe`.
+- [x] Phase 9: confirmed source provenance, current-use gates, bounded OSM search, explainable qualification, conservative duplicate review, mock-only email boundary, suppression/event safeguards, and added explicit owner-attested contact eligibility evidence with expiry metadata.
+- [x] Phase 9 validation: **207 automated tests passed** (3 focused Phase 9 tests); Phase 3/4 server smoke, Phase 5 sales-worker smoke and full Chromium sales/site/operations flow passed. Details: `PHASE9.md` and `PHASE9_FINAL_VALIDATION.md`.
 
 ## Phase validation log
 
@@ -33,9 +36,9 @@ Record actual commands, outcomes, evidence paths, and fixes here only after exec
 |---|---|---|---|
 | 6 Website builder and QA | Complete | 186 unit tests; HTTP/worker smoke; Chromium preview/revision/approval; screenshots | `eb9b3ea` |
 | 7 Invoices and sandbox payments | Complete | 195 automated tests; HTTP/worker smoke; Chromium workflow; signed payment/refund tests; reviewed A4 PDF | `4542dcd` |
-| 8 Agent orchestration and operations | Complete | 204 automated tests; HTTP/sales smoke; Chromium workflow; DST, concurrency, worker and schedule evidence | Pending checkpoint |
-| 9 Authorized discovery and compliant outreach | In progress | Audit existing discovery/outreach controls, then fill gaps with synthetic/local validation | — |
-| 10 Hosting, publication, maintenance and production preparation | Not started | — | — |
+| 8 Agent orchestration and operations | Complete | 204 automated tests; HTTP/sales smoke; Chromium workflow; DST, concurrency, worker and schedule evidence | `68fd0d9` |
+| 9 Authorized discovery and compliant outreach | Complete | 207 automated tests; owner-attested eligibility records; Phase 3/4 smoke; Phase 5 sales worker; Chromium lifecycle | Pending checkpoint |
+| 10 Hosting, publication, maintenance and production preparation | In progress | Audit deployment/maintenance boundaries and implement local-only evidence | — |
 | 11 Integration, security and final acceptance | Not started | — | — |
 
 ## Current blockers
@@ -45,7 +48,7 @@ Record actual commands, outcomes, evidence paths, and fixes here only after exec
 
 ## Next executable step
 
-Audit Phase 3–5 discovery and outreach paths against Phase 9 acceptance criteria. Complete authorized-source metadata, deduplication/scoring, and local/sandbox email safeguards using synthetic fixtures only. No live email, payments, deployment, or publication.
+Audit Phase 6 artifacts and Phase 8 scheduling against Phase 10 readiness criteria. Implement local staging/deploy verification, health checks and rollback evidence without publishing or changing a live domain.
 
 ## Resume instructions
 

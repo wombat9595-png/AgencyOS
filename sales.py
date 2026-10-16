@@ -174,6 +174,7 @@ def register(app,get_db,login_required):
           events=conn.execute('SELECT e.* FROM p5_events e JOIN p5_messages m ON m.id=e.message_id WHERE m.flow_id=? ORDER BY e.id',(flow_id,)).fetchall(),
           quotes=conn.execute('SELECT * FROM p5_quotes WHERE flow_id=? ORDER BY version DESC',(flow_id,)).fetchall(),
           followups=conn.execute('SELECT u.* FROM p5_followups u JOIN p5_messages m ON m.id=u.message_id WHERE m.flow_id=?',(flow_id,)).fetchall(),
+          contact_basis=conn.execute('SELECT * FROM p5_contact_basis WHERE user_id=? ORDER BY reviewed_at DESC',(session['user_id'],)).fetchall(),
           acceptances=conn.execute('SELECT a.* FROM p5_acceptances a JOIN p5_quotes q ON q.id=a.quote_id WHERE q.flow_id=?',(flow_id,)).fetchall(),
           briefs=[quotes.brief_view(conn,r) for r in conn.execute('SELECT b.* FROM p5_project_briefs b JOIN p5_acceptances a ON a.id=b.acceptance_id JOIN p5_quotes q ON q.id=a.quote_id WHERE q.flow_id=?',(flow_id,)).fetchall()],
           activity=conn.execute('SELECT * FROM p5_activity WHERE flow_id=? ORDER BY id DESC',(flow_id,)).fetchall())
@@ -313,6 +314,28 @@ def register(app,get_db,login_required):
         if not reason or len(reason)>500:raise WorkflowError('Provide the suppression reason.')
         conn.execute('BEGIN IMMEDIATE');email.suppress(conn,session['user_id'],request.form.get('email',''),reason)
         conn.commit();return redirect(url_for('sales_home'))
+
+    @app.route('/sales/contact-basis',methods=['POST'])
+    @login_required
+    def sales_contact_basis():
+        conn=get_db();flow_id=request.form.get('flow_id',type=int);row=flow(flow_id)
+        address=email.address(request.form.get('email',''))
+        basis=request.form.get('basis_type','')
+        reference=request.form.get('evidence_reference','').strip()
+        expires=request.form.get('expires_on','').strip()
+        if basis not in ('consent','existing_relationship','other_reviewed_basis') or not reference or len(reference)>1000 or request.form.get('attest')!='yes':
+            raise WorkflowError('Choose a reviewed basis, record its evidence reference, and attest that the record is accurate.')
+        if expires:
+            from datetime import date
+            try:date.fromisoformat(expires)
+            except ValueError:raise WorkflowError('Expiry must be a valid ISO date (YYYY-MM-DD).') from None
+        conn.execute('BEGIN IMMEDIATE')
+        conn.execute('''INSERT INTO p5_contact_basis(user_id,email,basis_type,evidence_reference,reviewed_at,expires_on)
+          VALUES(?,?,?,?,?,?) ON CONFLICT(user_id,email) DO UPDATE SET basis_type=excluded.basis_type,
+          evidence_reference=excluded.evidence_reference,reviewed_at=excluded.reviewed_at,expires_on=excluded.expires_on''',
+          (session['user_id'],address,basis,reference,stamp(),expires))
+        store.log(conn,session['user_id'],'Recorded owner-attested contact eligibility evidence for '+address+'; not independently verified and no permission to send inferred.',row['id'])
+        conn.commit();return redirect(url_for('sales_flow',flow_id=flow_id))
 
     @app.route('/sales/messages/<int:message_id>/followup',methods=['POST'])
     @login_required

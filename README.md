@@ -1,6 +1,6 @@
 # AgencyOS — Phase 5: coordinated sales workflow
 
-The master development program is tracked in [AGENCYOS_MASTER_PROGRESS.md](AGENCYOS_MASTER_PROGRESS.md) and [AGENCYOS_MASTER_ROADMAP.md](AGENCYOS_MASTER_ROADMAP.md). Phase 6 website delivery is described in [PHASE6.md](PHASE6.md), Phase 7 billing/payment boundaries are in [PHASE7.md](PHASE7.md), and Phase 8 operations are in [PHASE8.md](PHASE8.md). Current milestone status and validation evidence are recorded in the progress log.
+The master development program is tracked in [AGENCYOS_MASTER_PROGRESS.md](AGENCYOS_MASTER_PROGRESS.md) and [AGENCYOS_MASTER_ROADMAP.md](AGENCYOS_MASTER_ROADMAP.md). Phase 6 website delivery is described in [PHASE6.md](PHASE6.md), Phase 7 billing/payment boundaries are in [PHASE7.md](PHASE7.md), Phase 8 operations are in [PHASE8.md](PHASE8.md), and Phase 9 discovery/outreach is in [PHASE9.md](PHASE9.md). Current milestone status and validation evidence are recorded in the progress log.
 
 Built from Phase 4 commit `d55468a`, preserving the dashboard styling, earlier modules and records. Phase 5 connects approved research, outreach drafts, correspondence, internal follow-up reviews, proposals, versioned AUD quotes and owner-attested acceptance/project briefs.
 

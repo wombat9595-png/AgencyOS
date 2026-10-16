@@ -1,0 +1,15 @@
+<section class="panel section-gap" id="contact-basis">
+  <h2>Contact eligibility evidence</h2>
+  <p>Owner-attested record for review only. AgencyOS does not independently verify legal basis, and this record does not authorize sending. Suppression and opt-out controls still apply.</p>
+  <form method="post" action="{{ url_for('sales_contact_basis') }}" class="stack">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="flow_id" value="{{ flow.id }}">
+    <label>Email address<input type="email" name="email" required maxlength="254"></label>
+    <label>Reviewed basis<select name="basis_type"><option value="consent">Consent evidence</option><option value="existing_relationship">Existing relationship</option><option value="other_reviewed_basis">Other reviewed basis</option></select></label>
+    <label>Evidence reference<textarea name="evidence_reference" required maxlength="1000" placeholder="Reference to an owner-held record; do not paste sensitive documents"></textarea></label>
+    <label>Review expiry (optional)<input type="date" name="expires_on"></label>
+    <label class="check-label"><input type="checkbox" name="attest" value="yes" required> I reviewed this evidence and accurately recorded its source. This is not legal advice or independent verification.</label>
+    <button class="btn secondary">Save owner-attested evidence</button>
+  </form>
+  {% for item in contact_basis %}<p>{{ item.email }} · {{ item.basis_type }} · reviewed {{ item.reviewed_at }} · {{ item.evidence_reference }}{% if item.expires_on %} · expires {{ item.expires_on }}{% endif %}</p>{% else %}<p>No contact eligibility evidence recorded.</p>{% endfor %}
+</section>

@@ -72,6 +72,11 @@ def migrate(conn):
     CREATE TABLE IF NOT EXISTS p5_suppressions (
       user_id INTEGER NOT NULL REFERENCES users(id), email TEXT NOT NULL,
       reason TEXT NOT NULL, created_at TEXT NOT NULL, PRIMARY KEY(user_id,email));
+    CREATE TABLE IF NOT EXISTS p5_contact_basis (
+      user_id INTEGER NOT NULL REFERENCES users(id), email TEXT NOT NULL,
+      basis_type TEXT NOT NULL CHECK(basis_type IN ('consent','existing_relationship','other_reviewed_basis')),
+      evidence_reference TEXT NOT NULL, reviewed_at TEXT NOT NULL, expires_on TEXT NOT NULL DEFAULT '',
+      PRIMARY KEY(user_id,email));
     CREATE TABLE IF NOT EXISTS p5_followups (
       id INTEGER PRIMARY KEY, message_id INTEGER NOT NULL UNIQUE REFERENCES p5_messages(id),
       due_at REAL NOT NULL, status TEXT NOT NULL DEFAULT 'Scheduled');
