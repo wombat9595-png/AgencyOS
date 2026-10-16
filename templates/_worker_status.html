@@ -1,0 +1,7 @@
+<details class="panel section-gap" id="worker-status"><summary>Database and Phase {{ runtime.selected_phase }} worker status</summary>
+<p><strong>{{ 'Recent matching worker connected' if runtime.selected_worker_connected else 'No recent matching worker heartbeat in this database' }}</strong>{% if runtime.paused %} · Emergency pause active{% endif %}</p>
+<p>Database: <code>{{ runtime.database_path }}</code><br>Identity: <code>{{ runtime.database_identity }}</code></p>
+<p>Phase 5 sales tasks need a Phase 5 worker. Agency Manager research uses Phase 4. A worker on another phase or database cannot claim these tasks. Attempts 0 means not yet claimed, not a completed research failure.</p>
+<p>Run in this checkout, with the same database as the app:</p><pre class="draft">{{ runtime.command }}</pre>
+<p>Recent heartbeats are observations within 60 seconds, not a guarantee that a process is still alive. Refresh to update. Paused, delayed, approval-gated or leased work may still wait.</p>
+{% for phase,counts in runtime.queues.items() %}<p>Phase {{ phase }} queue: {{ counts }}</p>{% endfor %}</details>

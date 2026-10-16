@@ -103,12 +103,14 @@ def register(app, get_db, login_required, insert_lead):
     @login_required
     def agency_manager():
         conn=get_db()
+        import runtime_status
         jobs=conn.execute('SELECT * FROM p4_jobs WHERE user_id=? ORDER BY id DESC LIMIT 100', (session['user_id'],)).fetchall()
         activity=conn.execute('SELECT * FROM p4_activity WHERE user_id=? ORDER BY id DESC LIMIT 100', (session['user_id'],)).fetchall()
         schedules=conn.execute('''SELECT s.*,l.business_name FROM p4_schedules s JOIN leads l ON l.id=s.lead_id WHERE s.user_id=? ORDER BY s.id DESC''', (session['user_id'],)).fetchall()
         report={row['status']:row['n'] for row in conn.execute('SELECT status,COUNT(*) n FROM p4_jobs WHERE user_id=? AND created_at>=? GROUP BY status', (session['user_id'],stamp()[:10])).fetchall()}
         usage=conn.execute('SELECT COALESCE(SUM(reserved_cents),0) reserved,COALESCE(SUM(actual_cents),0) actual FROM p4_budget WHERE day=?', (stamp()[:10],)).fetchone()
         return render_template('agency.html',jobs=jobs,activity=activity,schedules=schedules,report=report,usage=usage,
+                               runtime=runtime_status.status(conn,conn.execute('PRAGMA database_list').fetchone()[2],'4'),
                                control=conn.execute('SELECT * FROM p4_control WHERE id=1').fetchone(),leads=conn.execute('SELECT * FROM leads ORDER BY business_name').fetchall())
 
     @app.route('/agency/pause',methods=['POST'])

@@ -11,6 +11,7 @@ import sales_store as store
 import sales_email as email
 import sales_quotes as quotes
 import sales_ai
+import runtime_status
 
 
 def register(app,get_db,login_required):
@@ -43,7 +44,9 @@ def register(app,get_db,login_required):
     @login_required
     def sales_home():
         conn=get_db()
+        existing=conn.execute("SELECT * FROM p5_flows WHERE user_id=? AND state NOT IN ('Cancelled','Project brief ready') ORDER BY id DESC",(session['user_id'],)).fetchall()
         return render_template('sales.html',flows=conn.execute('SELECT * FROM p5_flows WHERE user_id=? ORDER BY id DESC LIMIT 100',(session['user_id'],)).fetchall(),
+          active_flows={r['lead_id']:r['id'] for r in existing},runtime=runtime_status.status(conn,conn.execute('PRAGMA database_list').fetchone()[2],'5'),
           leads=conn.execute('SELECT * FROM leads ORDER BY business_name').fetchall(),packages=conn.execute('SELECT * FROM p5_packages WHERE user_id=? ORDER BY id DESC',(session['user_id'],)).fetchall(),
           research3=conn.execute("SELECT id,payload_json FROM p3_jobs WHERE user_id=? AND kind='research' AND status='Approved'",(session['user_id'],)).fetchall(),
           research4=conn.execute("SELECT id,payload_json FROM p4_jobs WHERE user_id=? AND kind='research' AND status='Approved'",(session['user_id'],)).fetchall(),
@@ -136,8 +139,12 @@ def register(app,get_db,login_required):
             approved=True
         if len(store.dumps(snapshot))>40000:raise WorkflowError('Research snapshot too large; choose fewer evidence records.')
         conn.execute('BEGIN IMMEDIATE')
-        if conn.execute("SELECT 1 FROM p5_flows WHERE user_id=? AND lead_id=? AND state NOT IN ('Cancelled','Project brief ready')",(session['user_id'],lead['id'])).fetchone():
-            raise WorkflowError('An active sales workflow already exists for this lead.')
+        existing=conn.execute("SELECT id FROM p5_flows WHERE user_id=? AND lead_id=? AND state NOT IN ('Cancelled','Project brief ready')",(session['user_id'],lead['id'])).fetchone()
+        if existing:
+            conn.rollback()
+            from flask import flash
+            flash('Opened existing sales opportunity #'+str(existing['id'])+'. No duplicate workflow or task was created.','success')
+            return redirect(url_for('sales_flow',flow_id=existing['id']))
         identifier=conn.execute('INSERT INTO p5_flows(user_id,lead_id,snapshot_json,package_json,state,tone,synthetic,created_at) VALUES(?,?,?,?,?,?,?,?)',
           (session['user_id'],lead['id'],store.dumps(snapshot),store.dumps(packages),'Research approved' if approved else 'Research queued',tone,int(request.form.get('synthetic')=='yes'),stamp())).lastrowid
         row=conn.execute('SELECT * FROM p5_flows WHERE id=?',(identifier,)).fetchone()
@@ -160,14 +167,15 @@ def register(app,get_db,login_required):
                 except (WorkflowError,DraftError):
                     estimates[job['id']]=None
         return render_template('sales_flow.html',flow=row,snapshot=json.loads(row['snapshot_json']),packages=json.loads(row['package_json']),
-          jobs=jobs,estimates=estimates,
+          jobs=jobs,estimates=estimates,sender=conn.execute('SELECT sender FROM p5_control WHERE id=1').fetchone()[0],
+          runtime=runtime_status.status(conn,conn.execute('PRAGMA database_list').fetchone()[2],'5'),
           drafts=conn.execute('SELECT * FROM p5_drafts WHERE flow_id=? ORDER BY id DESC',(flow_id,)).fetchall(),
           messages=conn.execute('SELECT * FROM p5_messages WHERE flow_id=? ORDER BY id DESC',(flow_id,)).fetchall(),
           events=conn.execute('SELECT e.* FROM p5_events e JOIN p5_messages m ON m.id=e.message_id WHERE m.flow_id=? ORDER BY e.id',(flow_id,)).fetchall(),
           quotes=conn.execute('SELECT * FROM p5_quotes WHERE flow_id=? ORDER BY version DESC',(flow_id,)).fetchall(),
           followups=conn.execute('SELECT u.* FROM p5_followups u JOIN p5_messages m ON m.id=u.message_id WHERE m.flow_id=?',(flow_id,)).fetchall(),
           acceptances=conn.execute('SELECT a.* FROM p5_acceptances a JOIN p5_quotes q ON q.id=a.quote_id WHERE q.flow_id=?',(flow_id,)).fetchall(),
-          briefs=conn.execute('SELECT b.* FROM p5_project_briefs b JOIN p5_acceptances a ON a.id=b.acceptance_id JOIN p5_quotes q ON q.id=a.quote_id WHERE q.flow_id=?',(flow_id,)).fetchall(),
+          briefs=[quotes.brief_view(conn,r) for r in conn.execute('SELECT b.* FROM p5_project_briefs b JOIN p5_acceptances a ON a.id=b.acceptance_id JOIN p5_quotes q ON q.id=a.quote_id WHERE q.flow_id=?',(flow_id,)).fetchall()],
           activity=conn.execute('SELECT * FROM p5_activity WHERE flow_id=? ORDER BY id DESC',(flow_id,)).fetchall())
 
     @app.route('/sales/jobs/<int:job_id>/decision',methods=['POST'])
@@ -202,6 +210,8 @@ def register(app,get_db,login_required):
             conn.execute("UPDATE p5_jobs SET status='Approved',updated_at=? WHERE id=?",(stamp(),job_id))
         elif decision=='Cancel' and job['status'] in ('Queued','Awaiting approval'):
             conn.execute("UPDATE p5_jobs SET status='Cancelled',updated_at=? WHERE id=?",(stamp(),job_id))
+        elif decision=='Acknowledge result' and job['status']=='Needs review' and (job['kind']=='followup' or (job['kind']=='classify' and json.loads(job['result_json'])['classification'] in ('rejection','opt-out'))):
+            conn.execute("UPDATE p5_jobs SET status='Approved',updated_at=? WHERE id=?",(stamp(),job_id))
         elif decision=='Retry local' and job['status'] in ('Failed','Interrupted') and job['mode']=='local' and job['kind']!='dispatch' and job['attempts']<3:
             conn.execute("UPDATE p5_jobs SET status='Queued',error='',not_before=?,updated_at=? WHERE id=?",(time.time()+10,stamp(),job_id))
         else:abort(409,description='Decision invalid for this task state.')
@@ -230,11 +240,12 @@ def register(app,get_db,login_required):
             store.enqueue(conn,row['id'],'quote',content_payload,key='proposal-to-quote-'+str(draft_id))
         else:
             config=conn.execute('SELECT * FROM p5_control WHERE id=1').fetchone()
-            if not config['sender']:raise WorkflowError('Configure sender metadata before preparing correspondence.')
+            if not config['sender']:raise WorkflowError('Configure sender metadata in Sales team → Sender, GST and optional AI configuration before preparing correspondence. Your reviewed draft has been preserved; return to this opportunity after saving the sender.')
             recipient=email.address(request.form.get('recipient',''))
             conn.execute('INSERT INTO p5_messages(flow_id,draft_id,recipient,sender,subject,body,created_at) VALUES(?,?,?,?,?,?,?)',
                          (row['id'],draft_id,recipient,config['sender'],content['subject'],content['body'],stamp()))
         conn.execute("UPDATE p5_drafts SET status='Approved' WHERE id=?",(draft_id,))
+        conn.execute("UPDATE p5_jobs SET status='Approved',updated_at=? WHERE id=? AND status='Needs review'",(stamp(),draft['job_id']))
         conn.execute('UPDATE p5_flows SET state=? WHERE id=?',('Quote queued' if draft['kind']=='proposal' else 'Correspondence ready for exact approval',row['id']))
         store.log(conn,row['user_id'],'Owner approved exact draft version '+str(draft['version'])+'; no email sent.',row['id'])
         conn.commit();return redirect(url_for('sales_flow',flow_id=row['id']))
@@ -344,6 +355,15 @@ def register(app,get_db,login_required):
         recipient=email.address(request.form.get('recipient',''))
         if not config['sender']:raise WorkflowError('Configure sender metadata first.')
         conn.execute("UPDATE p5_quotes SET status='Approved' WHERE id=?",(quote_id,))
+        candidates=[]
+        for job in conn.execute("SELECT * FROM p5_jobs WHERE flow_id=? AND kind='quote' AND result_json!=''",(row['id'],)).fetchall():
+            if json.loads(job['result_json']).get('quote_id')==quote_id:
+                candidates=[job['id']];break
+            if job['result_json']==quote['content_json']:
+                candidates.append(job['id'])
+        # Legacy quotes without an origin ID are linked only when unambiguous.
+        if len(candidates)==1:
+            conn.execute("UPDATE p5_jobs SET status='Approved',updated_at=? WHERE id=? AND status='Needs review'",(stamp(),candidates[0]))
         conn.execute("UPDATE p5_flows SET state='Quote approved; awaiting acceptance' WHERE id=?",(row['id'],))
         conn.execute('INSERT INTO p5_messages(flow_id,quote_id,recipient,sender,subject,body,created_at) VALUES(?,?,?,?,?,?,?)',
           (row['id'],quote_id,recipient,config['sender'],'Draft quote #'+str(quote_id)+' for review',quotes.render_quote(json.loads(quote['content_json']),quote['version']),stamp()))
@@ -417,5 +437,6 @@ def register(app,get_db,login_required):
         row=flow(draft['flow_id']);active(row)
         if draft['status']!='Needs review':abort(409)
         conn.execute("UPDATE p5_drafts SET status='Rejected' WHERE id=?",(draft_id,))
+        conn.execute("UPDATE p5_jobs SET status='Rejected',updated_at=? WHERE id=? AND status='Needs review'",(stamp(),draft['job_id']))
         store.log(conn,row['user_id'],'Owner rejected '+draft['kind']+' version '+str(draft['version'])+'; no handoff.',row['id'])
         conn.commit();return redirect(url_for('sales_flow',flow_id=row['id']))

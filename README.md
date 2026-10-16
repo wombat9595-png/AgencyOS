@@ -4,6 +4,8 @@ Built from Phase 4 commit `d55468a`, preserving the dashboard styling, earlier m
 
 **Live email is disabled: no live sender adapter is installed.** The email provider is explicitly a mock for testing the integration boundary. Local agents perform real work on saved records; they do not claim simulated business discoveries, replies or customer agreements. Optional AI writing/interpretation is implemented behind exact-request approval and budgets, but was validated only with mocked provider responses. Default AI budget is zero.
 
+**Final validation:** automated browser, server/worker and regression testing is recorded in [PHASE5_FINAL_VALIDATION.md](PHASE5_FINAL_VALIDATION.md). You do not need to repeat the walkthrough to validate this release.
+
 ## MacBook installation — new folder and database
 
 Install Python 3.13 from [python.org](https://www.python.org/downloads/macos/) if `python3.13 --version` is unavailable. Git may prompt you to install macOS command-line tools. Keep all older folders/databases unchanged.
@@ -38,16 +40,16 @@ export AGENCYOS_DB="$PWD/.development/agencyos-phase5.db"
 export AGENCYOS_WEBSITE_FETCH=0
 export AGENCYOS_AI_PROVIDER=""
 unset AGENCYOS_OSM_POLICY_FILE
-python manage.py worker --phase5 --watch
+python manage.py worker --phase5 --database "$PWD/.development/agencyos-phase5.db" --watch
 ```
 
 The app and worker must use the same database. `--phase5` processes sales work and internal follow-up reviews. Existing `--phase4` remains available for Phase 4 research/audits; no phase flag selects the legacy Phase 3 queue. Do not combine phase flags.
 
 Browser closure does not stop the worker. Keep both Terminal processes running and your Mac awake; no always-on service is installed. Stop with Control+C. Multiple Phase 5 workers can process independent opportunities; jobs within one opportunity are serialized.
 
-## Safe end-to-end test in the UI
+## Optional workflow reference (already tested automatically)
 
-Use only fictional data. Leave AI budgets/rates at zero, provider **Mock**, website fetch off, and optional AI credentials unconfigured.
+The browser/HTTP tests have executed this workflow; routine manual testing is not required. For optional practice, use only fictional data. Leave AI budgets/rates at zero, provider **Mock**, website fetch off, and optional AI credentials unconfigured.
 
 1. In **Leads & clients**, create `Fictional Studio`, email `prospect@example.com`, industry `Design`, location `Sydney`. Website can be blank; no URL does not mean the business lacks a website.
 2. In **Sales team → Sender, GST and optional AI configuration**, set sender `owner@example.com`, provider **Mock**, GST **Not registered**, and save with all AI limits zero. These fictional sender details are not verified email authentication.
@@ -62,6 +64,26 @@ Use only fictional data. Leave AI budgets/rates at zero, provider **Mock**, webs
 
 Mock dispatch accepts only explicitly fictional workflows and reserved test domains (`example.com`, `example.org`, `example.net`, or `.test`, `.invalid`, `.example`). It allows at most one attempt per recipient per UTC day and ten per owner/day. Do not use real business addresses. These protections are not marketing consent or provider permission.
 
+
+## Worker and database troubleshooting
+
+The app and worker now print the **absolute database path** and **database identity** at startup. Compare both, not merely whether a worker process exists. Relative `AGENCYOS_DB` values now resolve from the checkout directory, independent of the terminal working directory. No database is moved or searched automatically. If an older relative path referred to another location, select the intended **backup copy** by its full path.
+
+Read-only diagnostics (does not run jobs or migrate a database):
+
+```sh
+python manage.py doctor --phase5 --database "$PWD/.development/agencyos-phase5.db"
+```
+
+Sales Team and Agency Manager also show recent matching worker heartbeats, pause state and per-phase queue counts under **Database and worker status**. A heartbeat within 60 seconds is evidence of a recent connection, not a guarantee that a process is alive now.
+
+- **Sales Team opportunities** use `--phase5`. Open **Existing opportunities**, then **Agent tasks / research approval**, **Draft reviews**, **Correspondence** or **Quotes**. Create new is for new sales work; repeating an identical creation reopens the existing active opportunity without duplicating it.
+- **Agency Manager research** uses `--phase4` on the **same selected Phase 5 database**. A Phase 5 worker deliberately does not drain this separate queue. If you use that older workflow, run `python manage.py worker --phase4 --database "$PWD/.development/agencyos-phase5.db" --watch` separately. The legacy Phase 3 queue still uses neither phase flag.
+- **Queued / Attempts 0** means no matching worker has claimed the job. Check phase, exact path, recent heartbeat, pause, not-before time and whether another task holds the opportunity's lease. Approval-gated work needs review, not another worker. No automatic paid/external task execution is enabled by these diagnostics.
+- **Sender missing** is a real preparation prerequisite, not lost research. The error links directly to sender settings, preserves the draft, and lets you return to its existing opportunity. Saving settings does not send email or establish SPF/DKIM/DMARC/provider permission.
+
+Source evidence and prior records remain intact. New project briefs include acceptance evidence/source/provenance. Legacy schema-v1 briefs are enriched on read from their linked acceptance record without rewriting the stored brief or quote; inconsistent linkage is rejected.
+
 ## Automated validation
 
 ```sh
@@ -71,6 +93,8 @@ python tests/smoke_server.py
 python tests/smoke_sales.py
 python -m pip check
 ```
+
+Optional maintainer browser runner: install `requirements-validation.txt` and Chromium, then run `python tests/browser_phase5.py --artifacts /tmp/agencyos-browser-evidence --chromium /path/to/chromium`. The completed validation used Playwright 1.64.0 and preinstalled Chromium 154, with external browser requests blocked. See the final report for evidence and exact commands; you do not need to run these tests yourself.
 
 Tests use synthetic records, temporary databases and mocked external providers. Both smoke runners launch actual local servers and separate worker processes. `smoke_sales.py` also exercises concurrent workers, signed mock events, reply handoffs, proposals, quotes, acceptance and pause/restart. No external API call or customer contact is required. Python 3.13 was tested on Linux, not represented as a physical MacBook or visual-browser test.
 

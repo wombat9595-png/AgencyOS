@@ -20,9 +20,10 @@ from phase4_store import migrate as migrate_phase4
 from phase4_data import migrate as migrate_phase4_data
 from sales_store import migrate as migrate_sales
 from sales import register as register_sales
+import runtime_status
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.environ.get("AGENCYOS_DB") or os.path.join(APP_DIR, ".development", "agencyos-phase5.db")
+DB_PATH = runtime_status.database_path(os.environ.get("AGENCYOS_DB"))
 app = Flask(__name__)
 app.secret_key = os.environ.get("AGENCYOS_SECRET_KEY") or secrets.token_hex(32)
 app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024
@@ -88,6 +89,7 @@ def init_db():
     migrate_phase4(conn)
     migrate_phase4_data(conn)
     migrate_sales(conn)
+    runtime_status.migrate(conn)
     conn.commit()
     conn.close()
 
@@ -474,4 +476,7 @@ register_sales(app, db, login_required)
 
 if __name__ == "__main__":
     init_db()
+    print('AgencyOS database: '+DB_PATH,flush=True)
+    with app.app_context():
+        print('Database identity: '+runtime_status.status(db(),DB_PATH)['database_identity'],flush=True)
     app.run(host="127.0.0.1", port=int(os.environ.get("PORT", 5000)), debug=False)

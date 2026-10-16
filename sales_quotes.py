@@ -49,6 +49,21 @@ def render_quote(content,version):
     return '\n'.join(lines)
 
 
+def brief_view(conn,record):
+    """Enrich legacy v1 briefs on read without rewriting saved customer evidence."""
+    result=dict(record)
+    brief=json.loads(record['brief_json'])
+    if 'acceptance' not in brief:
+        row=conn.execute('SELECT * FROM p5_acceptances WHERE id=?',(record['acceptance_id'],)).fetchone()
+        if not row or row['quote_hash']!=brief['quote_hash'] or row['quote_id']!=brief['quote_id']:
+            raise WorkflowError('Project brief acceptance linkage is inconsistent; owner review required.')
+        brief['stored_schema_version']=brief['schema_version']
+        brief['schema_version']=2
+        brief['acceptance']=dict(row)
+        result['brief_json']=dumps(brief)
+    return result
+
+
 def accept(conn,flow,quote,customer,evidence,evidence_source,expected_hash):
     if conn.execute('SELECT 1 FROM p5_acceptances a JOIN p5_quotes q ON q.id=a.quote_id WHERE q.flow_id=?',(flow['id'],)).fetchone():
         raise WorkflowError('This opportunity already has accepted scope and a project. New scope needs a new opportunity.')
@@ -66,10 +81,11 @@ def accept(conn,flow,quote,customer,evidence,evidence_source,expected_hash):
     project=conn.execute('INSERT INTO projects(client_name,project_name,status,notes,created_at) VALUES(?,?,?,?,?)',
                          (snapshot['lead']['business_name'],'Website project from Phase 5 quote #'+str(quote['id']),'Planning',
                           'Owner-attested customer acceptance #'+str(acceptance_id)+'. See Phase 5 brief; not independently verified.',stamp())).lastrowid
-    brief=dict(schema_version=1,flow_id=flow['id'],lead_id=flow['lead_id'],customer_name=customer,
+    acceptance=dict(conn.execute('SELECT * FROM p5_acceptances WHERE id=?',(acceptance_id,)).fetchone())
+    brief=dict(schema_version=2,flow_id=flow['id'],lead_id=flow['lead_id'],customer_name=customer,
                requirements=accepted['requirements'],requirements_source=accepted['requirements_source'],branding_references=accepted.get('branding',''),
                quote_id=quote['id'],quote_version=quote['version'],quote_hash=quote['content_hash'],quote=json.loads(quote['content_json']),
-               acceptance_id=acceptance_id,acceptance_provenance='Owner-attested; not independently verified',project_id=project,
+               acceptance_id=acceptance_id,acceptance=acceptance,acceptance_provenance='Owner-attested; not independently verified',project_id=project,
                website_generation_authorised=False,publication_authorised=False)
     conn.execute('INSERT INTO p5_project_briefs(acceptance_id,project_id,brief_json) VALUES(?,?,?)',(acceptance_id,project,dumps(brief)))
     conn.execute("UPDATE p5_quotes SET status='Owner-attested acceptance' WHERE id=?",(quote['id'],))

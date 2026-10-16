@@ -5,6 +5,9 @@ import os
 import sqlite3
 from pathlib import Path
 import time
+import uuid
+import signal
+from contextlib import closing
 from discovery import POLICIES, NOMINATIM, OVERPASS
 from phase3_store import stamp
 
@@ -15,6 +18,12 @@ def main():
     worker.add_argument('--phase5',action='store_true',help='Process sales workflow jobs and internal follow-up reviews; no live email')
     worker.add_argument('--phase4',action='store_true',help='Process Phase 4 local schedules/jobs and approved audits ONLY; no legacy AI/discovery calls')
     worker.add_argument('--watch',action='store_true',help='Poll until Control+C; selected phase also processes its enabled internal schedules')
+    worker.add_argument('--database',help='Explicit SQLite path; relative paths resolve under the checkout, not the terminal directory')
+    doctor=commands.add_parser('doctor',help='Read-only database, queue and worker diagnostics; does not execute tasks')
+    doctor.add_argument('--phase5',action='store_true')
+    doctor.add_argument('--phase4',action='store_true')
+    doctor.add_argument('--database')
+    doctor.add_argument('--json',action='store_true',help='Machine-readable diagnostics')
     review=commands.add_parser('policy-review',help='Record YOUR current review of all three provider policies; does not verify them automatically')
     review.add_argument('--reviewer',required=True);review.add_argument('--contact',required=True)
     review.add_argument('--output',default='.development/osm-policy.json')
@@ -36,21 +45,51 @@ def main():
         print('Recorded your attestation at',path,'. Set AGENCYOS_OSM_POLICY_FILE in BOTH app and worker shells. This command did not fetch or independently verify policies.')
         return
     import app
+    import runtime_status
+    from phase3_store import connect
+    if args.database:app.DB_PATH=runtime_status.database_path(args.database)
     if args.phase4 and args.phase5:parser.error('Choose --phase4 or --phase5, not both.')
+    phase='5' if args.phase5 else ('4' if args.phase4 else '3')
+    if not Path(app.DB_PATH).is_file():parser.error('Selected database does not exist: '+app.DB_PATH+'. Start app.py with the same AGENCYOS_DB; the worker will not create another database.')
+    # Read-only startup checks; no migrations or task execution through doctor.
+    try:
+        with closing(sqlite3.connect(Path(app.DB_PATH).as_uri()+'?mode=ro',uri=True)) as conn:
+            info=runtime_status.status(conn,app.DB_PATH,phase)
+            if info['database_identity']=='Not migrated':parser.error('Selected database needs current migrations. Start matching app.py on a backup copy first.')
+    except sqlite3.Error:parser.error('Cannot read selected database: '+app.DB_PATH)
+    if args.command=='doctor':
+        if args.json:print(json.dumps(info,sort_keys=True))
+        else:
+            print('Database: '+info['database_path']+'\nIdentity: '+info['database_identity']+'\nSelected phase: '+phase)
+            print('Queues: '+json.dumps(info['queues'],sort_keys=True))
+            print('Matching recent worker: '+str(info['selected_worker_connected'])+'; paused: '+str(info['paused']))
+            print('Phase 5 sales needs --phase5; Agency Manager research needs --phase4; the legacy research queue uses neither flag.')
+        return
     if args.phase5:
         from sales_engine import worker_once
     elif args.phase4:
         from phase4 import worker_once
     else:
         from phase3 import worker_once
-    # No init_db here: avoid accidental migrations. Start the selected app once first.
-    if not Path(app.DB_PATH).is_file():parser.error('Selected database does not exist. Start app.py first with the same AGENCYOS_DB.')
-    while True:
-        try:worked=worker_once(app.DB_PATH)
-        except sqlite3.OperationalError:parser.error('Selected database is unavailable, busy or not migrated to the selected phase. Check AGENCYOS_DB and start the matching app first.')
-        if not args.watch:
-            print('Processed one task.' if worked else 'No queued task.');break
-        if not worked:time.sleep(1)
+    print('Worker phase '+phase+' | database '+info['database_path']+' | identity '+info['database_identity'],flush=True)
+    for other,counts in info['queues'].items():
+        if other!=phase and counts.get('Queued',0):
+            print('Notice: '+str(counts['Queued'])+' queued task(s) belong to Phase '+other+' and are not consumed by this worker.',flush=True)
+    worker_id=uuid.uuid4().hex
+    def terminate(_signum,_frame):raise SystemExit(0)
+    signal.signal(signal.SIGTERM,terminate)
+    try:
+        while True:
+            runtime_status.heartbeat(app.DB_PATH,worker_id,phase)
+            try:worked=worker_once(app.DB_PATH)
+            except sqlite3.OperationalError:parser.error('Selected database is unavailable, busy or not migrated to the selected phase. Check AGENCYOS_DB and start the matching app first.')
+            if worked:print('Processed one task.',flush=True)
+            if not args.watch:
+                if not worked:print('No queued task.',flush=True)
+                break
+            if not worked:time.sleep(1)
+    finally:
+        runtime_status.heartbeat(app.DB_PATH,worker_id,phase,'stopped')
 
 if __name__=='__main__':
     try:main()

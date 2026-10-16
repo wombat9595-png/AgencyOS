@@ -138,8 +138,9 @@ def worker_once(path):
                 legacy=conn.execute('INSERT INTO quotes(lead_id,client_name,title,amount_cents,status,notes,created_at) VALUES(?,?,?,?,?,?,?)',
                     (flow['lead_id'],json.loads(flow['snapshot_json'])['lead']['business_name'],'Phase 5 draft v'+str(version),result['totals']['one-off']['total_cents'],'Draft',
                      'Phase 5 flow #'+str(flow['id'])+'. One-off AUD total only; recurring items and authoritative version are in Sales. Editable legacy status is not acceptance evidence.',stamp())).lastrowid
-                conn.execute('INSERT INTO p5_quotes(flow_id,version,content_json,content_hash,legacy_quote_id,created_at) VALUES(?,?,?,?,?,?)',
-                             (flow['id'],version,store.dumps(result),store.digest(result),legacy,stamp()))
+                quote_id=conn.execute('INSERT INTO p5_quotes(flow_id,version,content_json,content_hash,legacy_quote_id,created_at) VALUES(?,?,?,?,?,?)',
+                             (flow['id'],version,store.dumps(result),store.digest(result),legacy,stamp())).lastrowid
+                result['quote_id']=quote_id
                 conn.execute("UPDATE p5_flows SET state='Quote needs review' WHERE id=?",(flow['id'],))
             elif job['kind']=='classify':
                 if result['classification'] in ('opt-out','rejection'):
@@ -153,10 +154,10 @@ def worker_once(path):
             # not regress the accepted opportunity into an earlier sales stage.
             if flow['state']=='Project brief ready':
                 conn.execute("UPDATE p5_flows SET state='Project brief ready' WHERE id=?",(flow['id'],))
-            conn.execute("UPDATE p5_jobs SET status='Needs review',result_json=?,lease_until=NULL,updated_at=? WHERE id=?",(store.dumps(result),stamp(),job['id']))
+            conn.execute('UPDATE p5_jobs SET status=?,result_json=?,lease_until=NULL,updated_at=? WHERE id=?',('Completed' if job['kind']=='dispatch' else 'Needs review',store.dumps(result),stamp(),job['id']))
             if job['mode']=='ai':
                 conn.execute("UPDATE p5_ai_usage SET status='Response received; ceiling retained, not actual billing' WHERE job_id=?",(job['id'],))
-            store.log(conn,job['user_id'],'Completed '+job['kind']+'; review required.',flow['id'],job['id'])
+            store.log(conn,job['user_id'],'Completed dispatch; mock receipt recorded, no real email.' if job['kind']=='dispatch' else 'Completed '+job['kind']+'; review required.',flow['id'],job['id'])
             conn.commit()
         except Exception as exc:
             conn.rollback()

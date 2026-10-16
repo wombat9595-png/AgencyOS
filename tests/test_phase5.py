@@ -139,7 +139,7 @@ class SalesTest(unittest.TestCase):
 
     def test_lead_research_approval_is_real_checkpoint_and_deduped(self):
         self.new()
-        self.assertEqual(self.new().status_code,400)
+        self.assertEqual(self.new().status_code,302)
         self.assertTrue(self.work())
         self.assertFalse(self.work())
         self.assertEqual(len(self.rows('p5_drafts')),0)
