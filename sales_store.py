@@ -111,9 +111,9 @@ def log(conn,user_id,message,flow_id=None,job_id=None):
 
 
 def enqueue(conn,flow_id,kind,payload,mode='local',key=None):
-    if kind not in ('research','outreach','classify','reply','proposal','quote','dispatch','followup','website') or mode not in ('local','ai'):
+    if kind not in ('research','outreach','classify','reply','proposal','quote','dispatch','followup','website','research-assist','qa-assist') or mode not in ('local','ai'):
         raise WorkflowError('Unsupported sales task or execution mode.')
-    if mode=='ai' and kind not in ('outreach','reply','proposal','classify','website'):
+    if mode=='ai' and kind not in ('outreach','reply','proposal','classify','website','research-assist','qa-assist'):
         raise WorkflowError('This task has no AI executor.')
     if len(dumps(payload))>50000:
         raise WorkflowError('Sales task snapshot exceeds 50,000 characters.')

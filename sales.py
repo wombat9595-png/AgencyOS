@@ -211,7 +211,7 @@ def register(app,get_db,login_required):
             conn.execute("UPDATE p5_jobs SET status='Approved',updated_at=? WHERE id=?",(stamp(),job_id))
         elif decision=='Cancel' and job['status'] in ('Queued','Awaiting approval'):
             conn.execute("UPDATE p5_jobs SET status='Cancelled',updated_at=? WHERE id=?",(stamp(),job_id))
-        elif decision=='Acknowledge result' and job['status']=='Needs review' and (job['kind']=='followup' or (job['kind']=='classify' and json.loads(job['result_json'])['classification'] in ('rejection','opt-out'))):
+        elif decision=='Acknowledge result' and job['status']=='Needs review' and (job['kind'] in ('followup','research-assist','qa-assist') or (job['kind']=='classify' and json.loads(job['result_json'])['classification'] in ('rejection','opt-out'))):
             conn.execute("UPDATE p5_jobs SET status='Approved',updated_at=? WHERE id=?",(stamp(),job_id))
         elif decision=='Retry local' and job['status'] in ('Failed','Interrupted') and job['mode']=='local' and job['kind']!='dispatch' and job['attempts']<3:
             conn.execute("UPDATE p5_jobs SET status='Queued',error='',not_before=?,updated_at=? WHERE id=?",(time.time()+10,stamp(),job_id))

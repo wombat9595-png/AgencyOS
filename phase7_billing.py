@@ -223,7 +223,7 @@ def register(app, get_db, login_required):
     @login_required
     def invoice_approve_test(invoice_id):
         conn = get_db(); row = _invoice_row(conn, invoice_id, request_session_user())
-        if row['status'] != 'Draft' or not row['synthetic']:
+        if row['status'] != 'Draft' or not row['synthetic'] or request.form.get('confirm')!='yes':
             flash('Only an unissued synthetic invoice draft can enter the test workflow.', 'error')
             return redirect(url_for('invoices'))
         config = conn.execute('SELECT * FROM p7_control WHERE id=1').fetchone()

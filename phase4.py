@@ -95,7 +95,7 @@ def register(app, get_db, login_required, insert_lead):
     def pause_actions():
         # Applies to legacy action endpoints too. Login/logout and the pause switch
         # remain available so the owner can recover. GET pages stay accessible.
-        if request.method=='POST' and request.endpoint not in ('agency_pause','login','logout','setup','sales_provider_event','sales_record_reply','sales_suppress','sales_cancel'):
+        if request.method=='POST' and request.endpoint not in ('agency_pause','login','logout','setup','sales_provider_event','sales_record_reply','sales_suppress','sales_cancel','unsubscribe','payment_webhook'):
             if store.paused(get_db()):
                 raise WorkflowError('Emergency pause active. Resume in Agency Manager before making changes.')
 
@@ -273,6 +273,15 @@ def register(app, get_db, login_required, insert_lead):
             abort(409)
         if not data.source_current(row) or request.form.get('confirm')!='yes':
             raise WorkflowError('A current owner-reviewed permission record and explicit candidate approval are required.')
+        configured=conn.execute('SELECT config_json FROM prep_discovery WHERE user_id=?',(session['user_id'],)).fetchone()
+        if configured:
+            plan=json.loads(configured[0]);details=json.loads(row['data_json'])
+            if row['state'] not in plan['states'] or (plan['cities'] and row['city'].casefold() not in {city.casefold() for city in plan['cities']}) or (plan['industries'] and details['industry'].casefold() not in {industry.casefold() for industry in plan['industries']}):
+                raise WorkflowError('Candidate is outside the saved geography/industry plan.')
+            imported=conn.execute("SELECT COUNT(*) FROM p4_candidates WHERE user_id=? AND crm_imported_at>=?",(session['user_id'],stamp()[:10])).fetchone()[0]
+            if imported>=plan['daily_leads']:raise WorkflowError('Saved daily licensed-lead import ceiling reached.')
+            score=50+20*bool(details.get('industry'))
+            if score<plan['minimum_score']:raise WorkflowError('Source-only qualification does not meet the saved minimum score; review criteria before import.')
         hints=data.duplicate(conn,row)
         if hints:
             raise WorkflowError('Duplicate blocked: '+'; '.join(hints[:5])+'. Review the existing profile; no automatic merge or overwrite.')
@@ -280,7 +289,7 @@ def register(app, get_db, login_required, insert_lead):
         values['source']=row['name'][:254]
         insert_lead(conn,values)
         lead_id=conn.execute('SELECT last_insert_rowid()').fetchone()[0]
-        conn.execute("UPDATE p4_candidates SET status='Imported',lead_id=? WHERE id=?",(lead_id,candidate_id))
+        conn.execute("UPDATE p4_candidates SET status='Imported',lead_id=?,crm_imported_at=? WHERE id=?",(lead_id,stamp(),candidate_id))
         facts=dict(source_id=row['external_id'],licence_url=row['licence_url'],attribution=row['attribution'],state=row['state'],city=row['city'],data=values,
                    limitation='Source-reported; not independently verified. Public details do not establish marketing consent.')
         conn.execute('INSERT INTO p3_evidence(user_id,lead_id,source_url,observed_at,origin,facts_json) VALUES(?,?,?,?,?,?)',(session['user_id'],lead_id,row['source_url'],row['observed_at'],'Licensed directory',json.dumps(facts)))

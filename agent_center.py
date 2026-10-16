@@ -52,7 +52,8 @@ def migrate_agents(conn):
 
 def provider_fingerprint():
     fields = ('AGENCYOS_AI_PROVIDER', 'AGENCYOS_AI_ENDPOINT', 'AGENCYOS_AI_MODEL', 'AGENCYOS_AI_API_KEY')
-    return hashlib.sha256(json.dumps([os.environ.get(key, '') for key in fields]).encode()).hexdigest()
+    from production_security import secret
+    return hashlib.sha256(json.dumps([secret(key) if key=='AGENCYOS_AI_API_KEY' else os.environ.get(key, '') for key in fields]).encode()).hexdigest()
 
 def provider_info():
     try:

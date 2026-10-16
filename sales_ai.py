@@ -34,6 +34,10 @@ def approval(conn,job):
     # UTF-8 bytes + conservative framing allowance bound input token estimates.
     tokens=len((SYSTEM+user).encode())+2048
     cents=max(1,(tokens*config['input_rate']+(MAX_OUTPUT+2048)*config['output_rate']+999999)//1000000)
+    if job['kind']=='research-assist':
+        plan=conn.execute('SELECT d.config_json FROM prep_discovery d JOIN p5_flows f ON f.user_id=d.user_id WHERE f.id=?',(job['flow_id'],)).fetchone()
+        if not plan or cents>json.loads(plan[0])['research_budget_cents']:
+            raise WorkflowError('A positive research ceiling must be configured in the Launch discovery plan before AI research approval.')
     context=dict(provider=provider_fingerprint(),model=model,input_rate=config['input_rate'],output_rate=config['output_rate'],maximum_output=MAX_OUTPUT)
     return digest([job['kind'],user,context,cents]),cents
 
@@ -52,6 +56,10 @@ def execute(conn,job):
     used=conn.execute('SELECT COALESCE(SUM(reserved_cents),0) total,COUNT(*) n FROM p5_ai_usage WHERE day=?',(stamp()[:10],)).fetchone()
     if used['total']+maximum>config['daily_cents'] or used['n']>=config['daily_requests']:
         raise WorkflowError('AI daily budget/request ceiling exceeded; no request started.')
+    if job['kind']=='research-assist':
+        plan=json.loads(conn.execute('SELECT config_json FROM prep_discovery WHERE user_id=?',(job['user_id'],)).fetchone()[0])
+        research_used=conn.execute("SELECT COALESCE(SUM(u.reserved_cents),0) FROM p5_ai_usage u JOIN p5_jobs j ON j.id=u.job_id WHERE u.day=? AND j.kind='research-assist'",(stamp()[:10],)).fetchone()[0]
+        if research_used+maximum>plan['research_budget_cents']:raise WorkflowError('Daily AI research reservation ceiling reached.')
     if conn.execute('SELECT 1 FROM p5_ai_usage WHERE job_id=?',(job['id'],)).fetchone():
         raise WorkflowError('This job already reserved an uncertain/completed AI request. It cannot execute twice.')
     conn.execute('INSERT INTO p5_ai_usage(job_id,day,reserved_cents) VALUES(?,?,?)',(job['id'],stamp()[:10],maximum))

@@ -27,6 +27,8 @@ import p8_ops
 import p10_release
 import production_security
 import production_ops
+import production_portal
+import email_preparation
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = runtime_status.database_path(os.environ.get("AGENCYOS_DB"))
@@ -103,6 +105,8 @@ def init_db():
     runtime_status.migrate(conn)
     production_security.migrate(conn)
     production_ops.migrate(conn)
+    production_portal.migrate(conn)
+    email_preparation.migrate(conn)
     conn.commit()
     conn.close()
 
@@ -396,7 +400,7 @@ def template_helpers():
 
 @app.before_request
 def protect_forms():
-    if request.method == 'POST' and request.endpoint not in ('sales_provider_event', 'payment_webhook'):
+    if request.method == 'POST' and request.endpoint not in ('sales_provider_event', 'payment_webhook','unsubscribe'):
         expected = session.get('csrf_token', '')
         supplied = request.form.get('csrf_token', '')
         if not expected or not hmac.compare_digest(expected, supplied):
@@ -508,6 +512,8 @@ def import_preview(token):
 register_agent_routes(app, db, login_required)
 production_security.install(app,db)
 production_ops.register(app,db)
+production_portal.register(app,db,login_required,APP_DIR)
+email_preparation.register(app,db)
 register_phase3(app, db, login_required, insert_lead)
 register_phase4(app, db, login_required, insert_lead)
 register_sales(app, db, login_required)

@@ -65,6 +65,7 @@ def install(app,get_db):
     @app.before_request
     def installation_boundary():
         g.request_started=time.monotonic()
+        if request.endpoint in ('unsubscribe','healthz','readyz','sales_provider_event','payment_webhook'):return None
         if app.config['PRODUCTION_MODE'] and request.endpoint=='setup':abort(403)
         if session.get('user_id'):
             owner=get_db().execute('SELECT id FROM users ORDER BY id LIMIT 1').fetchone()

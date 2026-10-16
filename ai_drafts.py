@@ -3,13 +3,14 @@ import json
 import os
 from urllib import request, error
 from urllib.parse import urlsplit
+from production_security import secret
 
 class DraftError(Exception):
     pass
 
 def provider_settings():
     provider = os.environ.get('AGENCYOS_AI_PROVIDER', '')
-    key = os.environ.get('AGENCYOS_AI_API_KEY', '')
+    key = secret('AGENCYOS_AI_API_KEY')
     endpoint = os.environ.get('AGENCYOS_AI_ENDPOINT', '')
     model = os.environ.get('AGENCYOS_AI_MODEL', '')
     if provider != 'openai-compatible' or not all((key, endpoint, model)):
@@ -21,6 +22,9 @@ def provider_settings():
         raise DraftError('AI endpoint is not a valid HTTPS URL.') from None
     if url.scheme != 'https' or not url.hostname or url.username or url.password or url.query or url.fragment:
         raise DraftError('AI endpoint must be an HTTPS chat-completions URL without credentials, query or fragment.')
+    if os.environ.get('AGENCYOS_ENV')=='production' and (url.port not in (None,443) or url.hostname not in os.environ.get('AGENCYOS_AI_ALLOWED_HOSTS','').split(',')):
+        raise DraftError('Production AI requires an explicitly approved HTTPS provider hostname.')
+    if len(model)>200 or any(c in key for c in '\r\n'):raise DraftError('Invalid AI key/model configuration.')
     return provider, key, endpoint, model
 
 def request_chat(system_prompt, user_content, max_tokens=600):

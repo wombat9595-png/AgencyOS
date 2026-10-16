@@ -91,7 +91,8 @@ def worker_once(path):
         if not job:return False
         payload=json.loads(job['payload_json'])
         try:
-            agent_id=('lead-research' if job['kind']=='research' else
+            agent_id=('lead-research' if job['kind'] in ('research','research-assist') else
+                      'website-qa' if job['kind']=='qa-assist' else
                       'sales-replies' if job['kind'] in ('classify','reply','followup') else
                       'sales-proposals' if job['kind'] in ('proposal','quote') else
                       'website-builder' if job['kind']=='website' else 'outreach')
