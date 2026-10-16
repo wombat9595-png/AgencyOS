@@ -88,7 +88,7 @@ def fit_score(snapshot,contact_eligible=False):
 
 
 def register(app,get_db,login_required):
-    @app.get('/business')
+    @app.get('/business',strict_slashes=False)
     @login_required
     def business_home():
         import runtime_status

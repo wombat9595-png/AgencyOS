@@ -46,7 +46,7 @@ def register(app,get_db,login_required,app_dir):
         conn.execute('BEGIN IMMEDIATE');sales_store.enqueue(conn,flow_id,kind,payload,'ai')
         conn.commit();return redirect(url_for('sales_flow',flow_id=flow_id))
 
-    @app.get('/launch')
+    @app.get('/launch',strict_slashes=False)
     @login_required
     def launch_dashboard():
         conn=get_db();owner=session['user_id']

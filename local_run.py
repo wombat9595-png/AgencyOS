@@ -6,6 +6,8 @@ read-only and never migrated. No public listeners, tunnel or login item is made.
 import argparse
 from contextlib import closing
 import fcntl
+import json
+import socket
 import os
 from pathlib import Path
 import secrets
@@ -103,11 +105,40 @@ def worker_main():
         for phase in ('4','5','8'):runtime_status.heartbeat(app.DB_PATH,'private-'+str(os.getpid())+'-'+phase,phase,'stopped')
 
 
+def select_port(preferred=None):
+    """Choose a loopback port without disturbing another app (e.g. AirPlay)."""
+    candidates=[preferred] if preferred is not None else [5000,*range(5050,5060)]
+    for candidate in candidates:
+        if not 1024<=candidate<=65535:raise ValueError('Choose a local port from 1024 to 65535.')
+        try:
+            with socket.socket() as probe:probe.bind(('127.0.0.1',candidate))
+            return candidate
+        except OSError:
+            if preferred is not None:raise ValueError('Local port '+str(candidate)+' is busy. Close the other launcher or omit --port for automatic selection.') from None
+    raise ValueError('No local dashboard port is available. Close the other AgencyOS launcher and try again.')
+
+
+def existing_dashboard(home):
+    """Use only bounded private metadata and verify a local AgencyOS health reply."""
+    from urllib.request import urlopen
+    import re
+    try:
+        path=home/'launcher.json'
+        if path.is_symlink() or path.stat().st_size>1024:return None
+        url=json.loads(path.read_text()).get('url','')
+        match=re.fullmatch(r'http://127\.0\.0\.1:([0-9]{4,5})/business',url)
+        if not match or not 1024<=int(match[1])<=65535:return None
+        with urlopen(url.rsplit('/',1)[0]+'/healthz',timeout=2) as response:
+            if response.status==200 and json.loads(response.read(1000)).get('status')=='alive':return url
+    except (OSError,ValueError,TypeError,AttributeError):pass
+    return None
+
+
 def main():
     parser=argparse.ArgumentParser(description='Private AgencyOS; no paid providers, live sending or public hosting.')
     parser.add_argument('--data-dir',default=str(Path.home()/'Library'/'Application Support'/'AgencyOS'))
     parser.add_argument('--import-database',help='Copy an existing database into a NEW private data directory; never modify source')
-    parser.add_argument('--port',type=int,default=5000)
+    parser.add_argument('--port',type=int,help='Optional fixed port; otherwise use 5000 or an available 5050–5059 port')
     parser.add_argument('--no-browser',action='store_true')
     parser.add_argument('--worker',action='store_true',help=argparse.SUPPRESS)
     parser.add_argument('--server',action='store_true',help=argparse.SUPPRESS)
@@ -117,9 +148,8 @@ def main():
         from app import app
         from werkzeug.serving import make_server
         from production_security import PrivateRequestHandler
-        server=make_server('127.0.0.1',args.port,app,threaded=True,request_handler=PrivateRequestHandler)
+        server=make_server('127.0.0.1',args.port or 5000,app,threaded=True,request_handler=PrivateRequestHandler)
         server.serve_forever();return
-    if not 1024<=args.port<=65535:parser.error('Choose a loopback port from 1024 to 65535')
     os.umask(0o077)
     home=Path(args.data_dir).expanduser()
     if home.is_symlink():parser.error('Private data directory cannot be a symbolic link')
@@ -127,7 +157,14 @@ def main():
     if (home/'launcher.lock').is_symlink():parser.error('Launcher lock cannot be a symbolic link')
     lock=(home/'launcher.lock').open('a')
     try:fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
-    except BlockingIOError:parser.error('This private workspace is already running. Open its existing window.')
+    except BlockingIOError:
+        url=existing_dashboard(home)
+        if url:
+            print('AgencyOS is already running. Dashboard: '+url,flush=True)
+            if not args.no_browser:webbrowser.open(url)
+            return
+        parser.error('AgencyOS is already starting or running. Keep its launcher window open; retry opening this launcher in a moment.')
+    args.port=select_port(args.port)
     home,env=prepare(home,args.import_database)
     # Make a verified, encrypted pre-migration snapshot of an existing workspace.
     if (home/'business.sqlite3').exists():
@@ -143,9 +180,6 @@ def main():
     os.environ.update(env)
     import app
     app.init_db();Path(app.DB_PATH).chmod(0o600)
-    # Fail before starting a worker if the port belongs to any other process.
-    import socket
-    with socket.socket() as sock:sock.bind(('127.0.0.1',args.port))
     children=[]
     def stop(*_):raise KeyboardInterrupt()
     signal.signal(signal.SIGTERM,stop)
@@ -160,8 +194,14 @@ def main():
             except OSError:time.sleep(.1)
         else:raise RuntimeError('Private server readiness timeout')
         children.append(subprocess.Popen([sys.executable,str(ROOT/'local_run.py'),'--worker'],cwd=ROOT,env=env))
+        dashboard_url='http://127.0.0.1:'+str(args.port)+'/business'
+        metadata=home/'launcher.json'
+        if metadata.is_symlink():raise ValueError('Private launcher metadata cannot be a symbolic link')
+        metadata.write_text(json.dumps(dict(url=dashboard_url,pid=os.getpid())))
+        metadata.chmod(0o600)
+        print('Dashboard: '+dashboard_url+'\nLaunch dashboard: '+dashboard_url.rsplit('/',1)[0]+'/launch',flush=True)
         print('AgencyOS private workspace ready. Live sending and paid APIs disabled. Close this launcher to stop. Data: '+str(home),flush=True)
-        if not args.no_browser:webbrowser.open('http://127.0.0.1:'+str(args.port)+'/business')
+        if not args.no_browser:webbrowser.open(dashboard_url)
         while True:
             if any(p.poll() is not None for p in children):raise RuntimeError('A local process stopped; restart the launcher. Durable jobs and approvals remain saved.')
             time.sleep(1)
@@ -172,7 +212,16 @@ def main():
         for child in children:
             try:child.wait(timeout=20)
             except subprocess.TimeoutExpired:child.kill();child.wait()
+        metadata=home/'launcher.json'
+        if metadata.is_file() and not metadata.is_symlink():
+            try:
+                if json.loads(metadata.read_text()).get('pid')==os.getpid():metadata.unlink()
+            except (OSError,ValueError):pass
         lock.close()
 
 
-if __name__=='__main__':main()
+if __name__=='__main__':
+    try:main()
+    except (OSError,ValueError,RuntimeError) as exc:
+        print('AgencyOS could not start: '+str(exc),file=sys.stderr)
+        sys.exit(1)

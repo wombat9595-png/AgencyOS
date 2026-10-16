@@ -1,0 +1,1 @@
+{"passed": true, "python": "3.13.5", "dashboard_http_status": 200, "dashboard_path": "/launch", "local_workers_verified": 3, "private_file_modes": "0600", "gmail_connected": false, "live_sending": false, "external_provider_calls": 0}

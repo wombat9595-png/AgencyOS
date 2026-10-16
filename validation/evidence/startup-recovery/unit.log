@@ -1,0 +1,11 @@
+test_owner_dashboard_urls_accept_optional_trailing_slash (test_local_startup.LocalDashboardRoutesTest.test_owner_dashboard_urls_accept_optional_trailing_slash) ... ok
+test_unknown_routes_still_report_not_found (test_local_startup.LocalDashboardRoutesTest.test_unknown_routes_still_report_not_found) ... ok
+test_busy_explicit_port_is_actionable_and_does_not_close_other_listener (test_local_startup.LocalStartupTest.test_busy_explicit_port_is_actionable_and_does_not_close_other_listener) ... ok
+test_default_port_selects_safe_alternative_on_collision (test_local_startup.LocalStartupTest.test_default_port_selects_safe_alternative_on_collision) ... ok
+test_existing_dashboard_requires_actual_local_health_response (test_local_startup.LocalStartupTest.test_existing_dashboard_requires_actual_local_health_response) ... ok
+test_metadata_cannot_open_external_or_malformed_dashboard (test_local_startup.LocalStartupTest.test_metadata_cannot_open_external_or_malformed_dashboard) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.763s
+
+OK

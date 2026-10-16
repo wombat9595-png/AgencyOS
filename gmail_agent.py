@@ -367,7 +367,7 @@ def register(app,get_db,login_required):
         if not row:abort(404)
         return row
 
-    @app.get('/gmail')
+    @app.get('/gmail',strict_slashes=False)
     @login_required
     def gmail_home():
         conn=get_db();owner=session['user_id'];account=conn.execute('SELECT * FROM gmail_accounts WHERE owner_id=?',(owner,)).fetchone()
