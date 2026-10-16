@@ -397,8 +397,9 @@ def apply_event(conn, provider, payload, signature):
     if type(amount) is not int or amount<=0 or currency not in ('aud',) or (charge_event and invoice['status'] not in ('Approved (test)','Partially paid')):
         conn.execute("UPDATE p7_payment_events SET result='Needs review' WHERE id=?",(event_pk,)); return 'Needs review'
     if event_type in ('payment.succeeded','payment_intent.succeeded','checkout.session.completed'):
-        txn=(obj.get('payment_intent') if event_type=='checkout.session.completed' else obj.get('id')) or event_id
-        if not isinstance(txn,str) or len(txn)>200:return 'Rejected'
+        txn=obj.get('payment_intent') if event_type=='checkout.session.completed' else obj.get('id')
+        if not isinstance(txn,str) or not 1<=len(txn)<=200:
+            conn.execute("UPDATE p7_payment_events SET result='Missing canonical transaction' WHERE id=?",(event_pk,));return 'Rejected'
         existing=conn.execute('SELECT * FROM p7_payments WHERE transaction_id=?',(txn,)).fetchone()
         if existing:
             result='Duplicate transaction' if existing['invoice_id']==invoice_id and existing['amount_cents']==amount else 'Needs review'
@@ -418,12 +419,21 @@ def apply_event(conn, provider, payload, signature):
         conn.execute('UPDATE p7_invoices SET status=? WHERE id=?',(status,invoice_id))
         conn.execute("UPDATE p7_payment_events SET result='Applied' WHERE id=?",(event_pk,)); return 'Applied'
     if event_type in ('charge.refunded','refund.updated'):
+        if provider=='stripe_test':
+            conn.execute("UPDATE p7_payment_events SET result='Needs provider refund correlation review' WHERE id=?",(event_pk,));return 'Needs review'
         amount=obj.get('amount_refunded',amount)
         paid=conn.execute('SELECT COALESCE(SUM(amount_cents),0) FROM p7_payments WHERE invoice_id=?',(invoice_id,)).fetchone()[0]
-        if type(amount) is not int or amount<=0 or amount>paid:
+        external=obj.get('id')
+        previous=conn.execute('SELECT * FROM p7_refunds WHERE external_id=?',(external,)).fetchone() if isinstance(external,str) else None
+        others=conn.execute("SELECT COALESCE(SUM(amount_cents),0) FROM p7_refunds WHERE invoice_id=? AND external_id!=? AND status IN ('verified','succeeded','complete')",(invoice_id,external or '')).fetchone()[0]
+        mixed=conn.execute('SELECT 1 FROM p7_refunds r JOIN p7_payment_events e ON e.id=r.event_id WHERE r.invoice_id=? AND e.event_type!=? LIMIT 1',(invoice_id,event_type)).fetchone()
+        if type(amount) is not int or amount<=0 or amount+others>paid or not isinstance(external,str) or not 1<=len(external)<=200 or mixed or (previous and (previous['invoice_id']!=invoice_id or amount<previous['amount_cents'])):
             conn.execute("UPDATE p7_payment_events SET result='Needs review' WHERE id=?",(event_pk,));return 'Needs review'
-        conn.execute('INSERT OR IGNORE INTO p7_refunds(invoice_id,external_id,amount_cents,status,event_id) VALUES(?,?,?,?,?)',
-                     (invoice_id,obj.get('id') or event_id,amount,obj.get('status','verified'),event_pk))
+        status=obj.get('status','verified')
+        if status not in ('verified','succeeded','complete'):
+            conn.execute("UPDATE p7_payment_events SET result='Refund pending or failed' WHERE id=?",(event_pk,));return 'Needs review'
+        if previous:conn.execute('UPDATE p7_refunds SET amount_cents=?,status=?,event_id=? WHERE id=?',(amount,status,event_pk,previous['id']))
+        else:conn.execute('INSERT INTO p7_refunds(invoice_id,external_id,amount_cents,status,event_id) VALUES(?,?,?,?,?)',(invoice_id,external,amount,status,event_pk))
         total_refunded=conn.execute("SELECT COALESCE(SUM(amount_cents),0) FROM p7_refunds WHERE invoice_id=? AND status IN ('verified','succeeded','complete')",(invoice_id,)).fetchone()[0]
         if total_refunded>=invoice['total_cents']:
             conn.execute("UPDATE p7_invoices SET status='Refunded (test)' WHERE id=?",(invoice_id,))

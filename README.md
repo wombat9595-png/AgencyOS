@@ -1,4 +1,10 @@
-# AgencyOS — Phase 5: coordinated sales workflow
+# AgencyOS — production launch preparation
+
+Current branch: `codex/agencyos-production-prep`. Start with [production readiness](AGENCYOS_PRODUCTION_READINESS.md), [deployment/setup and recovery](DEPLOYMENT.md), [provider review](PROVIDER_INTEGRATION_REVIEW.md), [initial audit](PRODUCTION_READINESS_AUDIT.md) and [progress/evidence](AGENCYOS_PRODUCTION_PROGRESS.md). The owner Launch dashboard is at `/launch`.
+
+Local preparation and synthetic workflows are available. Live email, real invoicing/charging, customer publication and a public production deployment are not active. Use the production WSGI/services configuration only after the documented host/provider prerequisites and approvals; `app.py` remains a local development server.
+
+The following local workflow reference originated in Phase 5 and remains useful for the retained sales modules. Automated production validation is reproducible with `python tests/validate_production.py` in the prepared Python 3.13 development environment; it creates isolated fictional databases and requires no manual fixture entry.
 
 The master development program is tracked in [AGENCYOS_MASTER_PROGRESS.md](AGENCYOS_MASTER_PROGRESS.md) and [AGENCYOS_MASTER_ROADMAP.md](AGENCYOS_MASTER_ROADMAP.md). Phase 6 website delivery is described in [PHASE6.md](PHASE6.md), Phase 7 billing/payment boundaries are in [PHASE7.md](PHASE7.md), Phase 8 operations are in [PHASE8.md](PHASE8.md), Phase 9 discovery/outreach is in [PHASE9.md](PHASE9.md), and Phase 10 local staging/readiness is in [PHASE10.md](PHASE10.md) with validation evidence in [PHASE10_FINAL_VALIDATION.md](PHASE10_FINAL_VALIDATION.md). Phase 11 integration and readiness are documented in [PHASE11.md](PHASE11.md) and [PHASE11_FINAL_VALIDATION.md](PHASE11_FINAL_VALIDATION.md). Current milestone status and validation evidence are recorded in the progress log.
 
@@ -13,8 +19,8 @@ Built from Phase 4 commit `d55468a`, preserving the dashboard styling, earlier m
 Install Python 3.13 from [python.org](https://www.python.org/downloads/macos/) if `python3.13 --version` is unavailable. Git may prompt you to install macOS command-line tools. Keep all older folders/databases unchanged.
 
 ```sh
-git clone --branch agencyos-phase5 --single-branch https://github.com/wombat9595-png/AgencyOS.git AgencyOS-Phase5
-cd AgencyOS-Phase5
+git clone --branch codex/agencyos-production-prep --single-branch https://github.com/wombat9595-png/AgencyOS.git AgencyOS-Production-Prep
+cd AgencyOS-Production-Prep
 python3.13 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt

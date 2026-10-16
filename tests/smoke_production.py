@@ -56,8 +56,14 @@ with tempfile.TemporaryDirectory(prefix='agencyos-production-smoke-') as tmp:
         backup=temp/'backup.enc';restore=temp/'restored'
         command('production.py','backup','--database',str(database),'--output',str(backup),'--key-file',str(backupkey))
         command('production.py','restore','--database',str(database),'--input',str(backup),'--destination',str(restore),'--key-file',str(backupkey))
+        import hashlib
+        original=hashlib.sha256(database.read_bytes()).hexdigest()
+        command('production.py','migrate','--database',str(restore/'database.sqlite3'),'--upgrade-copy')
+        refused=subprocess.run([sys.executable,'production.py','migrate','--database',str(database)],cwd=root,env=env,capture_output=True,text=True,timeout=30)
+        assert refused.returncode!=0,'Existing database migration must require the explicit copy flag'
+        assert hashlib.sha256(database.read_bytes()).hexdigest()==original,'Copy migration changed source database'
         command('production.py','check','--database',str(database))
-        print('PASS: Gunicorn strict startup, health/readiness, bootstrap disabled, trusted-host rejection, secure session cookie, real login, encrypted CLI backup/restore and operational check')
+        print('PASS: Gunicorn strict startup, health/readiness, bootstrap disabled, trusted-host rejection, secure session cookie, real login, encrypted CLI backup/restore, isolated copy migration/source preservation and operational check')
     finally:
         server.terminate()
         try:server.wait(timeout=10)

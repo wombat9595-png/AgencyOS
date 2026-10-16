@@ -210,6 +210,15 @@ with tempfile.TemporaryDirectory(prefix='agencyos-browser-validation-') as tempo
             expect(page.get_by_role('heading',name='Sales team',exact=True)).to_be_visible()
             result['mobile_horizontal_overflow']=page.evaluate('document.documentElement.scrollWidth > innerWidth')
             page.screenshot(path=str(artifacts/'sales-mobile.png'),full_page=True)
+            for width,height,label in [(1440,1000,'desktop'),(390,844,'mobile')]:
+                page.set_viewport_size(dict(width=width,height=height));go('/launch')
+                expect(page.get_by_role('heading',name='Agency activity and launch readiness',exact=True)).to_be_visible()
+                form=page.locator('form[action="/launch/discovery"]')
+                fill(form,cities='Canberra',industries='Design')
+                submit(form,'Save discovery plan')
+                assert not page.evaluate('document.documentElement.scrollWidth > innerWidth'),'Launch overflow: '+label
+                page.screenshot(path=str(artifacts/('launch-'+label+'.png')),full_page=True)
+            step('Launch dashboard desktop/mobile, Canberra settings and no horizontal overflow')
             assert query('SELECT COUNT(*) n FROM p5_ai_usage')['n']==0
             assert query('SELECT COUNT(*) n FROM invoices')['n']==0
             assert not result['page_errors'] and not result['server_errors'],result

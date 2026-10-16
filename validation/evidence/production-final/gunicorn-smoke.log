@@ -1,0 +1,1 @@
+PASS: Gunicorn strict startup, health/readiness, bootstrap disabled, trusted-host rejection, secure session cookie, real login, encrypted CLI backup/restore, isolated copy migration/source preservation and operational check

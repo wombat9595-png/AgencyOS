@@ -13,3 +13,7 @@ __pycache__/
 *.zip
 .smoke-*/
 .venv313/
+secrets/
+*.secret
+*.enc
+output/staging/
