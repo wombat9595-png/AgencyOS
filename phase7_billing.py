@@ -213,7 +213,7 @@ def register(app, get_db, login_required):
             invoice_id = conn.execute('''INSERT INTO p7_invoices(user_id,quote_id,project_id,cycle,snapshot_json,subtotal_cents,gst_cents,total_cents,due_date,synthetic,created_at)
                 VALUES(?,?,?,?,?,?,?,?,?,?,?)''', (request_session_user(),quote_id,source['project_id'],cycle,json.dumps(snapshot),subtotal,gst,total,due.isoformat(),int(source['synthetic']),stamp())).lastrowid
             conn.commit()
-            flash('Synthetic invoice draft created. Review it before marking it test-approved.', 'success')
+            flash('Synthetic invoice draft created. Review it before marking it test-approved.' if source['synthetic'] else 'Real-scope draft prepared, not issued. Verify legal details and approve a compliant issuance process separately.', 'success')
         except Exception:
             conn.rollback()
             flash('An invoice draft already exists for that quote and billing cycle.', 'error')
@@ -242,6 +242,18 @@ def register(app, get_db, login_required):
         conn.commit()
         flash('Test invoice approved. It is synthetic, local and not sent to a customer.', 'success')
         return redirect(url_for('invoices'))
+
+    @app.route('/invoices/<int:invoice_id>/draft-pdf')
+    @login_required
+    def invoice_draft_pdf(invoice_id):
+        row=_invoice_row(get_db(),invoice_id,request_session_user())
+        if row['status']!='Draft':abort(409)
+        snapshot=json.loads(row['snapshot_json'])
+        if not snapshot['business'].get('business_name') or snapshot['quote_gst_mode'] not in ('not_registered','registered_10'):
+            abort(409,description='Confirm actual business identity and GST treatment before exporting a draft.')
+        snapshot['test_notice']='DRAFT - NOT ISSUED; OWNER LEGAL AND TAX REVIEW REQUIRED'
+        pdf=make_pdf('DRAFT-'+str(invoice_id),snapshot,row,date.fromisoformat(row['due_date']))
+        return send_file(BytesIO(pdf),mimetype='application/pdf',as_attachment=True,download_name='unissued-draft-'+str(invoice_id)+'.pdf')
 
     @app.route('/invoices/<int:invoice_id>/pdf')
     @login_required
@@ -457,7 +469,7 @@ def make_pdf(number, snapshot, invoice, due):
     stream=BytesIO()
     doc=SimpleDocTemplate(stream,pagesize=A4,rightMargin=20*mm,leftMargin=20*mm,topMargin=18*mm,bottomMargin=18*mm)
     styles=getSampleStyleSheet(); styles.add(ParagraphStyle(name='Subtle',parent=styles['Normal'],textColor=colors.HexColor('#536273'),fontSize=9,leading=13))
-    story=[Paragraph('INVOICE',styles['Title']),Paragraph('SYNTHETIC TEST - NOT ISSUED TO A CUSTOMER',styles['Heading2']),Spacer(1,5*mm)]
+    story=[Paragraph('INVOICE DRAFT' if snapshot.get('test_notice','').startswith('DRAFT') else 'INVOICE',styles['Title']),Paragraph(_esc(snapshot.get('test_notice','SYNTHETIC TEST - NOT ISSUED TO A CUSTOMER')),styles['Heading2']),Spacer(1,5*mm)]
     business=snapshot['business']; story.extend([Paragraph(f"<b>{_esc(business['business_name'])}</b>",styles['Heading2']),Paragraph(_esc(business.get('business_address','')).replace('\n','<br/>'),styles['Normal']),Paragraph('ABN: '+_esc(business.get('business_abn') or 'Not supplied'),styles['Subtle']),Spacer(1,4*mm)])
     story.append(Paragraph(f"<b>Bill to:</b> {_esc(snapshot['client_name'])}<br/><b>Invoice:</b> {_esc(number)}<br/><b>Issue date:</b> {date.today().isoformat()}<br/><b>Due date:</b> {due.isoformat()}<br/><b>Currency:</b> AUD",styles['Normal']))
     data=[['Description','Qty','Unit price','GST','Line total']]
@@ -468,7 +480,7 @@ def make_pdf(number, snapshot, invoice, due):
     story.extend([Spacer(1,7*mm),table,Spacer(1,5*mm)])
     totals=[['Subtotal',_aud(invoice['subtotal_cents'])],['GST',_aud(invoice['gst_cents'])],['Total AUD',_aud(invoice['total_cents'])]]
     t=Table(totals,colWidths=[35*mm,35*mm],hAlign='RIGHT'); t.setStyle(TableStyle([('ALIGN',(1,0),(1,-1),'RIGHT'),('FONTNAME',(0,-1),(-1,-1),'Helvetica-Bold'),('LINEABOVE',(0,-1),(-1,-1),.8,colors.HexColor('#17324d')),('TOPPADDING',(0,0),(-1,-1),5),('BOTTOMPADDING',(0,0),(-1,-1),5)])); story.append(t)
-    story.extend([Spacer(1,8*mm),Paragraph('<b>Payment terms:</b> '+_esc(business.get('terms','')),styles['Normal']),Spacer(1,3*mm),Paragraph('No payment has been taken. This synthetic example is for local testing only. Payment instructions are omitted because no approved business bank details were configured.',styles['Subtle'])])
+    story.extend([Spacer(1,8*mm),Paragraph('<b>Payment terms:</b> '+_esc(business.get('terms','')),styles['Normal']),Spacer(1,3*mm),Paragraph('No payment has been taken. This is an unissued draft for owner review; it is not a request for payment. Payment instructions are omitted.' if snapshot.get('test_notice','').startswith('DRAFT') else 'No payment has been taken. This synthetic example is for local testing only. Payment instructions are omitted because no approved business bank details were configured.',styles['Subtle'])])
     doc.build(story)
     return stream.getvalue()
 

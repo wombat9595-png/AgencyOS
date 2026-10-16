@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "synthetic": true,
+  "simulation": "Accelerated workload; not a long-duration reliability certification",
+  "local_tasks_completed": 21,
+  "expired_local_task_recoveries": 1,
+  "scheduled_occurrences": 1,
+  "daily_summaries": 1,
+  "paid_tasks_executed": 0,
+  "real_emails": 0,
+  "publications": 0,
+  "process_restart_verified": true,
+  "pause_verified": true
+}

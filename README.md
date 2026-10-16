@@ -1,3 +1,5 @@
+> **Current direction: private, zero-subscription, one-person business.** Start with [MacBook setup](LOCAL_BUSINESS_SETUP.md), [first-sale readiness](FIRST_SALE_READINESS.md) and [owner/provider checklist](FIRST_SALE_POLICY_REVIEW.md). AgencyOS stays on your Mac; historical AWS/production documents below are optional later references, not first-sale prerequisites. Live Gmail sending, paid APIs and public deployment stay disabled.
+
 # AgencyOS — production launch preparation
 
 Current branch: `codex/agencyos-production-prep`. Start with [production readiness](AGENCYOS_PRODUCTION_READINESS.md), [deployment/setup and recovery](DEPLOYMENT.md), [provider review](PROVIDER_INTEGRATION_REVIEW.md), [initial audit](PRODUCTION_READINESS_AUDIT.md) and [progress/evidence](AGENCYOS_PRODUCTION_PROGRESS.md). The owner Launch dashboard is at `/launch`.

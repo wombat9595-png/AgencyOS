@@ -236,7 +236,8 @@ def register(app,get_db,login_required):
             if conn.execute('SELECT 1 FROM p5_acceptances a JOIN p5_quotes q ON q.id=a.quote_id WHERE q.flow_id=?',(row['id'],)).fetchone():
                 raise WorkflowError('Accepted scope is frozen; no further proposal handoff in this opportunity.')
             config=conn.execute('SELECT * FROM p5_control WHERE id=1').fetchone()
-            content_payload=payload(row);content_payload.update(gst_mode=config['gst_mode'],proposal=content,proposal_draft_id=draft_id)
+            origin=conn.execute('SELECT payload_json FROM p5_jobs WHERE id=?',(draft['job_id'],)).fetchone()
+            content_payload=json.loads(origin['payload_json']);content_payload.update(gst_mode=config['gst_mode'],proposal=content,proposal_draft_id=draft_id)
             if config['gst_mode']=='unset':raise WorkflowError('Configure GST treatment before quote generation.')
             store.enqueue(conn,row['id'],'quote',content_payload,key='proposal-to-quote-'+str(draft_id))
         else:

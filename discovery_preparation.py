@@ -6,7 +6,7 @@ from phase3_store import WorkflowError
 from phase4_data import parse_dataset,STATES
 
 
-DEFAULTS=dict(states=['ACT'],cities=['Canberra'],industries=[],daily_leads=10,research_budget_cents=0,minimum_score=50,provider='licensed_csv')
+DEFAULTS=dict(states=list(STATES),cities=[],industries=[],daily_leads=10,research_budget_cents=0,minimum_score=50,provider='licensed_csv')
 
 
 def migrate(conn):
@@ -41,7 +41,7 @@ def filter_authorized_csv(raw,plan):
 def parse_abn_fragment(raw):
     """Bounded bulk-schema fragment parser for licensed/offline validation fixtures.
 
-    ABN location is state/postcode, not proof of a Canberra street location. No
+    ABN location is state/postcode, not proof of a street location. No
     email, website or marketing consent is inferred from a registration.
     """
     if len(raw)>1_000_000 or b'<!DOCTYPE' in raw.upper() or b'<!ENTITY' in raw.upper():raise WorkflowError('ABN XML input is unsafe or oversized.')

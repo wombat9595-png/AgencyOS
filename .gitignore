@@ -17,3 +17,6 @@ secrets/
 *.secret
 *.enc
 output/staging/
+
+.venv-first-sale/
+.local-business/

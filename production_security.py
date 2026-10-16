@@ -27,6 +27,9 @@ def configure(app):
         app.config['SESSION_COOKIE_NAME']='__Host-agencyos'
         from werkzeug.middleware.proxy_fix import ProxyFix
         app.wsgi_app=ProxyFix(app.wsgi_app,x_proto=1)
+    if os.environ.get('AGENCYOS_LOCAL_PRIVATE')=='1':
+        if len(key)<32:raise RuntimeError('Private operation requires a stable session key.')
+        app.config['TRUSTED_HOSTS']=['127.0.0.1']
     if key:app.secret_key=key
     app.config.update(PRODUCTION_MODE=production,PERMANENT_SESSION_LIFETIME=timedelta(hours=8))
 
@@ -88,3 +91,15 @@ def install(app,get_db):
         if request.method=='POST' and request.endpoint in ('invoice_settings','sales_settings','stage_approved_version','rollback_release','sales_contact_basis') and response.status_code<400:
             conn=get_db();audit(conn,request.endpoint,session.get('user_id'),request.view_args);conn.commit()
         return response
+
+
+# Use in both direct development startup and the private local launcher.
+from werkzeug.serving import WSGIRequestHandler
+
+
+class PrivateRequestHandler(WSGIRequestHandler):
+    def log_request(self,code='-',size='-'):
+        path=self.path.split('?',1)[0]
+        if path.startswith('/websites/preview-document/'):
+            path='/websites/preview-document/[redacted]'
+        self.log('info','%s %s %s',self.command,path,code)

@@ -1,0 +1,60 @@
+{
+  "passed": true,
+  "steps": [
+    "Authenticated /launch dashboard returned HTTP 200 and rendered without errors",
+    "Private launcher, owner authentication and first-sale defaults",
+    "Nationwide lead and real local worker research/outreach handoff",
+    "Encrypted fictional Gmail conversation, local draft/edit and disabled send UI",
+    "Questionnaire forms, exact A$800 quote and fictional evidenced acceptance",
+    "Three layouts built/revised by real worker; six actual browser viewports, links and form checks",
+    "Entire private server/worker restart retained session, database and versions without duplicate jobs"
+  ],
+  "page_errors": [],
+  "server_errors": [],
+  "blocked_requests": [],
+  "layouts": {
+    "earth-desktop": {
+      "width": 1280,
+      "overflow": false,
+      "static_qa": true,
+      "form_validation": true,
+      "navigation": true
+    },
+    "earth-mobile": {
+      "width": 390,
+      "overflow": false,
+      "static_qa": true,
+      "form_validation": true,
+      "navigation": true
+    },
+    "studio-desktop": {
+      "width": 1280,
+      "overflow": false,
+      "static_qa": true,
+      "form_validation": true,
+      "navigation": true
+    },
+    "studio-mobile": {
+      "width": 390,
+      "overflow": false,
+      "static_qa": true,
+      "form_validation": true,
+      "navigation": true
+    },
+    "coastal-desktop": {
+      "width": 1280,
+      "overflow": false,
+      "static_qa": true,
+      "form_validation": true,
+      "navigation": true
+    },
+    "coastal-mobile": {
+      "width": 390,
+      "overflow": false,
+      "static_qa": true,
+      "form_validation": true,
+      "navigation": true
+    }
+  },
+  "browser_version": "154.0.8037.57"
+}

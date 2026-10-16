@@ -9,6 +9,7 @@ import json
 import re
 import time
 from flask import abort, redirect, render_template, request, session, url_for
+from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from phase3_store import WorkflowError, stamp
 import sales_store as store
 from static_safety import static_errors
@@ -81,6 +82,12 @@ def _site_content(name, industry, brief, items, theme, revision_note):
     multi = bool(categories & {'multi-page', 'custom'}) or \
         any('multi-page' in str(item.get('scope', '')).casefold() for item in items)
     services = [dict(title=item['description'], description=item['scope']) for item in items]
+    approved=brief.get('website_data',{})
+    if approved:
+        entries=[line.strip() for line in approved.get('services','').splitlines() if line.strip()][:12]
+        services=[dict(title=line.split(':',1)[0][:140],description=line.split(':',1)[1].strip() if ':' in line else '') for line in entries]
+        if not services:
+            services=[dict(title='Services',description=approved.get('description','Customer service details awaiting confirmation.'))]
     context = (brief.get('requirements', '') + ' ' + ' '.join(x['description'] for x in services)).strip()
     summary = f'{escape(name)} services' if industry else f'{escape(name)}'
     # Don't turn a business category into a claimed credential or track record.
@@ -97,12 +104,18 @@ def _site_content(name, industry, brief, items, theme, revision_note):
         ])
     else:
         pages[0]['sections'] = ['services', 'about', 'contact']
+    if approved:
+        if approved.get('headline'):pages[0]['heading']=approved['headline']
+        if approved.get('intro'):pages[0]['intro']=approved['intro']
+        for page in pages:
+            if page['kind']=='about' and approved.get('about'):page['intro']=approved['about']
     return dict(name=name, industry=industry, summary=summary, theme=theme, pages=pages,
                 services=services, branding=brief.get('branding_references', ''),
                 requirements=context, revision_note=revision_note,
-                contact_email='', testimonials=[], claims=[],
+                contact_email=approved.get('contact_email',''), contact_phone=approved.get('contact_phone',''), about=approved.get('about',''), approved_copy=bool(approved), testimonials=[], claims=[],
                 limitations=['No testimonial, street address, credential or business claim was invented.',
-                              'No customer contact endpoint was supplied; connect an approved form destination before publication.'])
+                              'Contact form is a non-sending preview. Configure and test a customer-approved destination before publication.',
+                              'Customer confirmation of copy, assets and legal disclosures is required.'])
 
 
 def render_site(content):
@@ -116,20 +129,36 @@ def render_site(content):
     services=''.join('<article class="service-card"><h3>'+escape(item['title'])+'</h3><p>'+escape(item['description'])+'</p></article>' for item in content['services'])
     theme_css=f"--ink:{theme['ink']};--accent:{theme['accent']};--paper:{theme['paper']};--muted:{theme['muted']}"
     style='''<style>:root{'''+theme_css+''';--max:1120px}*{box-sizing:border-box}body{margin:0;color:var(--ink);background:var(--paper);font:16px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif}a{color:var(--accent);text-underline-offset:3px}.wrap{width:min(var(--max),calc(100% - 40px));margin:0 auto}.site-header{background:#fff;border-bottom:1px solid #dfe7e5}.nav{min-height:76px;display:flex;align-items:center;justify-content:space-between;gap:24px}.brand{font-size:20px;font-weight:750;letter-spacing:-.03em;color:var(--ink);text-decoration:none}.nav-links{display:flex;gap:24px}.nav-links a{font-size:14px;font-weight:650;text-decoration:none}.hero{padding:clamp(72px,12vw,150px) 0;background:linear-gradient(115deg,#fff 0%,var(--paper) 70%)}.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);font-weight:750}.hero h1{max-width:850px;margin:10px 0 18px;font-size:clamp(42px,7vw,78px);letter-spacing:-.06em;line-height:1.02}.hero p{max-width:650px;color:var(--muted);font-size:19px}.button{display:inline-flex;margin-top:18px;padding:12px 19px;border-radius:6px;background:var(--accent);color:#fff;text-decoration:none;font-weight:700}.section{padding:80px 0}.section-soft{background:#fff}.section h2{font-size:clamp(30px,4vw,44px);letter-spacing:-.04em;line-height:1.15;margin:6px 0 24px}.section>div>p:not(.eyebrow){max-width:720px;color:var(--muted)}.service-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px}.service-card{padding:24px;background:#fff;border:1px solid #e0e8e5;border-radius:12px}.service-card h3{margin:0 0 10px;font-size:19px}.service-card p{margin:0;color:var(--muted)}.contact-form{max-width:600px;display:grid;gap:14px}.contact-form label{display:grid;gap:6px;font-size:14px;font-weight:650}.contact-form input,.contact-form textarea{width:100%;padding:12px;border:1px solid #aebfbc;border-radius:6px;background:#fff;color:var(--ink);font:inherit}.contact-form button{justify-self:start;border:0;cursor:pointer}.form-note{color:var(--muted);font-size:13px}.site-footer{padding:28px 0;background:var(--ink);color:#fff}.site-footer p{margin:0}@media(max-width:650px){.wrap{width:min(var(--max),calc(100% - 30px))}.nav{min-height:64px;align-items:flex-start;flex-direction:column;padding:15px 0;gap:10px}.nav-links{width:100%;overflow:auto;gap:20px;padding-bottom:3px}.nav-links a{white-space:nowrap}.hero{padding:72px 0}.hero p{font-size:17px}.section{padding:58px 0}.service-grid{grid-template-columns:1fr}.contact-form button{width:100%}}</style>'''
+    # Layouts change composition and typography, not only colour tokens.
+    variants={
+      'coastal': '.hero .wrap{display:grid;grid-template-columns:1.4fr 1fr;gap:12px 48px}.hero .eyebrow,.hero h1,.hero p,.hero .button{grid-column:1}.hero .button{justify-self:start}.hero .wrap:after{content:"";grid-column:2;grid-row:1/6;min-height:260px;border-radius:50% 10% 50% 10%;background:linear-gradient(145deg,var(--accent),var(--paper));box-shadow:24px 24px 0 #fff}.service-card{border-top:4px solid var(--accent)}@media(max-width:700px){.hero .wrap{display:block}.hero .wrap:after{display:none}}',
+      'earth': '.hero{background:var(--ink);color:var(--paper)}.hero p{color:var(--paper)}.hero .eyebrow{color:#fff}.hero h1{max-width:760px;text-transform:uppercase;letter-spacing:-.045em}.service-grid{counter-reset:services}.service-card{border-radius:0;border-left:5px solid var(--accent)}.service-card:before{counter-increment:services;content:"0" counter(services);font-size:34px;font-weight:800;color:var(--accent)}.button{border-radius:0}.section h2{border-bottom:2px solid var(--accent);padding-bottom:22px}',
+      'studio': '.hero h1,.section h2{font-family:Georgia,serif;font-weight:400;letter-spacing:-.04em}.hero{border-bottom:1px solid var(--ink)}.hero .wrap{padding-left:clamp(0px,6vw,80px)}.eyebrow{letter-spacing:.22em}.service-card{border:0;border-top:1px solid var(--ink);border-radius:0;background:transparent;padding:28px 8px}.hero h1{font-size:clamp(44px,8vw,94px)}.button{border-radius:32px}.section-soft{background:var(--paper)}',
+    }
+    style=style.replace('</style>',variants[content['theme']]+'a:focus-visible,input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:4px}p,h1,h2,h3,a{overflow-wrap:anywhere}</style>')
+    contact_details=''
+    if content.get('contact_email'):
+        from sales_email import address
+        email=address(content['contact_email'])
+        contact_details+='<p>Email: <a href="mailto:'+escape(email,quote=True)+'">'+escape(email)+'</a></p>'
+    if content.get('contact_phone'):
+        phone=re.sub(r'[ ()-]','',content['contact_phone'])
+        label=escape(content['contact_phone'])
+        contact_details+='<p>Phone: '+('<a href="tel:'+phone+'">'+label+'</a>' if re.fullmatch(r'\+?[0-9]{6,15}',phone) else label)+'</p>'
     output={}
     for page in content['pages']:
         if page['kind']=='home':
             body='<section id="hero" class="hero"><div class="wrap"><p class="eyebrow">'+escape(content['industry'] or 'Local business')+'</p><h1>'+escape(page['heading'])+'</h1><p>'+escape(page['intro'])+'</p><a class="button" href="'+escape(href('contact'),quote=True)+'">Get in touch</a></div></section>'
             if not multi:
                 body+='<section id="services" class="section"><div class="wrap"><p class="eyebrow">WHAT WE CAN HELP WITH</p><h2>Services</h2><div class="service-grid">'+services+'</div></div></section>'
-                body+='<section id="about" class="section section-soft"><div class="wrap"><p class="eyebrow">ABOUT</p><h2>About '+name+'</h2><p>'+escape(page['intro'])+'</p></div></section>'
-                body+='<section id="contact" class="section"><div class="wrap"><p class="eyebrow">CONTACT</p><h2>Start a conversation</h2>'+_contact_form()+'</div></section>'
+                body+='<section id="about" class="section section-soft"><div class="wrap"><p class="eyebrow">ABOUT</p><h2>About '+name+'</h2><p>'+escape(content.get('about') or page['intro'])+'</p></div></section>'
+                body+='<section id="contact" class="section"><div class="wrap"><p class="eyebrow">CONTACT</p><h2>Start a conversation</h2>'+contact_details+_contact_form()+'</div></section>'
             elif content['services']:
                 body+='<section class="section"><div class="wrap"><h2>Services</h2><div class="service-grid">'+services+'</div></div></section>'
         elif page['kind']=='services':
             body='<main class="section"><div class="wrap"><h1>'+escape(page['heading'])+'</h1><p>'+escape(page['intro'])+'</p><div class="service-grid">'+services+'</div></div></main>'
         elif page['kind']=='contact':
-            body='<main class="section"><div class="wrap"><h1>'+escape(page['heading'])+'</h1><p>'+escape(page['intro'])+'</p>'+_contact_form()+'</div></main>'
+            body='<main class="section"><div class="wrap"><h1>'+escape(page['heading'])+'</h1><p>'+escape(page['intro'])+'</p>'+contact_details+_contact_form()+'</div></main>'
         else:
             body='<main class="section section-soft"><div class="wrap"><h1>'+escape(page['heading'])+'</h1><p>'+escape(page['intro'])+'</p></div></main>'
         title=page['title']+' · '+content['name']
@@ -381,7 +410,25 @@ def register(app, get_db, login_required):
         _site,item=version_access(site_id,version)
         # sandboxed iframe prevents generated static pages accessing app storage,
         # credentials, forms, or parent window. No scripts are generated.
-        return render_template('website_preview.html',item=item,site_id=site_id,project_id=_site['project_id'])
+        capability=URLSafeTimedSerializer(app.secret_key,salt='website-read-preview-v1').dumps(dict(site_id=site_id,version=version,owner_id=session['user_id'],pages_hash=store.digest(item['pages_json'])))
+        return render_template('website_preview.html',item=item,site_id=site_id,project_id=_site['project_id'],preview_capability=capability)
+
+    @app.get('/websites/preview-document/<capability>')
+    def website_preview_document(capability):
+        # A sandboxed document has an opaque origin. Subsequent page links must
+        # not need the dashboard's SameSite cookie or gain app storage access.
+        from flask import Response
+        try:
+            record=URLSafeTimedSerializer(app.secret_key,salt='website-read-preview-v1').loads(capability,max_age=600)
+            if not isinstance(record,dict) or set(record)!={'site_id','version','owner_id','pages_hash'}:abort(403)
+        except (BadSignature,SignatureExpired):abort(403,description='Preview expired or invalid. Reopen the owner preview page.')
+        item=get_db().execute('SELECT v.* FROM p6_site_versions v JOIN p6_sites s ON s.id=v.site_id WHERE s.id=? AND v.version=? AND s.owner_id=?',(record['site_id'],record['version'],record['owner_id'])).fetchone()
+        if not item or store.digest(item['pages_json'])!=record['pages_hash']:abort(403)
+        pages=json.loads(item['pages_json'] or '{}');page=request.args.get('page','index')
+        if page not in pages:abort(404)
+        html=pages[page]
+        if static_errors(html):abort(403)
+        return Response(html,mimetype='text/html',headers={'Content-Security-Policy':"sandbox; default-src 'none'; style-src 'unsafe-inline'; form-action 'none'; base-uri 'none'; frame-ancestors 'self'",'X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','Cache-Control':'private, no-store'})
 
     @app.route('/websites/<int:site_id>/source/<int:version>')
     @login_required

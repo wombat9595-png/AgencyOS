@@ -133,7 +133,9 @@ def qualify(payload):
     if findings:
         score += 30
         reasons.append(dict(points=30, reason='Owner-approved technical findings within 30 days'))
+    from first_sale import fit_score
     return dict(score=score, maximum=100, reasons=reasons, source_count=len(payload['sources']),
+                sales_suitability=fit_score(payload),
                 website_status='URL recorded; not proof of ownership or quality' if lead['website'] else 'Unknown: no URL recorded; this does not prove no website exists',
                 limitations='Rule-based prioritisation, not an AI prediction, consent record or proof of buying intent.',
                 snapshot=payload)

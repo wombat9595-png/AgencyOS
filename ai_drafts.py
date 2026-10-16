@@ -9,6 +9,8 @@ class DraftError(Exception):
     pass
 
 def provider_settings():
+    if os.environ.get('AGENCYOS_ZERO_COST')=='1':
+        raise DraftError('Paid AI is disabled by the private zero-cost operating policy. Use local templates.')
     provider = os.environ.get('AGENCYOS_AI_PROVIDER', '')
     key = secret('AGENCYOS_AI_API_KEY')
     endpoint = os.environ.get('AGENCYOS_AI_ENDPOINT', '')

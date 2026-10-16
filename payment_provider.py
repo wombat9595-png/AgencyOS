@@ -14,6 +14,7 @@ def create_stripe_test_checkout(invoice, success_url, cancel_url, timeout=10):
 
     The caller must opt in through AGENCYOS_PAYMENT_PROVIDER=stripe_test. No live key is accepted.
     """
+    if os.environ.get('AGENCYOS_ZERO_COST')=='1':raise ProviderError('External payment API requests are disabled in private zero-cost mode.')
     key=os.environ.get('AGENCYOS_STRIPE_TEST_SECRET_KEY','')
     if not key.startswith('sk_test_'):
         raise ProviderError('Stripe test mode requires an sk_test_ key. Live mode is disabled.')

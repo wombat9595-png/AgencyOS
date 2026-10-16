@@ -1,0 +1,46 @@
+test_confirmed_questionnaire_to_exact_quote_brief_build_revision_and_qa (test_first_sale.BusinessWorkflowTest.test_confirmed_questionnaire_to_exact_quote_brief_build_revision_and_qa) ... ok
+test_dashboard_reports_do_not_turn_test_money_into_revenue (test_first_sale.BusinessWorkflowTest.test_dashboard_reports_do_not_turn_test_money_into_revenue) ... ok
+test_defaults_are_nationwide_and_saved_plans_never_overwritten (test_first_sale.BusinessWorkflowTest.test_defaults_are_nationwide_and_saved_plans_never_overwritten) ... ok
+test_existing_price_versions_are_preserved_when_applying_first_sale_offer (test_first_sale.BusinessWorkflowTest.test_existing_price_versions_are_preserved_when_applying_first_sale_offer) ... ok
+test_first_sale_defaults_idempotent_no_fake_tax_or_external_activation (test_first_sale.BusinessWorkflowTest.test_first_sale_defaults_idempotent_no_fake_tax_or_external_activation) ... ok
+test_launcher_refuses_missing_keys_or_symlinked_database_without_mutating_records (test_first_sale.BusinessWorkflowTest.test_launcher_refuses_missing_keys_or_symlinked_database_without_mutating_records) ... ok
+test_preview_and_oauth_secrets_are_redacted_from_access_logs (test_first_sale.BusinessWorkflowTest.test_preview_and_oauth_secrets_are_redacted_from_access_logs) ... ok
+test_preview_capability_is_read_only_version_bound_and_works_without_owner_cookie (test_first_sale.BusinessWorkflowTest.test_preview_capability_is_read_only_version_bound_and_works_without_owner_cookie) ... ok
+test_private_import_copies_database_and_keys_remain_private (test_first_sale.BusinessWorkflowTest.test_private_import_copies_database_and_keys_remain_private) ... ok
+test_static_contact_links_allow_only_plain_owner_approved_destinations (test_first_sale.BusinessWorkflowTest.test_static_contact_links_allow_only_plain_owner_approved_destinations) ... ok
+test_unconfirmed_intake_cannot_generate_proposal_and_unknown_budget_stays_unknown (test_first_sale.BusinessWorkflowTest.test_unconfirmed_intake_cannot_generate_proposal_and_unknown_budget_stays_unknown) ... ok
+test_zero_cost_blocks_legacy_ai_and_payment_transport_even_with_credentials (test_first_sale.BusinessWorkflowTest.test_zero_cost_blocks_legacy_ai_and_payment_transport_even_with_credentials) ... ok
+test_complete_first_customer_with_mock_gmail_and_verified_synthetic_payment (test_first_sale.FirstCustomerJourneyTest.test_complete_first_customer_with_mock_gmail_and_verified_synthetic_payment) ... FIRST_CUSTOMER_JOURNEY {"steps": ["Authorised fictional Australian manual lead received; Business package selected", "Local research and explainable qualification reviewed", "Permitted technical audit with mocked HTML and source evidence", "Reviewed research handed to personalised outreach draft", "Explicit fictional contact eligibility recorded", "Outgoing contact simulated through existing mock provider; no Gmail send", "Simulated Gmail reply imported, matched and deduplicated", "Customer pricing interest interpreted by explicit rules, not contract acceptance", "Exact owner-reviewed reply submitted to mocked Gmail API, not a real account", "Customer requirements and confirmation evidence recorded", "Saved A$800 scope selected; no guessed budget", "Accurate AUD quote generated and reviewed", "Actual synthetic acceptance reference bound to exact quote hash", "Project created once with frozen accepted brief", "Four-page responsive website generated from approved content", "Static QA passed; no unsupported claims or executable markup", "Desktop and mobile isolated preview routes available; real browser checked separately", "Requested revision saved as a separate immutable version", "Synthetic invoice PDF prepared and test-approved; no real issuance", "Signed synthetic payment verified; no actual money received", "Approved static ZIP prepared for handover; no publication", "CRM and financial dashboard updated; synthetic payment excluded from revenue", "Duplicate email, draft and payment replay prevented", "Fresh worker process resumed the persisted queue without repeating communication", "Customer evidence, audit trail and synthetic financial records verified"], "passed": true, "providers": "mocked", "real_revenue_cents": 0}
+ok
+test_ambiguous_send_never_retries (test_first_sale.GmailTest.test_ambiguous_send_never_retries) ... ok
+test_approved_send_contract_headers_and_replay_blocking_with_mock (test_first_sale.GmailTest.test_approved_send_contract_headers_and_replay_blocking_with_mock) ... ok
+test_authorised_thread_read_imports_conversation_without_modifying_gmail (test_first_sale.GmailTest.test_authorised_thread_read_imports_conversation_without_modifying_gmail) ... ok
+test_daily_limit_uses_submission_day_not_draft_creation_day (test_first_sale.GmailTest.test_daily_limit_uses_submission_day_not_draft_creation_day) ... ok
+test_disabling_polling_cancels_pending_reads (test_first_sale.GmailTest.test_disabling_polling_cancels_pending_reads) ... ok
+test_disconnect_cancels_polling_and_retains_audit_not_tokens (test_first_sale.GmailTest.test_disconnect_cancels_polling_and_retains_audit_not_tokens) ... ok
+test_draft_edit_changes_hash_and_prevents_old_approval (test_first_sale.GmailTest.test_draft_edit_changes_hash_and_prevents_old_approval) ... ok
+test_draft_is_personalised_with_exact_saved_prices_and_deduplicated (test_first_sale.GmailTest.test_draft_is_personalised_with_exact_saved_prices_and_deduplicated) ... ok
+test_expired_owner_mismatched_state_and_overscope_fail_closed (test_first_sale.GmailTest.test_expired_owner_mismatched_state_and_overscope_fail_closed) ... ok
+test_inbox_duplicate_thread_match_encrypted_body_and_handoff (test_first_sale.GmailTest.test_inbox_duplicate_thread_match_encrypted_body_and_handoff) ... ok
+test_interrupted_gmail_submission_becomes_unknown_without_a_resend (test_first_sale.GmailTest.test_interrupted_gmail_submission_becomes_unknown_without_a_resend) ... ok
+test_oauth_profile_verifies_only_dedicated_account_and_encrypts_tokens (test_first_sale.GmailTest.test_oauth_profile_verifies_only_dedicated_account_and_encrypts_tokens) ... ok
+test_optout_is_saved_while_paused_and_drafts_are_blocked (test_first_sale.GmailTest.test_optout_is_saved_while_paused_and_drafts_are_blocked) ... ok
+test_pkce_exact_scope_state_and_loopback (test_first_sale.GmailTest.test_pkce_exact_scope_state_and_loopback) ... ok
+test_poll_pause_retry_ceiling_and_no_unconfigured_network (test_first_sale.GmailTest.test_poll_pause_retry_ceiling_and_no_unconfigured_network) ... ok
+test_poll_reads_real_api_contract_with_mock_and_safe_restart_deduplication (test_first_sale.GmailTest.test_poll_reads_real_api_contract_with_mock_and_safe_restart_deduplication) ... ok
+test_prompt_injection_and_html_are_data_not_actions (test_first_sale.GmailTest.test_prompt_injection_and_html_are_data_not_actions) ... ok
+test_provider_message_identity_mismatch_cannot_import_unrequested_mail (test_first_sale.GmailTest.test_provider_message_identity_mismatch_cannot_import_unrequested_mail) ... ok
+test_real_transport_rejects_non_google_origins_and_redirects (test_first_sale.GmailTest.test_real_transport_rejects_non_google_origins_and_redirects) ... ok
+test_refresh_retains_refresh_token_without_scope_expansion (test_first_sale.GmailTest.test_refresh_retains_refresh_token_without_scope_expansion) ... ok
+test_send_disabled_before_transport_or_status_change (test_first_sale.GmailTest.test_send_disabled_before_transport_or_status_change) ... ok
+test_send_rechecks_pause_consent_hash_scope_and_suppression (test_first_sale.GmailTest.test_send_rechecks_pause_consent_hash_scope_and_suppression) ... ok
+test_unmatched_message_never_guesses_crm_and_thread_is_not_identity (test_first_sale.GmailTest.test_unmatched_message_never_guesses_crm_and_thread_is_not_identity) ... ok
+test_upload_validation_csrf_and_missing_key_fail_closed (test_first_sale.GmailTest.test_upload_validation_csrf_and_missing_key_fail_closed) ... ok
+test_wrong_account_cannot_connect_or_be_retained (test_first_sale.GmailTest.test_wrong_account_cannot_connect_or_be_retained) ... ok
+test_owner_bank_receipts_require_real_accepted_scope_and_independent_attestation (test_first_sale.ReceiptAndDraftTest.test_owner_bank_receipts_require_real_accepted_scope_and_independent_attestation) ... ok
+test_unissued_real_scope_pdf_does_not_issue_or_number_invoice (test_first_sale.ReceiptAndDraftTest.test_unissued_real_scope_pdf_does_not_issue_or_number_invoice) ... ok
+
+----------------------------------------------------------------------
+Ran 40 tests in 15.146s
+
+OK

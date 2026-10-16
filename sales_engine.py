@@ -125,6 +125,8 @@ def worker_once(path):
             elif job['kind']=='quote':
                 result=quotes.calculate(payload['packages'],payload['gst_mode'],payload['requirements'],payload['requirements_source'],payload['proposal'])
                 result['branding']=payload.get('branding','')
+                for key in ('website_data','website_data_source','website_data_confirmation'):
+                    if key in payload:result[key]=payload[key]
             elif job['kind']=='website':
                 result=website_builder.build(conn,payload)
             else:

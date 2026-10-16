@@ -1,3 +1,5 @@
+> Latest: **275 tests passed** for the private first-sale workflow. See [FIRST_SALE_READINESS.md](FIRST_SALE_READINESS.md) and [new evidence](validation/evidence/first-sale). The report below is preserved historical validation.
+
 # Phase 5 final validation
 
 **PHASE 5 READY FOR PHASE 6 — development readiness, not production/live-outreach approval.**

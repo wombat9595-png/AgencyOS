@@ -115,6 +115,9 @@ def register(app,get_db,login_required,app_dir):
           public_execution_authorized=False,customer_evidence_provenance='Owner-attested; not independently verified',
           prerequisites=['Separate owner launch authorization','Approved customer domain and DNS plan','Validated TLS','Approved working contact endpoint','External backup and monitoring'],
           api_contract='S3 PutObject for each manifest file; versioned private bucket, explicit SSE, content type text/html. CloudFront/TLS and DNS require separate approved resources. No request executed.')
+        if target=='local':
+            plan.update(region=None,prerequisites=['Exact owner and customer review','Agree customer-owned hosting/domain and a tested contact solution before public use','Separate explicit public publication approval'],
+                api_contract='Local static ZIP export only; no cloud account, paid host or remote deployment API required. No website was published.')
         conn.execute('INSERT INTO prep_delivery(user_id,release_id,customer_evidence,plan_json,created_at) VALUES(?,?,?,?,?)',(session['user_id'],release_id,evidence,json.dumps(plan),stamp()))
         audit(conn,'deployment_plan_prepared',session['user_id'],{'release_id':release_id});conn.commit()
         return send_file(io.BytesIO(json.dumps(plan,indent=2).encode()),mimetype='application/json',as_attachment=True,download_name=f'release-{release_id}-preparation.json')

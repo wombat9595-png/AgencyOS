@@ -29,6 +29,8 @@ import production_security
 import production_ops
 import production_portal
 import email_preparation
+import gmail_agent
+import first_sale
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = runtime_status.database_path(os.environ.get("AGENCYOS_DB"))
@@ -107,6 +109,8 @@ def init_db():
     production_ops.migrate(conn)
     production_portal.migrate(conn)
     email_preparation.migrate(conn)
+    gmail_agent.migrate(conn)
+    first_sale.migrate(conn)
     conn.commit()
     conn.close()
 
@@ -514,6 +518,8 @@ production_security.install(app,db)
 production_ops.register(app,db)
 production_portal.register(app,db,login_required,APP_DIR)
 email_preparation.register(app,db)
+gmail_agent.register(app,db,login_required)
+first_sale.register(app,db,login_required)
 register_phase3(app, db, login_required, insert_lead)
 register_phase4(app, db, login_required, insert_lead)
 register_sales(app, db, login_required)
@@ -527,4 +533,4 @@ if __name__ == "__main__":
     print('AgencyOS database: '+DB_PATH,flush=True)
     with app.app_context():
         print('Database identity: '+runtime_status.status(db(),DB_PATH)['database_identity'],flush=True)
-    app.run(host="127.0.0.1", port=int(os.environ.get("PORT", 5000)), debug=False)
+    app.run(host="127.0.0.1", port=int(os.environ.get("PORT", 5000)), debug=False, request_handler=production_security.PrivateRequestHandler)

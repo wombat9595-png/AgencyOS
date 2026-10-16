@@ -87,6 +87,10 @@ def accept(conn,flow,quote,customer,evidence,evidence_source,expected_hash):
                quote_id=quote['id'],quote_version=quote['version'],quote_hash=quote['content_hash'],quote=json.loads(quote['content_json']),
                acceptance_id=acceptance_id,acceptance=acceptance,acceptance_provenance='Owner-attested; not independently verified',project_id=project,
                website_generation_authorised=False,publication_authorised=False)
+    if accepted.get('website_data'):
+        brief['website_data']=accepted['website_data']
+        brief['website_data_source']=accepted['website_data_source']
+        brief['website_data_confirmation']=accepted['website_data_confirmation']
     conn.execute('INSERT INTO p5_project_briefs(acceptance_id,project_id,brief_json) VALUES(?,?,?)',(acceptance_id,project,dumps(brief)))
     conn.execute("UPDATE p5_quotes SET status='Owner-attested acceptance' WHERE id=?",(quote['id'],))
     conn.execute("UPDATE p5_flows SET state='Project brief ready' WHERE id=?",(flow['id'],))

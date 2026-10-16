@@ -12,6 +12,8 @@
     <a class="brand" href="{{ url_for('dashboard') }}"><span class="brand-mark">A</span><span>AgencyOS<small>WEBSITE AGENCY</small></span></a>
     <div class="nav-label">WORKSPACE</div>
     <nav>
+      <a href="{{ url_for('business_home') }}">◎ <span>First customer</span></a>
+      <a href="{{ url_for('gmail_home') }}">✉ <span>Dedicated Gmail</span></a>
       <a href="{{ url_for('dashboard') }}">◫ <span>Overview</span></a>
       <a href="{{ url_for('sales_home') }}">↗ <span>Sales team</span></a>
       <a href="{{ url_for('agency_manager') }}">✦ <span>Agency Manager</span></a>
@@ -37,7 +39,7 @@
     <section class="content">
       {% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}{% for category, message in messages %}<div class="flash {{ category }}">{{ message }}</div>{% endfor %}{% endif %}{% endwith %}
       {% block content %}{% endblock %}
-      <footer>AGENCYOS <span>·</span> PHASES 5–10 <span>·</span> LOCAL-FIRST WORKSPACE</footer>
+      <footer>AGENCYOS <span>·</span> PRIVATE BUSINESS <span>·</span> LOCAL-FIRST WORKSPACE</footer>
     </section>
   </main>
 </div>
