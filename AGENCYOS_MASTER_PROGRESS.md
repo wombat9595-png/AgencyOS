@@ -7,7 +7,7 @@ Updated: 2026-10-16 (Australia/Sydney)
 - **Current phase:** Complete — Phases 6–11 implemented and validated locally.
 - **Current branch:** `codex/agencyos-phases6-11`.
 - **Baseline:** GitHub `agencyos-phase5` at `497e950ee4c4fabcbb3a897053cc4890cb24f20f`, matching the Phase 5 commit specified in the program.
-- **Latest completed checkpoint:** Phase 10 `bec82f80521dd88a87c2ad4a094d6afe8a9a9fe6` (published; local staging, integrity checks and rollback).
+- **Latest completed checkpoint:** Phase 11 `21ef9198edcb847c5e3618aaf570b59d434246de` (published; integrated synthetic lifecycle and readiness review).
 - **Environment:** Local workspace checkout, not the user's MacBook. No pre-existing database was present in the workspace.
 - **External actions:** None. Live email, paid AI, real invoices/payments, public deployment and customer publication remain disabled.
 
@@ -45,7 +45,7 @@ Record actual commands, outcomes, evidence paths, and fixes here only after exec
 | 8 Agent orchestration and operations | Complete | 204 automated tests; HTTP/sales smoke; Chromium workflow; DST, concurrency, worker and schedule evidence | `68fd0d9` |
 | 9 Authorized discovery and compliant outreach | Complete | 207 automated tests; owner-attested eligibility records; Phase 3/4 smoke; Phase 5 sales worker; Chromium lifecycle | `5b628dd` |
 | 10 Hosting, publication, maintenance and production preparation | Complete | 211 automated tests; private staging, hash integrity, alert and rollback flows; smoke and Chromium regressions | `bec82f8` |
-| 11 Integration, security and final acceptance | Complete | 212 automated tests; synthetic lead-to-payment-to-summary lifecycle; server/sales/browser regressions; readiness/security inventory | Pending checkpoint |
+| 11 Integration, security and final acceptance | Complete | 212 automated tests; synthetic lead-to-payment-to-summary lifecycle; server/sales/browser regressions; readiness/security inventory | `21ef919` |
 
 ## Current blockers
 
