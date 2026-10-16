@@ -381,6 +381,32 @@ class BusinessWorkflowTest(unittest.TestCase):
         self.assertEqual(len(self.rows('first_sale_reports')),1);self.assertEqual(data['received_cents'],0)
         self.assertIn(b'Cash surplus',self.client.get('/business').data)
 
+    def test_simple_home_start_pause_priorities_and_ceo(self):
+        home=self.client.get('/business').data
+        for text in (b'What matters now',b'Talk to your CEO',b'No AI model is connected',b'action="/business/configure"'):self.assertIn(text,home)
+        self.post('/business/configure',{'confirm':'yes'})
+        self.assertNotIn(b'action="/business/configure"',self.client.get('/business').data)
+        response=self.post('/agency/pause',dict(paused='1',next='home'))
+        self.assertEqual(response.status_code,302);self.assertTrue(response.location.endswith('/business'))
+        self.assertIn(b'Start agency',self.client.get('/business').data)
+        # Asking the CEO is read-only and still works while paused.
+        answer=self.client.get('/business?ask=How+much+money+have+we+made').data
+        self.assertIn(b'A$0.00',answer);self.assertIn(b'not counted',answer)
+        self.post('/agency/pause',dict(paused='0',next='home'))
+        self.assertIn(b'Pause',self.client.get('/business').data)
+        self.assertEqual(self.post('/agency/pause',dict(paused='1')).location.rsplit('/',1)[-1],'agency')
+        self.assertIn(b'Record money independently checked',self.client.get('/business/details').data)
+
+    def test_ceo_answers_follow_the_first_missing_sales_step(self):
+        m=dict(leads=0,opportunities=0,quotes=0,accepted=0,received_cents=0,expense_cents=0,projects=0)
+        runtime=dict(queues={'5':{'Running':1,'Queued':2}},workers=[])
+        self.assertIn('no leads',first_sale.ceo_answer('why no customers?',m,[],False,runtime))
+        m.update(leads=3,opportunities=1)
+        self.assertIn('no quote',first_sale.ceo_answer('Why no customers?',m,[],False,runtime))
+        self.assertIn('1 job(s) are running and 2 are queued',first_sale.ceo_answer("What's everyone working on?",m,[],False,runtime))
+        self.assertIn('paused',first_sale.ceo_answer("What's happening?",m,[],True,runtime))
+        self.assertEqual(first_sale.ceo_answer('What needs me to do?',m,[],False,runtime),'Nothing needs you right now.')
+
     def test_private_import_copies_database_and_keys_remain_private(self):
         original=Path(application.DB_PATH).read_bytes();private=Path(self.temp.name)/'private'
         home,env=local_run.prepare(private,application.DB_PATH)

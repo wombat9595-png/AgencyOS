@@ -124,7 +124,7 @@ def register(app, get_db, login_required, insert_lead):
         conn.execute('UPDATE p4_control SET paused=? WHERE id=1', (value,))
         store.log(conn,session['user_id'],'Owner '+('paused all new work.' if value else 'resumed approved work.'))
         conn.commit()
-        return redirect(url_for('agency_manager'))
+        return redirect(url_for('business_home' if request.form.get('next')=='home' else 'agency_manager'))
 
     @app.route('/agency/budget',methods=['POST'])
     @login_required

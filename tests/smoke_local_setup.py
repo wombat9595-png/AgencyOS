@@ -40,7 +40,7 @@ with tempfile.TemporaryDirectory(prefix='agencyos-clean-local-') as tmp:
             post('/setup',dict(username='fictional-owner',password='Fictional-clean-runtime-password-123'))
             post('/login',dict(username='fictional-owner',password='Fictional-clean-runtime-password-123'))
             assert 'Authorized discovery plan' in get('/launch')
-            assert 'A small, practical business.' in get('/business')
+            assert 'What matters now' in get('/business') and 'A small, practical business.' in get('/business/details')
             assert 'Not connected' in get('/gmail')
             deadline=time.monotonic()+10
             while time.monotonic()<deadline:

@@ -87,13 +87,73 @@ def fit_score(snapshot,contact_eligible=False):
     return dict(score=sum(p['points'] for p in parts),reasons=parts,purchase_intent='Unknown',budget='Unknown; do not infer ability to afford A$600–A$1,000',complexity='Requires scope review',limitation='Rule-based triage, not a purchase prediction.')
 
 
+def configured(conn,owner):
+    return bool(conn.execute("SELECT 1 FROM p5_packages WHERE user_id=? AND name='Starter Website'",(owner,)).fetchone())
+
+
+def priorities(conn,owner,m,gmail,config):
+    """At most five owner actions, most important first. Empty means nothing needs the owner."""
+    items=[]
+    def add(text,label,endpoint,anchor=''):items.append(dict(text=text,label=label,url=url_for(endpoint)+anchor))
+    if m['failed_jobs']:add(str(m['failed_jobs'])+' job'+('s' if m['failed_jobs']>1 else '')+' failed and need a look','Open','operations')
+    if m['pending_approvals']:add(str(m['pending_approvals'])+' item'+('s' if m['pending_approvals']>1 else '')+' waiting for your review','Review','sales_home')
+    if m['gmail_drafts']:add(str(m['gmail_drafts'])+' email repl'+('ies' if m['gmail_drafts']>1 else 'y')+' drafted for you to check','Check','gmail_home')
+    if config['gst_mode']=='unset':add('Confirm your GST status before your first quote','Set GST','sales_home')
+    if not gmail:add('Connect your business Gmail (one-time sign-in)','Connect','gmail_home')
+    if not m['leads']:add('Add your first potential customer','Add lead','leads')
+    return items[:5]
+
+
+def ceo_answer(question,m,todo,is_paused,runtime):
+    """Rule-based answers from local records. Not a language model; never invents numbers."""
+    q=question.casefold()
+    queued=sum(c.get('Queued',0) for c in runtime['queues'].values())
+    running=sum(c.get('Running',0) for c in runtime['queues'].values())
+    state='paused' if is_paused else ('running' if runtime['workers'] else 'switched on, but the background worker is not running (open the AgencyOS launcher)')
+    def money(cents):return 'A$'+format(cents/100,',.2f')
+    if any(w in q for w in ('customer','sale','why','stuck','sell')):
+        steps=[(m['leads'],'You have no leads yet. Add a real business you are allowed to contact; that is the first step.'),
+          (m['opportunities'],'You have '+str(m['leads'])+' lead(s) but none has been started as an opportunity. Open Customers and start one.'),
+          (m['quotes'],'You have '+str(m['opportunities'])+' opportunity(ies) but no quote yet. Finish the questionnaire and prepare a quote.'),
+          (m['accepted'],'You have '+str(m['quotes'])+' quote(s) out and none accepted yet. Follow up with those customers.'),
+          (m['received_cents'],'A quote was accepted but no payment is recorded. Once the money is in your bank, record it under Money.')]
+        for value,reason in steps:
+            if not value:return reason
+        return 'You have recorded '+money(m['received_cents'])+' received. Keep the next quote moving.'
+    if any(w in q for w in ('money','revenue','paid','earn','cash','profit')):
+        return 'Money you have recorded as received: '+money(m['received_cents'])+'. Expenses: '+money(m['expense_cents'])+'. Test and simulated payments are not counted.'
+    if any(w in q for w in ('working','doing','job','agent','busy')):
+        return 'The agency is '+state+'. Right now '+str(running)+' job(s) are running and '+str(queued)+' are queued.'
+    if any(w in q for w in ('need','todo','to do','should','waiting','approve')):
+        if not todo:return 'Nothing needs you right now.'
+        return 'Here is what needs you: '+'; '.join(t['text'] for t in todo)+'.'
+    summary='The agency is '+state+'. You have '+str(m['leads'])+' lead(s), '+str(m['quotes'])+' quote(s), '+str(m['projects'])+' website project(s) and '+money(m['received_cents'])+' received.'
+    return summary+(' '+str(len(todo))+' thing(s) need you; see What matters now.' if todo else ' Nothing needs you right now.')
+
+
+CEO_SUGGESTIONS=("What's happening?","Why don't we have customers yet?","What's everyone working on?","How much money have we made?")
+
+
 def register(app,get_db,login_required):
     @app.get('/business',strict_slashes=False)
     @login_required
     def business_home():
         import runtime_status
+        conn=get_db();owner=session['user_id'];m=metrics(conn,owner)
+        gmail=conn.execute('SELECT email FROM gmail_accounts WHERE owner_id=?',(owner,)).fetchone()
+        runtime=runtime_status.status(conn,conn.execute('PRAGMA database_list').fetchone()[2],'5')
+        todo=priorities(conn,owner,m,gmail,conn.execute('SELECT * FROM p5_control WHERE id=1').fetchone())
+        question=request.args.get('ask','').strip()[:300]
+        answer=ceo_answer(question,m,todo,paused(conn),runtime) if question else ''
+        return render_template('business.html',metrics=m,paused=paused(conn),worker=bool(runtime['workers']),todo=todo,
+          configured=configured(conn,owner),question=question,answer=answer,suggestions=CEO_SUGGESTIONS)
+
+    @app.get('/business/details',strict_slashes=False)
+    @login_required
+    def business_details():
+        import runtime_status
         conn=get_db();owner=session['user_id']
-        return render_template('business.html',metrics=metrics(conn,owner),paused=paused(conn),
+        return render_template('business_details.html',metrics=metrics(conn,owner),paused=paused(conn),
           gmail=conn.execute('SELECT email,last_sync,polling,error FROM gmail_accounts WHERE owner_id=?',(owner,)).fetchone(),
           runtime=runtime_status.status(conn,conn.execute('PRAGMA database_list').fetchone()[2],'5'),
           flows=conn.execute('SELECT * FROM p5_flows WHERE user_id=? ORDER BY id DESC LIMIT 50',(owner,)).fetchall(),
@@ -139,13 +199,13 @@ def register(app,get_db,login_required):
         existing=conn.execute('SELECT * FROM first_sale_receipts WHERE owner_id=? AND bank_reference=?',(owner,reference)).fetchone()
         if existing:
             if existing['quote_id']!=quote['id'] or existing['amount_cents']!=amount:raise WorkflowError('Bank reference reused with different details; inspect the existing receipt.')
-            conn.rollback();flash('Existing bank receipt retained; no duplicate revenue.','success');return redirect(url_for('business_home'))
+            conn.rollback();flash('Existing bank receipt retained; no duplicate revenue.','success');return redirect(url_for('business_details'))
         total=json.loads(quote['content_json'])['totals']['one-off']['total_cents']
         paid=conn.execute('SELECT COALESCE(SUM(amount_cents),0) FROM first_sale_receipts WHERE quote_id=?',(quote['id'],)).fetchone()[0]
         if amount>total-paid:raise WorkflowError('Receipt exceeds the remaining accepted one-off total; review financial exceptions separately.')
         conn.execute('INSERT INTO first_sale_receipts(owner_id,quote_id,amount_cents,bank_reference,evidence,received_on,recorded_at) VALUES(?,?,?,?,?,?,?)',(owner,quote['id'],amount,reference,evidence,received_on.isoformat(),stamp()))
         audit(conn,'owner_bank_receipt_attested',owner,{'quote_id':quote['id'],'amount_cents':amount,'independent_bank_api':False});conn.commit()
-        flash('Owner-confirmed bank receipt recorded. No bank API verification, invoice issuance or money transfer occurred.','success');return redirect(url_for('business_home'))
+        flash('Owner-confirmed bank receipt recorded. No bank API verification, invoice issuance or money transfer occurred.','success');return redirect(url_for('business_details'))
 
     @app.get('/business/flows/<int:flow_id>/intake')
     @login_required

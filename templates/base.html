@@ -9,28 +9,32 @@
 <div class="app-shell">
   {% if session.get('user_id') %}
   <aside class="sidebar">
-    <a class="brand" href="{{ url_for('dashboard') }}"><span class="brand-mark">A</span><span>AgencyOS<small>WEBSITE AGENCY</small></span></a>
-    <div class="nav-label">WORKSPACE</div>
+    <a class="brand" href="{{ url_for('business_home') }}"><span class="brand-mark">A</span><span>AgencyOS<small>WEBSITE AGENCY</small></span></a>
     <nav>
-      <a href="{{ url_for('business_home') }}">◎ <span>First customer</span></a>
-      <a href="{{ url_for('gmail_home') }}">✉ <span>Dedicated Gmail</span></a>
-      <a href="{{ url_for('dashboard') }}">◫ <span>Overview</span></a>
-      <a href="{{ url_for('sales_home') }}">↗ <span>Sales team</span></a>
-      <a href="{{ url_for('agency_manager') }}">✦ <span>Agency Manager</span></a>
-      <a href="{{ url_for('operations') }}">▦ <span>Operations</span></a>
-      <a href="{{ url_for('launch_dashboard') }}">◈ <span>Launch dashboard</span></a>
-      <a href="{{ url_for('licensed_discovery') }}">⌕ <span>Licensed discovery</span></a>
-      <a href="{{ url_for('agent_center') }}">✦ <span>Agent Control Center</span></a>
-      <a href="{{ url_for('discovery_page') }}">⌕ <span>Business Discovery</span></a>
-      <a href="{{ url_for('workflows') }}">✦ <span>Research queue</span></a>
-      <a href="{{ url_for('lead_finder') }}">⌕ <span>Lead Finder</span></a>
-      <a href="{{ url_for('leads') }}">◎ <span>Leads & clients</span></a>
-      <a href="{{ url_for('outreach') }}">↗ <span>AI outreach drafts</span></a>
-      <a href="{{ url_for('quotes') }}">▤ <span>Quotes</span></a>
-      <a href="{{ url_for('invoices') }}">▣ <span>Invoices</span></a>
-      <a href="{{ url_for('projects') }}">⌘ <span>Website projects</span></a>
-      <a href="{{ url_for('projects') }}#project-board">▧ <span>Website builds</span></a>
+      <a href="{{ url_for('business_home') }}">◎ <span>Home</span></a>
+      <a href="{{ url_for('sales_home') }}">↗ <span>Customers</span></a>
+      <a href="{{ url_for('projects') }}">⌘ <span>Websites</span></a>
+      <a href="{{ url_for('gmail_home') }}">✉ <span>Inbox</span></a>
+      <a href="{{ url_for('invoices') }}">▣ <span>Money</span></a>
     </nav>
+    <details class="more-tools">
+      <summary>More tools</summary>
+      <nav>
+        <a href="{{ url_for('business_details') }}"><span>Business details</span></a>
+        <a href="{{ url_for('leads') }}"><span>Leads & clients</span></a>
+        <a href="{{ url_for('quotes') }}"><span>Quotes</span></a>
+        <a href="{{ url_for('agency_manager') }}"><span>Agency Manager</span></a>
+        <a href="{{ url_for('operations') }}"><span>Operations</span></a>
+        <a href="{{ url_for('launch_dashboard') }}"><span>Launch dashboard</span></a>
+        <a href="{{ url_for('agent_center') }}"><span>Agent Control Center</span></a>
+        <a href="{{ url_for('licensed_discovery') }}"><span>Licensed discovery</span></a>
+        <a href="{{ url_for('discovery_page') }}"><span>Business Discovery</span></a>
+        <a href="{{ url_for('lead_finder') }}"><span>Lead Finder</span></a>
+        <a href="{{ url_for('workflows') }}"><span>Research queue</span></a>
+        <a href="{{ url_for('outreach') }}"><span>AI outreach drafts</span></a>
+        <a href="{{ url_for('dashboard') }}"><span>Old overview</span></a>
+      </nav>
+    </details>
     <div class="sidebar-bottom"><div class="avatar">{{ session.get('username','A')[:1]|upper }}</div><div class="user-meta"><strong>{{ session.get('username') }}</strong><small>Workspace owner</small></div><form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="logout" title="Sign out">↗</button></form></div>
   </aside>
   {% endif %}

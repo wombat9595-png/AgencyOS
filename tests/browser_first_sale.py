@@ -142,7 +142,7 @@ with closing(connect(os.environ['AGENCYOS_DB'])) as conn,conn:
             assert query('SELECT COUNT(*) FROM first_sale_receipts')[0]==0;assert query('SELECT COUNT(*) FROM p5_ai_usage')[0]==0;assert query('SELECT COUNT(*) FROM p7_invoices')[0]==0
             before=query('SELECT COUNT(*) FROM p6_site_versions')[0]
             launcher.terminate();launcher.wait(timeout=25);launcher=start();readiness();page.goto(base+'/business')
-            expect(page.locator('body')).to_contain_text('A small, practical business.')
+            expect(page.locator('body')).to_contain_text('What matters now')
             wait("SELECT * FROM runtime_workers WHERE state='running' AND phase='5'",lambda r:time.time()-r['last_seen']<10)
             assert query('SELECT COUNT(*) FROM p6_site_versions')[0]==before
             result['steps'].append('Entire private server/worker restart retained session, database and versions without duplicate jobs')
