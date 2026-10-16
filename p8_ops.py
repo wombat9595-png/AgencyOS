@@ -181,6 +181,19 @@ def _daily_data(conn, user_id, local_date, timezone_name):
             query='SELECT status,COUNT(*) n FROM '+table+' WHERE user_id=? AND created_at>=? AND created_at<? GROUP BY status'
             params=(user_id,start,end)
         queues[table]={row['status']:row['n'] for row in conn.execute(query,params)}
+    if conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='p7_invoices'").fetchone():
+        queues['p7_invoices']={row['status']:row['n'] for row in conn.execute(
+            'SELECT status,COUNT(*) n FROM p7_invoices WHERE user_id=? AND created_at>=? AND created_at<? GROUP BY status',(user_id,start,end))}
+        queues['p7_payments']={row['source']+': '+row['status']:row['n'] for row in conn.execute(
+            '''SELECT p.source,p.status,COUNT(*) n FROM p7_payments p JOIN p7_invoices i ON i.id=p.invoice_id
+               WHERE i.user_id=? AND p.created_at>=? AND p.created_at<? GROUP BY p.source,p.status''',(user_id,start,end))}
+    else:
+        queues['p7_invoices']={};queues['p7_payments']={}
+    if conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='p10_releases'").fetchone():
+        queues['p10_releases']={row['status']:row['n'] for row in conn.execute(
+            'SELECT status,COUNT(*) n FROM p10_releases WHERE owner_id=? AND created_at>=? AND created_at<? GROUP BY status',(user_id,start,end))}
+    else:
+        queues['p10_releases']={}
     p3_calls=conn.execute('SELECT COALESCE(SUM(calls),0) FROM p3_usage WHERE day BETWEEN ? AND ?',(utc_first,utc_last)).fetchone()[0]
     p4_reserved=conn.execute("SELECT COALESCE(SUM(b.reserved_cents),0) FROM p4_budget b JOIN p4_jobs j ON j.id=b.job_id WHERE j.user_id=? AND b.day BETWEEN ? AND ?",(user_id,utc_first,utc_last)).fetchone()[0]
     p5_reserved=conn.execute("SELECT COALESCE(SUM(u.reserved_cents),0) FROM p5_ai_usage u JOIN p5_jobs j ON j.id=u.job_id JOIN p5_flows f ON f.id=j.flow_id WHERE f.user_id=? AND u.day BETWEEN ? AND ?",(user_id,utc_first,utc_last)).fetchone()[0]

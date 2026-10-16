@@ -4,10 +4,10 @@ Updated: 2026-10-16 (Australia/Sydney)
 
 ## Current state
 
-- **Current phase:** Phase 11 — Integration, security and final readiness.
+- **Current phase:** Complete — Phases 6–11 implemented and validated locally.
 - **Current branch:** `codex/agencyos-phases6-11`.
 - **Baseline:** GitHub `agencyos-phase5` at `497e950ee4c4fabcbb3a897053cc4890cb24f20f`, matching the Phase 5 commit specified in the program.
-- **Latest completed checkpoint:** Phase 9 `5b628ddf6b43d72a74fcff564a9fbc9f1873ac01` (published; authorized discovery and compliant outreach safeguards).
+- **Latest completed checkpoint:** Phase 10 `bec82f80521dd88a87c2ad4a094d6afe8a9a9fe6` (published; local staging, integrity checks and rollback).
 - **Environment:** Local workspace checkout, not the user's MacBook. No pre-existing database was present in the workspace.
 - **External actions:** None. Live email, paid AI, real invoices/payments, public deployment and customer publication remain disabled.
 
@@ -30,6 +30,9 @@ Updated: 2026-10-16 (Australia/Sydney)
 - [x] Phase 9 checkpoint published to `codex/agencyos-phases6-11` at `5b628ddf6b43d72a74fcff564a9fbc9f1873ac01`.
 - [x] Phase 10: local-only static staging for approved site versions, integrity manifests/checks, owner-visible maintenance alerts, explicit checked-release rollback, and a fail-closed public deployment boundary.
 - [x] Phase 10 validation: **211 automated tests passed** (4 focused Phase 10 tests); Phase 3/4 server smoke, Phase 5 sales-worker smoke and Chromium workflows passed. Details: `PHASE10.md` and `PHASE10_FINAL_VALIDATION.md`.
+- [x] Phase 10 checkpoint published to `codex/agencyos-phases6-11` at `bec82f80521dd88a87c2ad4a094d6afe8a9a9fe6`.
+- [x] Phase 11: one synthetic lifecycle now crosses owner-reviewed outreach evidence, accepted quote, approved site, private local staging, signed mock payment and a private daily Operations summary with payment/release provenance.
+- [x] Phase 11 validation: **212 automated tests passed** (4 Phase 10 and 1 integrated Phase 11 focused tests); Phase 3/4 server smoke, Phase 5 sales-worker smoke, Chromium workflow, dependency check and diff check passed. Details: `PHASE11.md` and `PHASE11_FINAL_VALIDATION.md`.
 
 ## Phase validation log
 
@@ -41,17 +44,17 @@ Record actual commands, outcomes, evidence paths, and fixes here only after exec
 | 7 Invoices and sandbox payments | Complete | 195 automated tests; HTTP/worker smoke; Chromium workflow; signed payment/refund tests; reviewed A4 PDF | `4542dcd` |
 | 8 Agent orchestration and operations | Complete | 204 automated tests; HTTP/sales smoke; Chromium workflow; DST, concurrency, worker and schedule evidence | `68fd0d9` |
 | 9 Authorized discovery and compliant outreach | Complete | 207 automated tests; owner-attested eligibility records; Phase 3/4 smoke; Phase 5 sales worker; Chromium lifecycle | `5b628dd` |
-| 10 Hosting, publication, maintenance and production preparation | Complete | 211 automated tests; private staging, hash integrity, alert and rollback flows; smoke and Chromium regressions | Pending checkpoint |
-| 11 Integration, security and final acceptance | In progress | Build synthetic lifecycle acceptance and readiness inventory | — |
+| 10 Hosting, publication, maintenance and production preparation | Complete | 211 automated tests; private staging, hash integrity, alert and rollback flows; smoke and Chromium regressions | `bec82f8` |
+| 11 Integration, security and final acceptance | Complete | 212 automated tests; synthetic lead-to-payment-to-summary lifecycle; server/sales/browser regressions; readiness/security inventory | Pending checkpoint |
 
 ## Current blockers
 
-- No development blocker at Phase 8 completion.
+- No development blocker at Phase 11 completion.
 - Provider licensing/permission, lawful outreach basis, verified business configuration, payment-provider configuration, hosting accounts/domains, and production approval are external prerequisites. Development and synthetic/sandbox implementation can proceed without them.
 
 ## Next executable step
 
-Complete the Phase 11 end-to-end synthetic lifecycle, run final security/gate regression checks, and document installed/configured/mock-only/missing components and operating requirements. Keep all provider activity mocked/local.
+No further development phase remains in this program. Live activation requires separately verified provider permissions, lawful operating basis, production security, hosting, backups, and publication approval as described in `PHASE11.md`.
 
 ## Resume instructions
 
