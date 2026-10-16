@@ -14,7 +14,8 @@ from phase3_store import stamp
 def main():
     parser=argparse.ArgumentParser(description='AgencyOS local maintenance; never sends email or publishes websites.')
     commands=parser.add_subparsers(dest='command',required=True)
-    worker=commands.add_parser('worker',help='Run the selected queue: --phase5 sales, --phase4 research, or legacy Phase 3')
+    worker=commands.add_parser('worker',help='Run Phase 8 local orchestration, the Phase 5 sales queue, Phase 4 queue, or legacy Phase 3')
+    worker.add_argument('--phase8',action='store_true',help='Process approved local Agent Center tasks, local-time schedules and daily summaries; no paid/external actions')
     worker.add_argument('--phase5',action='store_true',help='Process sales workflow jobs and internal follow-up reviews; no live email')
     worker.add_argument('--phase4',action='store_true',help='Process Phase 4 local schedules/jobs and approved audits ONLY; no legacy AI/discovery calls')
     worker.add_argument('--watch',action='store_true',help='Poll until Control+C; selected phase also processes its enabled internal schedules')
@@ -22,6 +23,7 @@ def main():
     doctor=commands.add_parser('doctor',help='Read-only database, queue and worker diagnostics; does not execute tasks')
     doctor.add_argument('--phase5',action='store_true')
     doctor.add_argument('--phase4',action='store_true')
+    doctor.add_argument('--phase8',action='store_true')
     doctor.add_argument('--database')
     doctor.add_argument('--json',action='store_true',help='Machine-readable diagnostics')
     review=commands.add_parser('policy-review',help='Record YOUR current review of all three provider policies; does not verify them automatically')
@@ -48,8 +50,8 @@ def main():
     import runtime_status
     from phase3_store import connect
     if args.database:app.DB_PATH=runtime_status.database_path(args.database)
-    if args.phase4 and args.phase5:parser.error('Choose --phase4 or --phase5, not both.')
-    phase='5' if args.phase5 else ('4' if args.phase4 else '3')
+    if sum(bool(value) for value in (args.phase4,args.phase5,args.phase8))>1:parser.error('Choose only one worker phase.')
+    phase='8' if args.phase8 else ('5' if args.phase5 else ('4' if args.phase4 else '3'))
     if not Path(app.DB_PATH).is_file():parser.error('Selected database does not exist: '+app.DB_PATH+'. Start app.py with the same AGENCYOS_DB; the worker will not create another database.')
     # Read-only startup checks; no migrations or task execution through doctor.
     try:
@@ -63,9 +65,11 @@ def main():
             print('Database: '+info['database_path']+'\nIdentity: '+info['database_identity']+'\nSelected phase: '+phase)
             print('Queues: '+json.dumps(info['queues'],sort_keys=True))
             print('Matching recent worker: '+str(info['selected_worker_connected'])+'; paused: '+str(info['paused']))
-            print('Phase 5 sales needs --phase5; Agency Manager research needs --phase4; the legacy research queue uses neither flag.')
+            print('Phase 8 Agent Center needs --phase8; Phase 5 sales needs --phase5; Agency Manager research needs --phase4; legacy research uses neither flag.')
         return
-    if args.phase5:
+    if args.phase8:
+        from p8_ops import worker_tick as worker_once
+    elif args.phase5:
         from sales_engine import worker_once
     elif args.phase4:
         from phase4 import worker_once

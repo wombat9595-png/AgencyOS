@@ -103,9 +103,10 @@ with tempfile.TemporaryDirectory(prefix='agencyos-browser-validation-') as tempo
             form=page.locator('form[method=post]');fill(form,username='fictional-browser-owner',password='fictional-browser-password');submit(form,'Sign in')
             step('Owner setup and login through real Chromium forms')
 
-            for path,heading in [('/leads','Leads & clients'),('/sales','Sales team'),('/agency','Agency Manager'),('/agents','Agent Control Center')]:
+            for path,heading in [('/leads','Leads & clients'),('/sales','Sales team'),('/agency','Agency Manager'),('/agents','Agent Control Center'),('/operations','Operations')]:
                 go(path);expect(page.get_by_role('heading',name=heading,exact=True)).to_be_visible()
-            step('Leads, Sales Team, Agency Manager and Agent Control Center navigation')
+            expect(page.locator('body')).to_contain_text('Phase 8')
+            step('Leads, Sales Team, Agency Manager, Agent Control Center and unified Operations navigation')
 
             go('/leads')
             for number in (1,2):

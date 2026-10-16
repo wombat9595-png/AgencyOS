@@ -8,7 +8,7 @@ import shlex
 from phase3_store import connect
 
 ROOT=Path(__file__).resolve().parent
-PHASES={'3':'p3_jobs','4':'p4_jobs','5':'p5_jobs'}
+PHASES={'3':'p3_jobs','4':'p4_jobs','5':'p5_jobs','8':'agent_tasks'}
 
 
 def database_path(value=None):

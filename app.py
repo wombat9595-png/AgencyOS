@@ -23,6 +23,7 @@ from sales import register as register_sales
 import website_builder
 import runtime_status
 import phase7_billing
+import p8_ops
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = runtime_status.database_path(os.environ.get("AGENCYOS_DB"))
@@ -93,6 +94,7 @@ def init_db():
     migrate_sales(conn)
     website_builder.migrate(conn)
     phase7_billing.migrate(conn)
+    p8_ops.migrate(conn)
     runtime_status.migrate(conn)
     conn.commit()
     conn.close()
@@ -496,6 +498,7 @@ register_phase4(app, db, login_required, insert_lead)
 register_sales(app, db, login_required)
 website_builder.register(app, db, login_required)
 phase7_billing.register(app, db, login_required)
+p8_ops.register(app, db, login_required, lambda: DB_PATH)
 
 if __name__ == "__main__":
     init_db()

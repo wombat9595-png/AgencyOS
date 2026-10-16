@@ -4,10 +4,10 @@ Updated: 2026-10-16 (Australia/Sydney)
 
 ## Current state
 
-- **Current phase:** Phase 8 — Agent orchestration and operations.
+- **Current phase:** Phase 9 — Authorized discovery and compliant outreach.
 - **Current branch:** `codex/agencyos-phases6-11`.
 - **Baseline:** GitHub `agencyos-phase5` at `497e950ee4c4fabcbb3a897053cc4890cb24f20f`, matching the Phase 5 commit specified in the program.
-- **Latest completed checkpoint:** Phase 7 `4afb459` (invoice drafts, synthetic PDFs and verified test reconciliation).
+- **Latest completed checkpoint:** Phase 7 `4542dcd` (published; invoice drafts, synthetic PDFs and verified test reconciliation; tree `42acb4e`).
 - **Environment:** Local workspace checkout, not the user's MacBook. No pre-existing database was present in the workspace.
 - **External actions:** None. Live email, paid AI, real invoices/payments, public deployment and customer publication remain disabled.
 
@@ -22,6 +22,8 @@ Updated: 2026-10-16 (Australia/Sydney)
 - [x] Phase 6 checkpoint published to `codex/agencyos-phases6-11` at `eb9b3eaafd970ec331f7780ff47f80842b5cfb44`.
 - [x] Phase 7: accepted-quote invoice drafts, explicit business/GST settings, encrypted optional bank test data, synthetic invoice PDFs, local signed mock payments, Stripe test-mode adapter/signature checks, partial payment/refund/dispute/reconciliation states, local reminder drafts, and revenue provenance separation.
 - [x] Phase 7 validation: **195 automated tests passed**; HTTP/worker and Chromium workflow checks passed; synthetic A4 invoice generated and visually reviewed. Details: `PHASE7.md`, `PHASE7_FINAL_VALIDATION.md`, and `output/pdf/`.
+- [x] Phase 8: unified Operations view, dedicated local Phase 8 worker, owner-scoped recurring local-time schedules and daily summaries, with queue pressure and emergency-pause controls.
+- [x] Phase 8 validation: **204 automated tests passed** (9 focused Phase 8 tests); server and sales smoke checks passed; Chromium workflow passed with Operations navigation; `pip check` and diff checks passed. Details: `PHASE8.md` and `PHASE8_FINAL_VALIDATION.md`.
 
 ## Phase validation log
 
@@ -30,20 +32,20 @@ Record actual commands, outcomes, evidence paths, and fixes here only after exec
 | Phase | Status | Tests/evidence | Commit |
 |---|---|---|---|
 | 6 Website builder and QA | Complete | 186 unit tests; HTTP/worker smoke; Chromium preview/revision/approval; screenshots | `eb9b3ea` |
-| 7 Invoices and sandbox payments | Complete | 195 automated tests; HTTP/worker smoke; Chromium workflow; signed payment/refund tests; reviewed A4 PDF | `4afb459` |
-| 8 Agent orchestration and operations | In progress | Not run | — |
-| 9 Authorized discovery and compliant outreach | Not started | — | — |
+| 7 Invoices and sandbox payments | Complete | 195 automated tests; HTTP/worker smoke; Chromium workflow; signed payment/refund tests; reviewed A4 PDF | `4542dcd` |
+| 8 Agent orchestration and operations | Complete | 204 automated tests; HTTP/sales smoke; Chromium workflow; DST, concurrency, worker and schedule evidence | Pending checkpoint |
+| 9 Authorized discovery and compliant outreach | In progress | Audit existing discovery/outreach controls, then fill gaps with synthetic/local validation | — |
 | 10 Hosting, publication, maintenance and production preparation | Not started | — | — |
 | 11 Integration, security and final acceptance | Not started | — | — |
 
 ## Current blockers
 
-- No development blocker at Phase 7 completion.
+- No development blocker at Phase 8 completion.
 - Provider licensing/permission, lawful outreach basis, verified business configuration, payment-provider configuration, hosting accounts/domains, and production approval are external prerequisites. Development and synthetic/sandbox implementation can proceed without them.
 
 ## Next executable step
 
-Implement Phase 8 durable orchestration and operational controls on the existing Phase 3–7 stores. Keep agent actions local/review-gated and test with isolated synthetic databases. No live email, payments, deployment, or publication.
+Audit Phase 3–5 discovery and outreach paths against Phase 9 acceptance criteria. Complete authorized-source metadata, deduplication/scoring, and local/sandbox email safeguards using synthetic fixtures only. No live email, payments, deployment, or publication.
 
 ## Resume instructions
 

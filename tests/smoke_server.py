@@ -40,7 +40,7 @@ with tempfile.TemporaryDirectory(dir=root, prefix='.smoke-') as temporary:
             page = post('/login', {'username':'synthetic-owner','password':'synthetic-smoke-password'})
             assert 'Build better websites' in page
             post('/leads', {'business_name':'HTTP Synthetic Studio','location':'Sydney'})
-            for path in ('/', '/leads','/outreach','/quotes','/invoices','/projects','/settings','/lead-finder','/agents','/agents/tasks/new','/workflows','/discovery','/research?lead_id=1','/outreach/history','/static/style.css'):
+            for path in ('/', '/leads','/outreach','/quotes','/invoices','/projects','/settings','/lead-finder','/agents','/agents/tasks/new','/operations','/workflows','/discovery','/research?lead_id=1','/outreach/history','/static/style.css'):
                 with opener.open(base + path) as response:
                     assert response.status == 200, path
             with opener.open(base + '/') as response:
