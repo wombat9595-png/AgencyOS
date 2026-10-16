@@ -65,7 +65,9 @@ with tempfile.TemporaryDirectory(prefix='agencyos-browser-validation-') as tempo
                 time.sleep(.1)
         else:raise AssertionError('Server readiness timeout')
         with sync_playwright() as automation:
-            browser=automation.chromium.launch(executable_path=args.chromium,headless=True,args=['--no-sandbox','--disable-background-networking','--disable-component-update'])
+            launch_options=dict(headless=True,args=['--no-sandbox','--disable-background-networking','--disable-component-update'])
+            if args.chromium: launch_options['executable_path']=args.chromium
+            browser=automation.chromium.launch(**launch_options)
             result['browser_version']=browser.version
             context=browser.new_context(viewport=dict(width=1440,height=1000))
             def network(route):
@@ -168,6 +170,33 @@ with tempfile.TemporaryDirectory(prefix='agencyos-browser-validation-') as tempo
             page.get_by_role('heading',name='Project #1 brief',exact=True).scroll_into_view_if_needed()
             page.screenshot(path=str(artifacts/'sales-project-brief.png'))
             step('Proposal review, exact GST quote approval and one owner-attested project brief with complete acceptance evidence')
+
+            go('/projects');page.get_by_role('link',name='Build and preview website ↗').click();page.wait_for_load_state('domcontentloaded')
+            expect(page.get_by_role('heading',name='Website project from Phase 5 quote #1',exact=True)).to_be_visible()
+            form=page.locator('form[action="/projects/1/website/generate"]');form.locator('[name=confirm]').check();submit(form,'Queue website build')
+            wait_query('SELECT * FROM p6_site_versions WHERE site_id=1',lambda row:row['status']=='Needs review')
+            go('/projects/1/website');expect(page.get_by_role('heading',name='Website QA · Passed',exact=True)).to_be_visible()
+            page.get_by_role('link',name='Desktop preview').click();page.wait_for_load_state('domcontentloaded')
+            expect(page.locator('iframe')).to_have_count(1)
+            frame=page.frame_locator('iframe');expect(frame.locator('nav[aria-label="Main navigation"] a')).to_have_count(3)
+            expect(frame.locator('input[required]')).to_have_count(2)
+            full_height=frame.locator('html').evaluate('(el) => el.scrollHeight')
+            page.locator('iframe').evaluate('(el,height) => el.style.height = height + "px"',full_height)
+            page.locator('iframe').screenshot(path=str(artifacts/'website-desktop.png'))
+            page.get_by_role('link',name='Back to build').click();page.wait_for_load_state('domcontentloaded')
+            form=page.locator('form[action="/websites/1/revise"]');fill(form,revision_note='headline: A clearer browser website headline');submit(form,'Queue revision')
+            wait_query('SELECT * FROM p6_site_versions WHERE site_id=1 AND version=2',lambda row:row['status']=='Needs review')
+            go('/projects/1/website')
+            expect(page.get_by_role('heading',name='Latest version · v2',exact=True)).to_be_visible()
+            page.get_by_role('link',name='Mobile preview').click();page.wait_for_load_state('domcontentloaded')
+            page.set_viewport_size(dict(width=390,height=844));frame=page.frame_locator('iframe')
+            full_height=frame.locator('html').evaluate('(el) => el.scrollHeight')
+            page.locator('iframe').evaluate('(el,height) => el.style.height = height + "px"',full_height)
+            page.locator('iframe').screenshot(path=str(artifacts/'website-mobile.png'))
+            page.get_by_role('link',name='Back to build').click();page.wait_for_load_state('domcontentloaded')
+            form=page.locator('form[action="/websites/1/approve/2"]');form.locator('[name=confirm]').check();submit(form,'Approve website version')
+            assert query('SELECT status FROM p6_site_versions WHERE site_id=1 AND version=2')['status']=='Approved'
+            step('Phase 6 local worker build, QA review, isolated desktop/mobile previews, revision and version approval')
 
             go('/agency');form=page.locator('form[action="/agency/pause"]');submit(form,'Emergency pause')
             expect(page.get_by_role('heading',name='Emergency pause active',exact=True)).to_be_visible()

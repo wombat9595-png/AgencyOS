@@ -9,6 +9,10 @@
 td .btn{padding:6px 9px;margin-top:6px}
 @media(max-width:650px){.filter-grid{grid-template-columns:1fr}}
 
+/* Phase 6 website build review and private preview. */
+.preview-actions,.viewport-switch{display:flex;align-items:center;flex-wrap:wrap;gap:9px;padding:16px 20px}.qa-box{margin:18px;padding:18px;border:1px solid var(--line);border-radius:10px}.qa-box h3{margin:0 0 10px;font:600 14px 'Space Grotesk',sans-serif}.qa-box ul{color:var(--muted);font-size:11px;line-height:1.8}.qa-ok{background:#141d16;border-color:#345238}.qa-fail{background:#281719;border-color:#704047}.version-list{padding:6px 20px}.version-list article{display:grid;gap:10px;padding:16px 0;border-bottom:1px solid var(--line)}.version-list article:last-child{border-bottom:0}.version-list article>div:first-child{display:grid;gap:5px}.version-list small{color:var(--muted);font-size:10px}.version-list pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:360px;overflow:auto;background:#0d1016;padding:14px;border-radius:8px;color:#ccd2de;font-size:10px}.preview-canvas{display:grid;place-items:start center;padding:18px;background:#252a33;border:1px solid var(--line);border-radius:12px;overflow:auto}.preview-canvas iframe{display:block;height:78vh;min-height:560px;background:white;border:0;border-radius:6px;box-shadow:0 12px 36px #0005}.preview-canvas .desktop-frame{width:100%}.preview-canvas .mobile-frame{width:390px;max-width:100%}.check-label{display:flex!important;grid-template-columns:18px 1fr;align-items:start;gap:10px!important;line-height:1.6}.check-label input{width:16px!important;margin-top:2px}.preview-actions details{font-size:11px;color:var(--muted)}.stack button:disabled{opacity:.5;cursor:not-allowed}
+@media(max-width:650px){.preview-canvas{padding:8px}.preview-canvas iframe{height:76vh;min-height:480px}.preview-canvas .mobile-frame{width:390px}.preview-actions{padding:13px 16px}}
+
 /* Phase 2B controls inherit the established AgencyOS visual identity. */
 .agent-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
 .agent-details{padding:18px 21px;overflow-wrap:anywhere}

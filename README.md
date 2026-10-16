@@ -1,5 +1,7 @@
 # AgencyOS — Phase 5: coordinated sales workflow
 
+The master development program is tracked in [AGENCYOS_MASTER_PROGRESS.md](AGENCYOS_MASTER_PROGRESS.md) and [AGENCYOS_MASTER_ROADMAP.md](AGENCYOS_MASTER_ROADMAP.md). Phase 6 website building is described in [PHASE6.md](PHASE6.md); its implementation is underway on the current development branch.
+
 Built from Phase 4 commit `d55468a`, preserving the dashboard styling, earlier modules and records. Phase 5 connects approved research, outreach drafts, correspondence, internal follow-up reviews, proposals, versioned AUD quotes and owner-attested acceptance/project briefs.
 
 **Live email is disabled: no live sender adapter is installed.** The email provider is explicitly a mock for testing the integration boundary. Local agents perform real work on saved records; they do not claim simulated business discoveries, replies or customer agreements. Optional AI writing/interpretation is implemented behind exact-request approval and budgets, but was validated only with mocked provider responses. Default AI budget is zero.

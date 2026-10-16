@@ -26,7 +26,7 @@ def calculate(packages,gst_mode,requirements,source,proposal):
             raise WorkflowError('Invalid package quantity, price or billing period.')
         subtotal=package['price_cents']*qty
         tax=int((Decimal(subtotal)/10).quantize(Decimal('1'),rounding=ROUND_HALF_UP)) if gst_mode=='registered_10' else 0
-        lines.append(dict(package_id=package['id'],package_version=package['version'],description=package['name'],quantity=qty,
+        lines.append(dict(package_id=package['id'],package_version=package['version'],category=package.get('category',''),description=package['name'],quantity=qty,
                           unit_cents=package['price_cents'],subtotal_cents=subtotal,gst_cents=tax,total_cents=subtotal+tax,
                           cycle=package['cycle'],scope=package['scope'],exclusions=package['exclusions']))
         total=totals[package['cycle']]

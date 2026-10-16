@@ -8,6 +8,7 @@ import sales_store as store
 import sales_email as email
 import sales_quotes as quotes
 import sales_ai
+import website_builder
 from ai_drafts import DraftError
 
 
@@ -92,11 +93,19 @@ def worker_once(path):
         try:
             agent_id=('lead-research' if job['kind']=='research' else
                       'sales-replies' if job['kind'] in ('classify','reply','followup') else
-                      'sales-proposals' if job['kind'] in ('proposal','quote') else 'outreach')
+                      'sales-proposals' if job['kind'] in ('proposal','quote') else
+                      'website-builder' if job['kind']=='website' else 'outreach')
             agent=conn.execute('SELECT enabled FROM agents WHERE id=?',(agent_id,)).fetchone()
             if not agent or not agent['enabled']:
                 raise WorkflowError('The selected sales agent is disabled in the Control Center.')
-            if job['mode']=='ai':
+            if job['kind']=='website':
+                qa_agent=conn.execute('SELECT enabled FROM agents WHERE id=?',('website-qa',)).fetchone()
+                if not qa_agent or not qa_agent['enabled']:
+                    raise WorkflowError('The Website QA Agent is disabled in the Control Center.')
+            if job['mode']=='ai' and job['kind']=='website':
+                generated=sales_ai.execute(conn,job)
+                result=website_builder.apply_ai_copy(website_builder.build(conn,payload),generated)
+            elif job['mode']=='ai':
                 # Suppression cannot be overridden by the model's interpretation.
                 result=sales_ai.execute(conn,job)
                 if job['kind']=='classify' and email.opted_out(payload['original']):
@@ -115,6 +124,8 @@ def worker_once(path):
             elif job['kind']=='quote':
                 result=quotes.calculate(payload['packages'],payload['gst_mode'],payload['requirements'],payload['requirements_source'],payload['proposal'])
                 result['branding']=payload.get('branding','')
+            elif job['kind']=='website':
+                result=website_builder.build(conn,payload)
             else:
                 result=write_local(job['kind'],payload)
             conn.execute('BEGIN IMMEDIATE')
@@ -150,6 +161,16 @@ def worker_once(path):
                 conn.execute("UPDATE p5_followups SET status='Review due' WHERE message_id=? AND status!='Stopped'",(payload['message_id'],))
             elif job['kind']=='dispatch':
                 conn.execute("UPDATE p5_flows SET state='Mock correspondence recorded; no real email' WHERE id=?",(flow['id'],))
+            elif job['kind']=='website':
+                site=conn.execute('SELECT * FROM p6_sites WHERE id=? AND owner_id=?',(payload['site_id'],job['user_id'])).fetchone()
+                if not site or site['project_id']!=payload['project_id'] or site['brief_id']!=payload['brief_id']:
+                    raise WorkflowError('Website task is not linked to the authorized owner project brief.')
+                version=conn.execute('SELECT COALESCE(MAX(version),0)+1 FROM p6_site_versions WHERE site_id=?',(site['id'],)).fetchone()[0]
+                conn.execute("UPDATE p6_site_versions SET status='Superseded' WHERE site_id=? AND status='Needs review'",(site['id'],))
+                conn.execute('''INSERT INTO p6_site_versions(site_id,version,theme,content_json,html,pages_json,qa_json,revision_note,status,created_at)
+                    VALUES(?,?,?,?,?,?,?,?,'Needs review',?)''',(site['id'],version,result['theme'],store.dumps(result['content']),result['html'],store.dumps(result['pages']),store.dumps(result['qa']),result['content'].get('revision_note',''),stamp()))
+                result=dict(site_id=site['id'],project_id=site['project_id'],version=version,qa=result['qa'])
+                conn.execute("UPDATE p6_sites SET status='Needs review',active_version=? WHERE id=?",(version,site['id']))
             # Correspondence may arrive after a project brief was created. It must
             # not regress the accepted opportunity into an earlier sales stage.
             if flow['state']=='Project brief ready':
@@ -162,6 +183,8 @@ def worker_once(path):
         except Exception as exc:
             conn.rollback()
             message=str(exc) if isinstance(exc,(WorkflowError,DraftError)) else 'Unexpected sales task failure. No invented output; inspect configuration and history.'
+            if job['kind']=='website':
+                conn.execute("UPDATE p6_sites SET status='Failed' WHERE id=? AND owner_id=?",(payload.get('site_id'),job['user_id']))
             conn.execute("UPDATE p5_jobs SET status='Failed',error=?,lease_until=NULL,updated_at=? WHERE id=? AND token=? AND status='Running'",(message,stamp(),job['id'],job['token']))
             store.log(conn,job['user_id'],message,job['flow_id'],job['id'])
             conn.commit()

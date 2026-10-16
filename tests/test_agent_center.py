@@ -138,7 +138,8 @@ class AgentCenterTest(unittest.TestCase):
         self.post('/agents/lead-research/settings', {'name':'My Lead Assistant','enabled':'yes'})
         self.assertEqual(self.post(response.location + '/run').status_code,302)
         self.assertIn(b'My Lead Assistant',self.client.get('/agents').data)
-        self.assertEqual(self.post('/agents/website-builder/settings', {'name':'Builder','enabled':'yes'}).status_code,400)
+        self.assertEqual(self.post('/agents/website-builder/settings', {'name':'Builder','enabled':'yes'}).status_code,302)
+        self.assertIn(b'Builder',self.client.get('/agents').data)
         self.assertEqual(self.post('/agents/unknown/settings', {'name':'Unknown'}).status_code,404)
         self.assertEqual(self.post('/agents/lead-research/settings', {'name':''}).status_code,400)
 
@@ -293,7 +294,7 @@ class AgentCenterTest(unittest.TestCase):
         application.init_db()
         for table in original_tables:
             self.assertEqual([tuple(row) for row in self.rows(table)],before[table],table)
-        self.assertEqual(len(self.rows('agents')),8)
+        self.assertEqual(len(self.rows('agents')),9)
         self.assertTrue({'sales-replies','sales-proposals'} <= {row['id'] for row in self.rows('agents')})
         self.assertEqual(self.client.get('/agents').status_code,200)
 

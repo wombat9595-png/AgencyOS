@@ -20,6 +20,7 @@ from phase4_store import migrate as migrate_phase4
 from phase4_data import migrate as migrate_phase4_data
 from sales_store import migrate as migrate_sales
 from sales import register as register_sales
+import website_builder
 import runtime_status
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -89,6 +90,7 @@ def init_db():
     migrate_phase4(conn)
     migrate_phase4_data(conn)
     migrate_sales(conn)
+    website_builder.migrate(conn)
     runtime_status.migrate(conn)
     conn.commit()
     conn.close()
@@ -335,7 +337,10 @@ def projects():
             flash("Project saved.", "success")
             return redirect(url_for("projects"))
     rows = conn.execute("SELECT * FROM projects ORDER BY id DESC").fetchall()
-    return render_template("projects.html", projects=rows)
+    website_project_ids={r['project_id'] for r in conn.execute('''SELECT b.project_id FROM p5_project_briefs b
+        JOIN p5_acceptances a ON a.id=b.acceptance_id JOIN p5_quotes q ON q.id=a.quote_id
+        JOIN p5_flows f ON f.id=q.flow_id WHERE f.user_id=?''',(session['user_id'],)).fetchall()}
+    return render_template("projects.html", projects=rows, website_project_ids=website_project_ids)
 
 @app.route("/projects/<int:project_id>/status", methods=["POST"])
 @login_required
@@ -473,6 +478,7 @@ register_agent_routes(app, db, login_required)
 register_phase3(app, db, login_required, insert_lead)
 register_phase4(app, db, login_required, insert_lead)
 register_sales(app, db, login_required)
+website_builder.register(app, db, login_required)
 
 if __name__ == "__main__":
     init_db()

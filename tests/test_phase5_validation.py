@@ -111,7 +111,7 @@ class ValidationRegression(unittest.TestCase):
         before=Path(application.DB_PATH).read_bytes()
         result=self.cli('doctor','--phase5','--json')
         self.assertEqual(result.returncode,0,result.stderr)
-        self.assertEqual(json.loads(result.stdout)['database_path'],application.DB_PATH)
+        self.assertEqual(Path(json.loads(result.stdout)['database_path']).resolve(),Path(application.DB_PATH).resolve())
         self.assertEqual(Path(application.DB_PATH).read_bytes(),before)
         self.assertEqual(self.rows('p5_jobs')[0]['attempts'],0)
 

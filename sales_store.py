@@ -94,7 +94,9 @@ def migrate(conn):
     ''')
     for identifier,name,description in (
         ('sales-replies','Reply and Follow-Up Agent','Local/optional approved AI reply interpretation, reviewed drafts and internal follow-up reviews.'),
-        ('sales-proposals','Proposal and Quote Agent','Reviewed proposals, exact AUD calculations and owner-attested acceptance/project briefs.')):
+        ('sales-proposals','Proposal and Quote Agent','Reviewed proposals, exact AUD calculations and owner-attested acceptance/project briefs.'),
+        ('website-builder','Website Builder Agent','Creates safe, versioned static websites from accepted project briefs.'),
+        ('website-qa','Website QA Agent','Checks generated pages, navigation, forms, accessibility, SEO, claims and scope.')):
         conn.execute("INSERT OR IGNORE INTO agents(id,name,description,availability,enabled) VALUES(?,?,?,'available',1)",(identifier,name,description))
 
 
@@ -104,9 +106,9 @@ def log(conn,user_id,message,flow_id=None,job_id=None):
 
 
 def enqueue(conn,flow_id,kind,payload,mode='local',key=None):
-    if kind not in ('research','outreach','classify','reply','proposal','quote','dispatch','followup') or mode not in ('local','ai'):
+    if kind not in ('research','outreach','classify','reply','proposal','quote','dispatch','followup','website') or mode not in ('local','ai'):
         raise WorkflowError('Unsupported sales task or execution mode.')
-    if mode=='ai' and kind not in ('outreach','reply','proposal','classify'):
+    if mode=='ai' and kind not in ('outreach','reply','proposal','classify','website'):
         raise WorkflowError('This task has no AI executor.')
     if len(dumps(payload))>50000:
         raise WorkflowError('Sales task snapshot exceeds 50,000 characters.')
