@@ -5,7 +5,12 @@
 <div class="stat-card"><div class="stat-top"><span>LEADS & CLIENTS</span><span class="stat-icon">◎</span></div><strong>{{ counts.leads }}</strong><small>Contacts in your pipeline</small></div>
 <div class="stat-card"><div class="stat-top"><span>QUOTES</span><span class="stat-icon">▤</span></div><strong>{{ counts.quotes }}</strong><small>Quotes created</small></div>
 <div class="stat-card"><div class="stat-top"><span>WEBSITE PROJECTS</span><span class="stat-icon">⌘</span></div><strong>{{ counts.projects }}</strong><small>Projects tracked</small></div>
-<div class="stat-card"><div class="stat-top"><span>OPEN INVOICES</span><span class="stat-icon">▣</span></div><strong>{{ counts.unpaid }}</strong><small>Not marked as paid</small></div>
+<div class="stat-card"><div class="stat-top"><span>LEGACY OPEN RECORDS</span><span class="stat-icon">▣</span></div><strong>{{ counts.unpaid }}</strong><small>Historical manual register</small></div>
+<div class="stat-card"><div class="stat-top"><span>PHASE 7 OPEN INVOICES</span></div><strong>{{ counts.phase7_open }}</strong><small>Drafts and unpaid test invoices</small></div>
+<div class="stat-card"><div class="stat-top"><span>VERIFIED PAYMENTS</span><span class="stat-icon">✓</span></div><strong>{{ counts.provider_verified_cents|money }}</strong><small>Provider evidence only · excludes legacy manual statuses</small></div>
+<div class="stat-card"><div class="stat-top"><span>OWNER RECONCILED</span></div><strong>{{ counts.owner_reconciled_cents|money }}</strong><small>Separate from provider verified revenue</small></div>
+<div class="stat-card"><div class="stat-top"><span>SYNTHETIC TEST PAYMENTS</span></div><strong>{{ counts.test_paid_cents|money }}</strong><small>Test evidence, not actual revenue</small></div>
+<div class="stat-card"><div class="stat-top"><span>SYNTHETIC OWNER RECEIPTS</span></div><strong>{{ counts.test_owner_cents|money }}</strong><small>Owner recorded test reconciliation</small></div>
 </div>
 <div class="two-col">
 <section class="panel"><div class="panel-heading"><div><span class="eyebrow">PIPELINE</span><h2>Recent leads</h2></div><a href="{{ url_for('leads') }}">View all ↗</a></div>

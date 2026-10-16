@@ -22,6 +22,7 @@ from sales_store import migrate as migrate_sales
 from sales import register as register_sales
 import website_builder
 import runtime_status
+import phase7_billing
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = runtime_status.database_path(os.environ.get("AGENCYOS_DB"))
@@ -91,6 +92,7 @@ def init_db():
     migrate_phase4_data(conn)
     migrate_sales(conn)
     website_builder.migrate(conn)
+    phase7_billing.migrate(conn)
     runtime_status.migrate(conn)
     conn.commit()
     conn.close()
@@ -101,6 +103,10 @@ def money(cents):
 @app.template_filter("money")
 def money_filter(cents):
     return money(cents or 0)
+
+@app.template_filter("fromjson")
+def fromjson_filter(value):
+    return json.loads(value or '{}')
 
 def login_required(fn):
     @wraps(fn)
@@ -161,6 +167,11 @@ def dashboard():
       "quotes": conn.execute("SELECT COUNT(*) FROM quotes").fetchone()[0],
       "projects": conn.execute("SELECT COUNT(*) FROM projects").fetchone()[0],
       "unpaid": conn.execute("SELECT COUNT(*) FROM invoices WHERE status != 'Paid'").fetchone()[0],
+      "phase7_open": conn.execute("SELECT COUNT(*) FROM p7_invoices WHERE status IN ('Draft','Approved (test)','Partially paid')").fetchone()[0],
+      "provider_verified_cents": phase7_billing.verified_net_cents(conn, synthetic=False),
+      "owner_reconciled_cents": conn.execute("SELECT COALESCE(SUM(p.amount_cents),0) FROM p7_payments p JOIN p7_invoices i ON i.id=p.invoice_id WHERE p.source='owner_reconciled' AND p.status='Verified' AND i.synthetic=0").fetchone()[0],
+      "test_paid_cents": phase7_billing.verified_net_cents(conn, synthetic=True),
+      "test_owner_cents": conn.execute("SELECT COALESCE(SUM(p.amount_cents),0) FROM p7_payments p JOIN p7_invoices i ON i.id=p.invoice_id WHERE p.source='owner_reconciled' AND p.status='Verified' AND i.synthetic=1").fetchone()[0],
     }
     recent_leads = conn.execute("SELECT * FROM leads ORDER BY id DESC LIMIT 5").fetchall()
     projects = conn.execute("SELECT * FROM projects ORDER BY id DESC LIMIT 5").fetchall()
@@ -286,9 +297,9 @@ def quote_status(quote_id):
         db().commit()
     return redirect(url_for("quotes"))
 
-@app.route("/invoices", methods=["GET", "POST"])
+@app.route("/invoices", methods=["POST"])
 @login_required
-def invoices():
+def legacy_invoice_create():
     conn = db()
     if request.method == "POST":
         client = request.form.get("client_name","").strip()
@@ -307,8 +318,7 @@ def invoices():
             conn.commit()
             flash("Invoice record saved.", "success")
             return redirect(url_for("invoices"))
-    rows = conn.execute("SELECT * FROM invoices ORDER BY id DESC").fetchall()
-    return render_template("invoices.html", invoices=rows)
+    return redirect(url_for("invoices"))
 
 @app.route("/invoices/<int:invoice_id>/status", methods=["POST"])
 @login_required
@@ -318,6 +328,12 @@ def invoice_status(invoice_id):
         db().execute("UPDATE invoices SET status=? WHERE id=?", (status, invoice_id))
         db().commit()
     return redirect(url_for("invoices"))
+
+@app.route("/invoices/legacy")
+@login_required
+def legacy_invoices():
+    rows = db().execute("SELECT * FROM invoices ORDER BY id DESC").fetchall()
+    return render_template("invoices_legacy.html", invoices=rows)
 
 @app.route("/projects", methods=["GET", "POST"])
 @login_required
@@ -367,7 +383,7 @@ def template_helpers():
 
 @app.before_request
 def protect_forms():
-    if request.method == 'POST' and request.endpoint != 'sales_provider_event':
+    if request.method == 'POST' and request.endpoint not in ('sales_provider_event', 'payment_webhook'):
         expected = session.get('csrf_token', '')
         supplied = request.form.get('csrf_token', '')
         if not expected or not hmac.compare_digest(expected, supplied):
@@ -479,6 +495,7 @@ register_phase3(app, db, login_required, insert_lead)
 register_phase4(app, db, login_required, insert_lead)
 register_sales(app, db, login_required)
 website_builder.register(app, db, login_required)
+phase7_billing.register(app, db, login_required)
 
 if __name__ == "__main__":
     init_db()
