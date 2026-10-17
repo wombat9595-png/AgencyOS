@@ -397,6 +397,35 @@ class BusinessWorkflowTest(unittest.TestCase):
         self.assertEqual(self.post('/agency/pause',dict(paused='1')).location.rsplit('/',1)[-1],'agency')
         self.assertIn(b'Record money independently checked',self.client.get('/business/details').data)
 
+    def test_home_money_counts_only_verified_money_by_month_and_week(self):
+        import sqlite3
+        from datetime import date
+        conn=sqlite3.connect(':memory:')
+        conn.executescript("""CREATE TABLE p7_invoices(id INTEGER PRIMARY KEY,user_id INT,synthetic INT);
+          CREATE TABLE p7_payments(id INTEGER PRIMARY KEY,invoice_id INT,amount_cents INT,status TEXT,created_at TEXT);
+          CREATE TABLE first_sale_receipts(id INTEGER PRIMARY KEY,owner_id INT,amount_cents INT,received_on TEXT);
+          INSERT INTO p7_invoices VALUES(1,1,0),(2,1,1);
+          INSERT INTO p7_payments VALUES(1,1,60000,'Verified','2026-08-03T01:00:00Z'),(2,2,99900,'Verified','2026-10-15T01:00:00Z'),(3,1,5000,'Pending','2026-10-15T01:00:00Z');
+          INSERT INTO first_sale_receipts VALUES(1,1,80000,'2026-10-14'),(2,1,100000,'2026-10-02'),(3,2,70000,'2026-10-14'),(4,1,1000,'2026-03-01');""")
+        money=first_sale.money_in(conn,1,date(2026,10,17))
+        self.assertEqual([m['label'] for m in money['months']],['May','Jun','Jul','Aug','Sep','Oct'])
+        self.assertEqual(money['month_cents'],180000);self.assertEqual(money['week_cents'],80000)
+        self.assertEqual(money['months'][3]['cents'],60000);self.assertTrue(money['months'][-1]['best'])
+        self.assertEqual(money['months'][-1]['pct'],100);self.assertEqual(money['months'][3]['pct'],33)
+        empty=first_sale.money_in(conn,9,date(2026,10,17))
+        self.assertFalse(empty['has_money']);self.assertEqual(empty['month_cents'],0)
+        self.assertEqual(first_sale.next_milestone(0),dict(goal_cents=100,first_sale=True,pct=0))
+        self.assertEqual(first_sale.next_milestone(540000)['goal_cents'],1000000)
+
+    def test_bento_look_is_default_and_classic_look_stays_available(self):
+        home=self.client.get('/business').data
+        for text in (b'bento.css',b'Money in, month by month',b'Your first verified payment lights this up',b'Road to your first sale',b'voice.js'):self.assertIn(text,home)
+        self.assertEqual(self.client.get('/look/classic').status_code,302)
+        classic=self.client.get('/business').data
+        self.assertNotIn(b'bento.css',classic);self.assertNotIn(b'Money in, month by month',classic);self.assertIn(b'Talk to your CEO',classic)
+        self.client.get('/look/bento');self.assertIn(b'bento.css',self.client.get('/business').data)
+        self.assertEqual(self.client.get('/look/neon').status_code,404)
+
     def test_ceo_answers_follow_the_first_missing_sales_step(self):
         m=dict(leads=0,opportunities=0,quotes=0,accepted=0,received_cents=0,expense_cents=0,projects=0)
         runtime=dict(queues={'5':{'Running':1,'Queued':2}},workers=[])

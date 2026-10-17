@@ -1,6 +1,6 @@
 """Small, private business workflow. No purchases, public deployment or legal filings."""
 import json
-from datetime import datetime
+from datetime import date,datetime,timedelta
 from zoneinfo import ZoneInfo
 from flask import abort,flash,redirect,render_template,request,session,url_for
 from phase3_store import WorkflowError,stamp
@@ -64,6 +64,35 @@ def metrics(conn,owner):
       gmail_sent=n("SELECT COUNT(*) FROM gmail_drafts WHERE owner_id=? AND status='Sent'",(owner,)),
       suppressed=n('SELECT COUNT(*) FROM p5_suppressions WHERE user_id=?',(owner,)),
       projects=n('SELECT COUNT(*) FROM p5_project_briefs b JOIN p5_acceptances a ON a.id=b.acceptance_id JOIN p5_quotes q ON q.id=a.quote_id JOIN p5_flows f ON f.id=q.flow_id WHERE f.user_id=? AND f.synthetic=0',(owner,)))
+
+
+MILESTONES=(100,100000,1000000,10000000)
+
+
+def money_in(conn,owner,today=None):
+    """Verified money by month and week, for the home dashboard. Same sources as metrics(); quotes, tests and simulated payments never count."""
+    today=today or datetime.now(ZoneInfo('Australia/Sydney')).date()
+    rows=conn.execute("SELECT substr(p.created_at,1,10) day,p.amount_cents FROM p7_payments p JOIN p7_invoices i ON i.id=p.invoice_id WHERE i.user_id=? AND i.synthetic=0 AND p.status='Verified'",(owner,)).fetchall()
+    rows+=conn.execute('SELECT substr(received_on,1,10) day,amount_cents FROM first_sale_receipts WHERE owner_id=?',(owner,)).fetchall()
+    keys=[]
+    y,mo=today.year,today.month
+    for _ in range(6):keys.insert(0,(y,mo));y,mo=(y,mo-1) if mo>1 else (y-1,12)
+    by_month={k:0 for k in keys};week=0;week_start=today-timedelta(days=today.weekday())
+    for day,cents in rows:
+        try:d=date.fromisoformat(day)
+        except ValueError:continue
+        if (d.year,d.month) in by_month:by_month[(d.year,d.month)]+=cents
+        if week_start<=d<=today:week+=cents
+    top=max(by_month.values()) or 1
+    months=[dict(label=date(y,mo,1).strftime('%b'),cents=c,pct=round(100*c/top) if c else 0,current=(y,mo)==keys[-1],best=c==top and c>0) for (y,mo),c in by_month.items()]
+    prev=months[-2]['cents']
+    return dict(months=months,month_cents=months[-1]['cents'],prev_month_cents=prev,month_change_cents=months[-1]['cents']-prev,week_cents=week,has_money=any(m['cents'] for m in months))
+
+
+def next_milestone(received_cents):
+    """The first-sale, A$1k, A$10k and A$100k goals from the owner's plan."""
+    goal=next((g for g in MILESTONES if received_cents<g),MILESTONES[-1])
+    return dict(goal_cents=goal,first_sale=goal==100,pct=min(100,round(100*received_cents/goal)))
 
 
 def daily_report(conn,now=None):
@@ -145,8 +174,17 @@ def register(app,get_db,login_required):
         todo=priorities(conn,owner,m,gmail,conn.execute('SELECT * FROM p5_control WHERE id=1').fetchone())
         question=request.args.get('ask','').strip()[:300]
         answer=ceo_answer(question,m,todo,paused(conn),runtime) if question else ''
-        return render_template('business.html',metrics=m,paused=paused(conn),worker=bool(runtime['workers']),todo=todo,
-          configured=configured(conn,owner),question=question,answer=answer,suggestions=CEO_SUGGESTIONS)
+        return render_template('business_classic.html' if request.cookies.get('look')=='classic' else 'business.html',metrics=m,paused=paused(conn),worker=bool(runtime['workers']),todo=todo,
+          configured=configured(conn,owner),question=question,answer=answer,suggestions=CEO_SUGGESTIONS,
+          money=money_in(conn,owner),milestone=next_milestone(m['received_cents']))
+
+    @app.get('/look/<name>')
+    @login_required
+    def set_look(name):
+        if name not in ('bento','classic'):abort(404)
+        response=redirect(url_for('business_home'))
+        response.set_cookie('look',name,max_age=10*365*86400,httponly=True,samesite='Lax')
+        return response
 
     @app.get('/business/details',strict_slashes=False)
     @login_required

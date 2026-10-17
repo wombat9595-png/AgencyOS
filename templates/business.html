@@ -1,43 +1,89 @@
 {% extends 'base.html' %}{% block page_heading %}Home{% endblock %}{% block content %}
-<div class="home">
-  <section class="home-hero">
+{% macro aud(cents) %}A${{ '{:,.0f}'.format(cents/100) }}{% endmacro %}
+<div class="home bento">
+  <section class="b-status">
     <div>
-      <span class="eyebrow">Benji Price · Web Design</span>
-      {% if paused %}<h1>Your agency is <em class="is-paused">paused</em>.</h1><p class="muted">No new work starts until you press Start.</p>
-      {% elif worker %}<h1>Your agency is <em>running</em>.</h1><p class="muted">Work happens in the background while the AgencyOS launcher is open on this Mac.</p>
-      {% else %}<h1>Your agency is <em class="is-idle">ready</em>.</h1><p class="muted">The background worker isn't running. Open the AgencyOS launcher to start it.</p>{% endif %}
+      {% if paused %}<span class="b-dot is-paused"></span><strong>Your agency is paused.</strong> <span class="muted">No new work starts until you press Start.</span>
+      {% elif worker %}<span class="b-dot"></span><strong>Your agency is running.</strong> <span class="muted">Work happens while the AgencyOS launcher is open on this Mac.</span>
+      {% else %}<span class="b-dot is-idle"></span><strong>Your agency is ready.</strong> <span class="muted">Open the AgencyOS launcher to start the background worker.</span>{% endif %}
     </div>
     <form method="post" action="{{ url_for('agency_pause') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="next" value="home">
-      {% if paused %}<input type="hidden" name="paused" value="0"><button class="btn primary big-btn">▶ Start agency</button>
-      {% else %}<input type="hidden" name="paused" value="1"><button class="btn secondary big-btn">❚❚ Pause</button>{% endif %}
+      {% if paused %}<input type="hidden" name="paused" value="0"><button class="b-btn b-btn-yellow">▶ Start agency</button>
+      {% else %}<input type="hidden" name="paused" value="1"><button class="b-btn b-btn-ghost">❚❚ Pause</button>{% endif %}
     </form>
   </section>
 
-  <div class="home-grid">
-    <section class="panel home-card">
+  <div class="b-row b-row-2">
+    <section class="tile tile-yellow b-big" aria-label="Money in this month">
+      <div class="tile-top"><span>This month</span><span class="tile-tag">verified money only</span></div>
+      <div>
+        <strong class="b-huge">{{ aud(money.month_cents) }}</strong>
+        <p>{% if money.month_change_cents > 0 %}Up {{ aud(money.month_change_cents) }} on last month{% elif money.month_change_cents < 0 %}Down {{ aud(-money.month_change_cents) }} on last month{% elif money.month_cents %}Same as last month{% else %}No verified payments yet this month{% endif %}</p>
+      </div>
+    </section>
+    <section class="tile tile-violet b-big" aria-label="Money in this week">
+      <div class="tile-top"><span>This week</span></div>
+      <div>
+        <strong class="b-huge">{{ aud(money.week_cents) }}</strong>
+        <p>{% if money.week_cents %}Since Monday{% else %}Nothing received since Monday{% endif %}</p>
+      </div>
+    </section>
+  </div>
+
+  <div class="b-row b-row-chart">
+    <section class="tile tile-dark b-chart" aria-label="Money in, month by month">
+      <div class="tile-top"><span>Money in, month by month</span><span class="muted">last 6 months</span></div>
+      <ol class="bars{% if not money.has_money %} is-empty{% endif %}">
+        {% for m in money.months %}
+        <li class="bar{% if m.current %} is-now{% endif %}{% if m.best %} is-best{% endif %}" style="--h:{{ m.pct }}%;--i:{{ loop.index0 }}" tabindex="0" aria-label="{{ m.label }}: {{ aud(m.cents) }}">
+          <span class="bar-value">{{ aud(m.cents) }}</span>
+          {% if m.best %}<span class="bar-best">Best</span>{% endif %}
+          <span class="bar-fill"></span>
+          <span class="bar-label">{{ m.label }}</span>
+        </li>
+        {% endfor %}
+      </ol>
+      {% if not money.has_money %}<p class="bars-empty">Your first verified payment lights this up.</p>{% endif %}
+    </section>
+    <section class="tile tile-orange b-goal" aria-label="Next milestone">
+      <div class="tile-top"><span>{% if milestone.first_sale %}Road to your first sale{% else %}Road to {{ aud(milestone.goal_cents) }}{% endif %}</span></div>
+      <strong class="b-huge">{{ milestone.pct }}%</strong>
+      <div class="goal-track" role="progressbar" aria-valuenow="{{ milestone.pct }}" aria-valuemin="0" aria-valuemax="100" aria-label="Progress to the next milestone"><span style="width:{{ milestone.pct }}%"></span></div>
+      <p>{{ aud(metrics.received_cents) }} received in total</p>
+    </section>
+  </div>
+
+  <div class="b-stats">
+    <a class="tile tile-mint" href="{{ url_for('leads') }}"><span>Leads</span><strong>{{ metrics.leads }}</strong></a>
+    <a class="tile tile-dark" href="{{ url_for('sales_home') }}"><span>Quotes</span><strong>{{ metrics.quotes }}</strong></a>
+    <a class="tile tile-dark" href="{{ url_for('projects') }}"><span>Websites</span><strong>{{ metrics.projects }}</strong></a>
+    <a class="tile tile-cream" href="{{ url_for('business_details') }}"><span>Cash surplus</span><strong>{{ aud(metrics.cash_surplus_cents) }}</strong></a>
+  </div>
+
+  <div class="b-row b-row-2">
+    <section class="tile tile-dark b-todo">
       <h2>What matters now</h2>
       <ul class="todo">
-        {% if not configured %}<li><form method="post" action="{{ url_for('business_configure') }}" class="todo-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label><input type="checkbox" name="confirm" value="yes" required> Set your name (Benji Price) and the A$600 / A$800 / A$1,000 packages</label><button class="btn primary">Set up</button></form></li>{% endif %}
-        {% for item in todo %}<li><span>{{ item.text }}</span><a class="btn secondary" href="{{ item.url }}">{{ item.label }}</a></li>{% endfor %}
+        {% if not configured %}<li><form method="post" action="{{ url_for('business_configure') }}" class="todo-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label><input type="checkbox" name="confirm" value="yes" required> Set your name (Benji Price) and the A$600 / A$800 / A$1,000 packages</label><button class="b-btn b-btn-yellow">Set up</button></form></li>{% endif %}
+        {% for item in todo %}<li><span>{{ item.text }}</span><a class="b-btn b-btn-ghost" href="{{ item.url }}">{{ item.label }}</a></li>{% endfor %}
         {% if configured and not todo %}<li class="todo-clear"><span>✓ Nothing needs you right now.</span></li>{% endif %}
       </ul>
     </section>
 
-    <section class="panel home-card" id="ceo">
+    <section class="tile tile-dark b-ceo" id="ceo">
       <h2>Talk to your CEO</h2>
-      {% if answer %}<div class="chat"><p class="chat-q">{{ question }}</p><p class="chat-a">{{ answer }}</p></div>{% endif %}
-      <form method="get" action="{{ url_for('business_home') }}#ceo" class="ceo-form"><input name="ask" maxlength="300" placeholder="Ask anything about the business…" aria-label="Ask your CEO" autocomplete="off"><button class="btn primary">Ask</button></form>
+      {% if answer %}<div class="chat"><p class="chat-q">{{ question }}</p><p class="chat-a" id="ceo-answer">{{ answer }}</p></div>{% endif %}
+      <form method="get" action="{{ url_for('business_home') }}#ceo" class="ceo-form" id="ceo-form">
+        <input name="ask" id="ceo-ask" maxlength="300" placeholder="Ask anything about the business…" aria-label="Ask your CEO" autocomplete="off">
+        <button type="button" class="b-mic" id="ceo-mic" hidden aria-label="Ask out loud" title="Ask out loud"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+        <button class="b-btn b-btn-yellow">Ask</button>
+      </form>
+      <p class="b-voice-status tiny muted" id="ceo-voice-status" aria-live="polite"></p>
       <div class="chips">{% for s in suggestions %}<a href="{{ url_for('business_home', ask=s) }}#ceo">{{ s }}</a>{% endfor %}</div>
       <p class="tiny muted">Answers come from your own AgencyOS records using simple rules. No AI model is connected yet.</p>
     </section>
   </div>
-
-  <div class="stat-grid home-stats">
-    <a class="stat-card" href="{{ url_for('leads') }}"><span>Leads</span><strong>{{ metrics.leads }}</strong></a>
-    <a class="stat-card" href="{{ url_for('sales_home') }}"><span>Quotes</span><strong>{{ metrics.quotes }}</strong></a>
-    <a class="stat-card" href="{{ url_for('projects') }}"><span>Websites</span><strong>{{ metrics.projects }}</strong></a>
-    <a class="stat-card" href="{{ url_for('business_details') }}"><span>Money received</span><strong>{{ metrics.received_cents|money }}</strong><small>Cash surplus {{ metrics.cash_surplus_cents|money }} · real bank money only</small></a>
-  </div>
   <p class="tiny muted"><a href="{{ url_for('business_details') }}">Full business details, receipts and daily reports →</a></p>
 </div>
+<script src="{{ url_for('static', filename='voice.js') }}"></script>
 {% endblock %}

@@ -1,0 +1,43 @@
+{% extends 'base.html' %}{% block page_heading %}Home{% endblock %}{% block content %}
+<div class="home">
+  <section class="home-hero">
+    <div>
+      <span class="eyebrow">Benji Price · Web Design</span>
+      {% if paused %}<h1>Your agency is <em class="is-paused">paused</em>.</h1><p class="muted">No new work starts until you press Start.</p>
+      {% elif worker %}<h1>Your agency is <em>running</em>.</h1><p class="muted">Work happens in the background while the AgencyOS launcher is open on this Mac.</p>
+      {% else %}<h1>Your agency is <em class="is-idle">ready</em>.</h1><p class="muted">The background worker isn't running. Open the AgencyOS launcher to start it.</p>{% endif %}
+    </div>
+    <form method="post" action="{{ url_for('agency_pause') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="next" value="home">
+      {% if paused %}<input type="hidden" name="paused" value="0"><button class="btn primary big-btn">▶ Start agency</button>
+      {% else %}<input type="hidden" name="paused" value="1"><button class="btn secondary big-btn">❚❚ Pause</button>{% endif %}
+    </form>
+  </section>
+
+  <div class="home-grid">
+    <section class="panel home-card">
+      <h2>What matters now</h2>
+      <ul class="todo">
+        {% if not configured %}<li><form method="post" action="{{ url_for('business_configure') }}" class="todo-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label><input type="checkbox" name="confirm" value="yes" required> Set your name (Benji Price) and the A$600 / A$800 / A$1,000 packages</label><button class="btn primary">Set up</button></form></li>{% endif %}
+        {% for item in todo %}<li><span>{{ item.text }}</span><a class="btn secondary" href="{{ item.url }}">{{ item.label }}</a></li>{% endfor %}
+        {% if configured and not todo %}<li class="todo-clear"><span>✓ Nothing needs you right now.</span></li>{% endif %}
+      </ul>
+    </section>
+
+    <section class="panel home-card" id="ceo">
+      <h2>Talk to your CEO</h2>
+      {% if answer %}<div class="chat"><p class="chat-q">{{ question }}</p><p class="chat-a">{{ answer }}</p></div>{% endif %}
+      <form method="get" action="{{ url_for('business_home') }}#ceo" class="ceo-form"><input name="ask" maxlength="300" placeholder="Ask anything about the business…" aria-label="Ask your CEO" autocomplete="off"><button class="btn primary">Ask</button></form>
+      <div class="chips">{% for s in suggestions %}<a href="{{ url_for('business_home', ask=s) }}#ceo">{{ s }}</a>{% endfor %}</div>
+      <p class="tiny muted">Answers come from your own AgencyOS records using simple rules. No AI model is connected yet.</p>
+    </section>
+  </div>
+
+  <div class="stat-grid home-stats">
+    <a class="stat-card" href="{{ url_for('leads') }}"><span>Leads</span><strong>{{ metrics.leads }}</strong></a>
+    <a class="stat-card" href="{{ url_for('sales_home') }}"><span>Quotes</span><strong>{{ metrics.quotes }}</strong></a>
+    <a class="stat-card" href="{{ url_for('projects') }}"><span>Websites</span><strong>{{ metrics.projects }}</strong></a>
+    <a class="stat-card" href="{{ url_for('business_details') }}"><span>Money received</span><strong>{{ metrics.received_cents|money }}</strong><small>Cash surplus {{ metrics.cash_surplus_cents|money }} · real bank money only</small></a>
+  </div>
+  <p class="tiny muted"><a href="{{ url_for('business_details') }}">Full business details, receipts and daily reports →</a></p>
+</div>
+{% endblock %}
