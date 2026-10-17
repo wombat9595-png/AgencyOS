@@ -326,25 +326,25 @@ class BusinessWorkflowTest(unittest.TestCase):
         self.assertNotIn(b'value="Canberra',self.client.get('/discovery').data)
 
     def test_existing_price_versions_are_preserved_when_applying_first_sale_offer(self):
-        self.package(name='Starter Website',price='650.00')
+        self.package(name='Care Website',price='650.00')
         original=dict(self.rows('p5_packages')[-1])
         self.post('/business/configure',{'confirm':'yes'})
-        versions=[dict(p) for p in self.rows('p5_packages') if p['name']=='Starter Website']
-        self.assertEqual(versions[0],original);self.assertEqual(versions[1]['price_cents'],60000)
+        versions=[dict(p) for p in self.rows('p5_packages') if p['name']=='Care Website']
+        self.assertEqual(versions[0],original);self.assertEqual(versions[1]['price_cents'],80000)
         self.assertEqual(versions[1]['version'],2)
         self.post('/business/configure',{'confirm':'yes'})
-        self.assertEqual(len([p for p in self.rows('p5_packages') if p['name']=='Starter Website']),2)
+        self.assertEqual(len([p for p in self.rows('p5_packages') if p['name']=='Care Website']),2)
 
     def test_first_sale_defaults_idempotent_no_fake_tax_or_external_activation(self):
         for _ in range(2):self.assertEqual(self.post('/business/configure',{'confirm':'yes'}).status_code,302)
         packages=[p for p in self.rows('p5_packages') if p['name'] in {x[0] for x in first_sale.PACKAGES}]
-        self.assertEqual(sorted(p['price_cents'] for p in packages),[60000,80000,100000]);self.assertEqual(len(packages),3)
+        self.assertEqual(sorted(p['price_cents'] for p in packages),[6900,14900,80000,140000]);self.assertEqual(len(packages),4)
         self.assertEqual(self.rows('p7_control')[0]['business_abn'],'');self.assertEqual(self.rows('p5_control')[0]['daily_cents'],0)
         self.assertEqual(self.client.get('/business').status_code,200)
 
     def test_confirmed_questionnaire_to_exact_quote_brief_build_revision_and_qa(self):
         self.post('/business/configure',{'confirm':'yes'})
-        self._new_defaults['package_ids']=['3'] # Business Website; original fixture package remains #1
+        self._new_defaults['package_ids']=['3'] # Care Website; original fixture package remains #1
         self.prepare_message()
         answers=dict(business_name='Fictional Studio',objectives='Help customers enquire',description='Fictional garden care',pages='Home, Services, About, Contact',services='Garden care: Customer-approved garden care\nHedge trimming: Customer-approved trimming',headline='A garden worth coming home to',intro='Customer-approved garden services in a fictional town.',about='Customer-approved business description.',contact_email='hello@example.com',source='Fictional customer email #intake1',customer_confirmed='yes',colours='Earth',style='Bold and practical')
         self.assertEqual(self.post('/business/flows/1/intake',answers).status_code,302)
@@ -362,7 +362,7 @@ class BusinessWorkflowTest(unittest.TestCase):
         self.assertEqual(self.post(f'/projects/{project}/website/generate',{'confirm':'yes','theme':'earth'}).status_code,302);self.work()
         version=self.rows('p6_site_versions')[-1];pages=json.loads(version['pages_json'])
         self.assertEqual(set(pages),{'index','services','about','contact'});self.assertIn(answers['headline'],pages['index'])
-        self.assertIn('Garden care',pages['services']);self.assertNotIn('Business Website</h3>',pages['services'])
+        self.assertIn('Garden care',pages['services']);self.assertNotIn('Care Website</h3>',pages['services'])
         self.assertIn('hello@example.com',pages['contact']);self.assertTrue(json.loads(version['qa_json'])['passed'])
         self.assertIn('counter(services)',pages['index'])
         self.assertEqual(len(self.rows('p7_payments')),0)
@@ -404,14 +404,16 @@ class BusinessWorkflowTest(unittest.TestCase):
         conn.executescript("""CREATE TABLE p7_invoices(id INTEGER PRIMARY KEY,user_id INT,synthetic INT);
           CREATE TABLE p7_payments(id INTEGER PRIMARY KEY,invoice_id INT,amount_cents INT,status TEXT,created_at TEXT);
           CREATE TABLE first_sale_receipts(id INTEGER PRIMARY KEY,owner_id INT,amount_cents INT,received_on TEXT);
+          CREATE TABLE plan_payments(id INTEGER PRIMARY KEY,owner_id INT,amount_cents INT,received_on TEXT);
+          INSERT INTO plan_payments VALUES(1,1,6900,'2026-10-16'),(2,2,6900,'2026-10-16');
           INSERT INTO p7_invoices VALUES(1,1,0),(2,1,1);
           INSERT INTO p7_payments VALUES(1,1,60000,'Verified','2026-08-03T01:00:00Z'),(2,2,99900,'Verified','2026-10-15T01:00:00Z'),(3,1,5000,'Pending','2026-10-15T01:00:00Z');
           INSERT INTO first_sale_receipts VALUES(1,1,80000,'2026-10-14'),(2,1,100000,'2026-10-02'),(3,2,70000,'2026-10-14'),(4,1,1000,'2026-03-01');""")
         money=first_sale.money_in(conn,1,date(2026,10,17))
         self.assertEqual([m['label'] for m in money['months']],['May','Jun','Jul','Aug','Sep','Oct'])
-        self.assertEqual(money['month_cents'],180000);self.assertEqual(money['week_cents'],80000)
+        self.assertEqual(money['month_cents'],186900);self.assertEqual(money['week_cents'],86900)
         self.assertEqual(money['months'][3]['cents'],60000);self.assertTrue(money['months'][-1]['best'])
-        self.assertEqual(money['months'][-1]['pct'],100);self.assertEqual(money['months'][3]['pct'],33)
+        self.assertEqual(money['months'][-1]['pct'],100);self.assertEqual(money['months'][3]['pct'],32)
         empty=first_sale.money_in(conn,9,date(2026,10,17))
         self.assertFalse(empty['has_money']);self.assertEqual(empty['month_cents'],0)
         self.assertEqual(first_sale.next_milestone(0),dict(goal_cents=100,first_sale=True,pct=0))
@@ -553,7 +555,7 @@ class FirstCustomerJourneyTest(unittest.TestCase):
         steps=[]
         self.post('/business/configure',{'confirm':'yes'})
         self.settings(sender=gmail.ACCOUNT)
-        self.new(package_ids=['3']) # preserved fixture #1 + Starter #2 + Business #3
+        self.new(package_ids=['3']) # preserved fixture #1 + Care Plan #2 + Care Website #3
         steps.append('Authorised fictional Australian manual lead received; Business package selected')
         for kind in ('qualification','research'):
             response=self.post('/agency/queue',dict(lead_id='1',kind=kind));self.assertEqual(response.status_code,302)

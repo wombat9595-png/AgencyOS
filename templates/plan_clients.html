@@ -1,0 +1,44 @@
+{% extends "base.html" %}{% block title %}Monthly clients · AgencyOS{% endblock %}{% block page_heading %}Monthly clients{% endblock %}
+{% block content %}
+{% macro aud(cents) %}A${{ '{:,.0f}'.format(cents/100) if cents % 100 == 0 else '{:,.2f}'.format(cents/100) }}{% endmacro %}
+<div class="page-intro"><div><span class="eyebrow">CARE AND AUTOPILOT PLANS</span><h1>Monthly clients</h1><p class="muted">No lock-in: month to month, paid in advance, {{ notice }} days' notice. You record payments after checking your bank. Nothing is charged or emailed from here.</p></div></div>
+<div class="stat-grid">
+<div class="stat-card"><div class="stat-top"><span>COMING IN EVERY MONTH</span></div><strong>{{ aud(totals.monthly_cents) }}</strong><small>Active plans; yearly plans spread over 12 months</small></div>
+<div class="stat-card"><div class="stat-top"><span>CLIENTS ON A PLAN</span></div><strong>{{ totals.clients }}</strong><small>Including anyone working out their notice</small></div>
+<div class="stat-card"><div class="stat-top"><span>PAYMENTS OVERDUE</span></div><strong>{{ totals.overdue }}</strong><small>Due date has passed with no payment recorded</small></div>
+<div class="stat-card"><div class="stat-top"><span>OPEN CHANGE REQUESTS</span></div><strong>{{ totals.requests }}</strong><small>New or approved, not yet done</small></div>
+</div>
+
+<section class="panel"><div class="panel-heading"><div><span class="eyebrow">CHANGE REQUESTS</span><h2>What clients asked for <span class="count">{{ requests|length }}</span></h2></div></div>
+<form method="post" action="{{ url_for('plan_request_add') }}" class="stack"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<label>Client<select name="client_id" required>{% for c in clients if c.state!='Ended' %}<option value="{{ c.id }}">{{ c.client_name }} ({{ c.plan }})</option>{% else %}<option value="">Add a monthly client first</option>{% endfor %}</select></label>
+<label>Came in by<select name="source">{% for s in sources %}<option value="{{ s }}">{{ s|capitalize }}</option>{% endfor %}</select></label>
+<label>Size<select name="size"><option value="small">Small change (under about 30 minutes)</option><option value="quote">Bigger job, needs a quote</option></select></label>
+<label class="wide">What they want<textarea name="request" rows="3" maxlength="1000" required placeholder="Swap the hero photo for the new van photo"></textarea></label>
+<div class="wide"><button class="btn primary" {% if not clients %}disabled{% endif %}>Save and draft a reply</button></div></form>
+{% for r in requests %}<article class="panel stack section-gap"><p><strong>{{ r.client_name }}</strong> · {{ r.source }} · {{ 'small change' if r.size=='small' else 'needs a quote' }} · <span class="pill">{{ r.status }}</span></p><p>{{ r.request }}</p>
+{% if r.status=='New' %}<form method="post" action="{{ url_for('plan_request_update',request_id=r.id,action='approve') }}" class="stack"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label>Drafted reply (edit it, then approve and send it yourself)<textarea name="reply" rows="9" maxlength="4000">{{ r.reply }}</textarea></label><button class="btn primary">Approve reply</button></form>
+{% else %}<pre class="tiny">{{ r.reply }}</pre>{% endif %}
+{% if r.status!='Done' %}<form method="post" action="{{ url_for('plan_request_update',request_id=r.id,action='done') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn secondary">Change is done</button></form>{% endif %}</article>
+{% else %}<div class="empty"><strong>No change requests yet</strong><p>When a client emails or messages a change, add it here and a reply is drafted for you.</p></div>{% endfor %}
+</section>
+
+<section class="panel"><div class="panel-heading"><div><span class="eyebrow">CLIENTS</span><h2>On a plan <span class="count">{{ clients|length }}</span></h2></div></div>
+{% if clients %}<div class="table-wrap"><table><thead><tr><th>CLIENT</th><th>PLAN</th><th>NEXT PAYMENT</th><th>CHANGES THIS MONTH</th><th>ACTIONS</th></tr></thead><tbody>
+{% for c in clients %}<tr><td><strong>{{ c.client_name }}</strong><small>{{ c.contact_email }}{% if c.state!='Active' %} · {{ c.state }}{% if c.state=='Cancelling' %} until {{ c.ends_on }}{% else %} {{ c.ends_on }}{% endif %}{% endif %}</small></td>
+<td>{{ c.plan }}<small>{{ aud(plans[c.plan].monthly_cents) }}/month{% if c.billing=='yearly' %} · paid yearly {{ aud(plans[c.plan].yearly_cents) }}{% endif %}</small></td>
+<td>{% if c.state=='Ended' %}None{% else %}{{ c.next_due_on }}{% if c.overdue %} <span class="pill">Overdue</span>{% endif %}{% endif %}</td>
+<td>{% if c.allowance %}{{ c.used }} of {{ c.allowance }}{% else %}{{ c.used }} (unlimited){% endif %}</td>
+<td>{% if c.state!='Ended' %}<details><summary>Record payment</summary><form method="post" action="{{ url_for('plan_client_payment',client_id=c.id) }}" class="stack"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label>Amount (A$)<input name="amount" inputmode="decimal" value="{{ '%.2f'|format((plans[c.plan].yearly_cents if c.billing=='yearly' else plans[c.plan].monthly_cents)/100) }}" required></label><label>Bank reference<input name="bank_reference" maxlength="160" required></label><label><input type="checkbox" name="confirm" value="yes" required> I checked it is in my bank</label><button class="btn secondary">Record payment</button></form></details>
+{% if c.state=='Active' %}<details><summary>Client is leaving</summary><form method="post" action="{{ url_for('plan_client_cancel',client_id=c.id) }}" class="stack"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label><input type="checkbox" name="confirm" value="yes" required> Client gave notice</label><button class="btn secondary">Start {{ notice }} days' notice</button></form></details>{% endif %}{% endif %}</td></tr>{% endfor %}
+</tbody></table></div>{% else %}<div class="empty"><strong>No monthly clients yet</strong><p>Add a client when they sign up for Care or Autopilot.</p></div>{% endif %}
+<h3>Add a monthly client</h3>
+<form method="post" action="{{ url_for('plan_client_add') }}" class="stack"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<label>Client or business name<input name="client_name" maxlength="160" required></label>
+<label>Email (optional)<input name="contact_email" type="email" maxlength="254"></label>
+<label>Plan<select name="plan">{% for name,p in plans.items() %}<option value="{{ name }}">{{ name }}: {{ aud(p.monthly_cents) }}/month{% if p.allowance %}, {{ p.allowance }} small changes{% else %}, unlimited small changes{% endif %}</option>{% endfor %}</select></label>
+<label>Billing<select name="billing"><option value="monthly">Monthly, in advance</option><option value="yearly">Yearly, 2 months free</option></select></label>
+<label>Plan starts<input name="started_on" type="date" value="{{ today }}" required></label>
+<div class="wide"><button class="btn primary">Add client</button></div></form>
+</section>
+{% endblock %}
