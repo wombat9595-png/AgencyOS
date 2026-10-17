@@ -30,6 +30,8 @@ ACCOUNT = 'benji.price.webdesign@gmail.com'
 DISPLAY = 'Benji Price | Web Design'
 READ = 'https://www.googleapis.com/auth/gmail.readonly'
 SEND = 'https://www.googleapis.com/auth/gmail.send'
+# Lets AgencyOS put approved outreach into Gmail Drafts. Google has no drafts-only scope; AgencyOS never calls send with it.
+COMPOSE = 'https://www.googleapis.com/auth/gmail.compose'
 API = 'https://gmail.googleapis.com/gmail/v1/users/me/'
 TOKEN = 'https://oauth2.googleapis.com/token'
 AUTH = 'https://accounts.google.com/o/oauth2/v2/auth'
@@ -131,13 +133,13 @@ def google_request(url, *, token=None, data=None, form=False):
         raise WorkflowError('Google could not be reached or returned invalid data. No automatic message resend.') from None
 
 
-def begin_oauth(conn, owner, redirect_uri, allow_send=False):
+def begin_oauth(conn, owner, redirect_uri, allow_send=False, allow_drafts=False):
     parts = urlsplit(redirect_uri)
     if parts.scheme!='http' or parts.hostname!='127.0.0.1' or parts.path!='/gmail/oauth/callback' or parts.query or parts.fragment or parts.username or parts.password:
         raise WorkflowError('Gmail authorisation must use this private 127.0.0.1 app, not a public dashboard.')
     config = client_config()
     state = secrets.token_urlsafe(32); verifier = secrets.token_urlsafe(48)
-    scopes = [READ] + ([SEND] if allow_send else [])
+    scopes = [READ] + ([SEND] if allow_send else []) + ([COMPOSE] if allow_drafts else [])
     conn.execute('DELETE FROM gmail_oauth WHERE expires<? OR owner_id=?',(time.time(),owner))
     conn.execute('INSERT INTO gmail_oauth VALUES(?,?,?,?,?,?)',(hashlib.sha256(state.encode()).hexdigest(),owner,seal(verifier),redirect_uri,' '.join(scopes),time.time()+600))
     conn.commit()
@@ -179,6 +181,30 @@ def access_token(conn, owner, sending=False):
         record.update(result);record['expires_at']=time.time()+min(int(result.get('expires_in',3600)),3600)
         conn.execute('UPDATE gmail_accounts SET token_cipher=? WHERE owner_id=?',(seal(record),owner));conn.commit()
     return record['access_token']
+
+
+def can_draft(conn, owner):
+    row=conn.execute('SELECT * FROM gmail_accounts WHERE owner_id=?',(owner,)).fetchone()
+    return bool(row and row['email']==ACCOUNT and COMPOSE in unseal(row['token_cipher']).get('scope','').split())
+
+
+def create_outreach_draft(conn, owner, recipient, subject, body):
+    """Put an owner-approved message in Gmail Drafts. Never sends: the owner presses Send in Gmail."""
+    if not can_draft(conn,owner):raise WorkflowError('Gmail Drafts is not connected.')
+    if re.search(r'[\r\n]',subject):raise WorkflowError('The subject must be one line.')
+    message=EmailMessage();message['From']=formataddr((DISPLAY,ACCOUNT));message['To']=sales_email.address(recipient)
+    message['Subject']=subject;message.set_content(body)
+    result=google_request(API+'drafts',token=access_token(conn,owner),data=dict(message=dict(raw=base64.urlsafe_b64encode(message.as_bytes()).decode())))
+    if not isinstance(result.get('id'),str):raise WorkflowError('Gmail did not confirm the draft. Check your Drafts folder before trying again.')
+    audit(conn,'gmail_outreach_draft_created',owner,{'draft_id':result['id'],'sent':False})
+    return result['id']
+
+
+def sent_since(conn, owner, recipient, since):
+    """True when Gmail's Sent folder has a message to this address after the given Unix time."""
+    query='in:sent to:'+sales_email.address(recipient)+' after:'+str(int(since))
+    result=google_request(API+'messages?'+urlencode(dict(q=query,maxResults=1)),token=access_token(conn,owner))
+    return bool(result.get('messages'))
 
 
 def _text(part, depth=0):
@@ -404,7 +430,7 @@ def register(app,get_db,login_required):
     def gmail_connect():
         if request.form.get('confirm')!='yes':raise WorkflowError('Confirm the dedicated account before Google sign-in.')
         session['gmail_oauth_owner']=session['user_id']
-        return redirect(begin_oauth(get_db(),session['user_id'],url_for('gmail_callback',_external=True),request.form.get('send_scope')=='yes'))
+        return redirect(begin_oauth(get_db(),session['user_id'],url_for('gmail_callback',_external=True),request.form.get('send_scope')=='yes',request.form.get('draft_scope')=='yes'))
 
     @app.get('/gmail/oauth/callback')
     @login_required
