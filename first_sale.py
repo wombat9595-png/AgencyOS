@@ -9,13 +9,17 @@ from sales_store import dumps,log
 from production_security import audit
 import gmail_agent
 import discovery_preparation
+import client_plans
 
+# Two offers, each a build fee plus a no-lock-in monthly plan. Ordered so the A$800 build keeps its saved position.
+TERMS="No lock-in: month to month, paid in advance, cancel with 30 days' notice. Yearly prepay costs 10 months' fees. On leaving, the customer keeps their domain; site files are a one-off A$250 handover, otherwise the site is taken down at the end of notice."
 PACKAGES=(
- ('Starter Website',60000,'one-page','One responsive page with up to five sections; client-approved text, service summary and contact details; basic page title/description; one revision round; static export and handover.'),
- ('Business Website',80000,'multi-page','Up to four responsive pages: Home, Services, About and Contact; client-approved copy and branding; basic technical SEO; two revision rounds; static export and handover.'),
- ('Premium Website',100000,'custom','Up to four responsive pages with tailored layout and expanded customer-approved content; basic technical SEO; three revision rounds; static export, handover guide and one handover call. Additional pages require a separate quote.'),
+ ('Care Plan',6900,'maintenance','monthly','Hosting, security and domain renewal; live Google reviews, gallery, team and about sections; a request-a-change chat on the site and by email; up to five small changes a month (under about 30 minutes each) done within two business days. '+TERMS),
+ ('Care Website',80000,'multi-page','one-off','Up to four responsive pages: Home, Services, About and Contact; client-approved copy and branding; basic technical SEO; two revision rounds. Requires the Care Plan. 50% to start, 50% before launch.'),
+ ('Autopilot Website',140000,'custom','one-off','Everything in the Care Website plus online booking into the team\'s Google Calendars, new-review alerts and an enquiry auto-reply set up on the customer\'s own Google account. Requires the Autopilot Plan. 50% to start, 50% before launch.'),
+ ('Autopilot Plan',14900,'maintenance','monthly','Everything in the Care Plan with unlimited small changes done within one business day, a monthly email on new reviews, rating and three competitors\' ratings, and booking and alert upkeep. Bigger jobs quoted at 15% off. '+TERMS),
 )
-EXCLUSIONS='Domain, hosting, paid assets, ongoing maintenance, e-commerce, bookings, custom backends, paid form services, copywriting beyond agreed edits and public publication are excluded. Customer owns and pays for domain/hosting. No unlimited revisions or guaranteed results.'
+EXCLUSIONS='Paid assets, e-commerce, custom backends, new pages, redesigns and copywriting beyond agreed edits are quoted separately. The domain is registered in the customer\'s name. No unlimited revisions on the build and no guaranteed results.'
 FIELDS={
  'business_name':('Business name',200),'description':('What does the business do?',800),
  'objectives':('What should the website help customers do?',600),'pages':('Pages needed',300),
@@ -51,7 +55,7 @@ def metrics(conn,owner):
     # or synthetic credits into earned revenue; bank evidence requires owner action.
     received=n("SELECT COALESCE(SUM(p.amount_cents),0) FROM p7_payments p JOIN p7_invoices i ON i.id=p.invoice_id WHERE i.user_id=? AND i.synthetic=0 AND p.status='Verified'",(owner,))
     refunds=n("SELECT COALESCE(SUM(r.amount_cents),0) FROM p7_refunds r JOIN p7_invoices i ON i.id=r.invoice_id WHERE i.user_id=? AND i.synthetic=0 AND r.status IN ('verified','succeeded','complete')",(owner,))
-    bank_received=n('SELECT COALESCE(SUM(amount_cents),0) FROM first_sale_receipts WHERE owner_id=?',(owner,))
+    bank_received=n('SELECT COALESCE(SUM(amount_cents),0) FROM first_sale_receipts WHERE owner_id=?',(owner,))+n('SELECT COALESCE(SUM(amount_cents),0) FROM plan_payments WHERE owner_id=?',(owner,))
     expenses=n('SELECT COALESCE(SUM(amount_cents),0) FROM prep_expenses WHERE user_id=? AND synthetic=0',(owner,))
     return dict(leads=n('SELECT COUNT(*) FROM leads'),opportunities=n('SELECT COUNT(*) FROM p5_flows WHERE user_id=? AND synthetic=0',(owner,)),
       quotes=n('SELECT COUNT(*) FROM p5_quotes q JOIN p5_flows f ON f.id=q.flow_id WHERE f.user_id=? AND f.synthetic=0',(owner,)),
@@ -63,6 +67,7 @@ def metrics(conn,owner):
       gmail_drafts=n("SELECT COUNT(*) FROM gmail_drafts WHERE owner_id=? AND status='Needs review'",(owner,)),
       gmail_sent=n("SELECT COUNT(*) FROM gmail_drafts WHERE owner_id=? AND status='Sent'",(owner,)),
       suppressed=n('SELECT COUNT(*) FROM p5_suppressions WHERE user_id=?',(owner,)),
+      plan_monthly_cents=client_plans.summary(conn,owner)['monthly_cents'],
       projects=n('SELECT COUNT(*) FROM p5_project_briefs b JOIN p5_acceptances a ON a.id=b.acceptance_id JOIN p5_quotes q ON q.id=a.quote_id JOIN p5_flows f ON f.id=q.flow_id WHERE f.user_id=? AND f.synthetic=0',(owner,)))
 
 
@@ -74,6 +79,7 @@ def money_in(conn,owner,today=None):
     today=today or datetime.now(ZoneInfo('Australia/Sydney')).date()
     rows=conn.execute("SELECT substr(p.created_at,1,10) day,p.amount_cents FROM p7_payments p JOIN p7_invoices i ON i.id=p.invoice_id WHERE i.user_id=? AND i.synthetic=0 AND p.status='Verified'",(owner,)).fetchall()
     rows+=conn.execute('SELECT substr(received_on,1,10) day,amount_cents FROM first_sale_receipts WHERE owner_id=?',(owner,)).fetchall()
+    rows+=conn.execute('SELECT received_on day,amount_cents FROM plan_payments WHERE owner_id=?',(owner,)).fetchall()
     keys=[]
     y,mo=today.year,today.month
     for _ in range(6):keys.insert(0,(y,mo));y,mo=(y,mo-1) if mo>1 else (y-1,12)
@@ -113,11 +119,11 @@ def fit_score(snapshot,contact_eligible=False):
        dict(points=min(25,findings*5),reason='Current approved technical observations: '+str(findings)),
        dict(points=25 if current else 0,reason='Current owner-reviewed source permission' if current else 'Current source permission not established'),
        dict(points=25 if contact_eligible else 0,reason='Contact eligibility reviewed' if contact_eligible else 'Contact eligibility not established')]
-    return dict(score=sum(p['points'] for p in parts),reasons=parts,purchase_intent='Unknown',budget='Unknown; do not infer ability to afford A$600–A$1,000',complexity='Requires scope review',limitation='Rule-based triage, not a purchase prediction.')
+    return dict(score=sum(p['points'] for p in parts),reasons=parts,purchase_intent='Unknown',budget='Unknown; do not infer ability to afford A$800–A$1,400 plus A$69–A$149 a month',complexity='Requires scope review',limitation='Rule-based triage, not a purchase prediction.')
 
 
 def configured(conn,owner):
-    return bool(conn.execute("SELECT 1 FROM p5_packages WHERE user_id=? AND name='Starter Website'",(owner,)).fetchone())
+    return bool(conn.execute("SELECT 1 FROM p5_packages WHERE user_id=? AND name='Care Website'",(owner,)).fetchone())
 
 
 def priorities(conn,owner,m,gmail,config):
@@ -126,6 +132,9 @@ def priorities(conn,owner,m,gmail,config):
     def add(text,label,endpoint,anchor=''):items.append(dict(text=text,label=label,url=url_for(endpoint)+anchor))
     if m['failed_jobs']:add(str(m['failed_jobs'])+' job'+('s' if m['failed_jobs']>1 else '')+' failed and need a look','Open','operations')
     if m['pending_approvals']:add(str(m['pending_approvals'])+' item'+('s' if m['pending_approvals']>1 else '')+' waiting for your review','Review','sales_home')
+    plans=client_plans.summary(conn,owner)
+    if plans['requests']:add(str(plans['requests'])+' change request'+('s' if plans['requests']>1 else '')+' from monthly clients','Open','plan_clients')
+    if plans['overdue']:add(str(plans['overdue'])+' monthly payment'+('s are' if plans['overdue']>1 else ' is')+' overdue','Check','plan_clients')
     if m['gmail_drafts']:add(str(m['gmail_drafts'])+' email repl'+('ies' if m['gmail_drafts']>1 else 'y')+' drafted for you to check','Check','gmail_home')
     if config['gst_mode']=='unset':add('Confirm your GST status before your first quote','Set GST','sales_home')
     if not gmail:add('Connect your business Gmail (one-time sign-in)','Connect','gmail_home')
@@ -149,8 +158,10 @@ def ceo_answer(question,m,todo,is_paused,runtime):
         for value,reason in steps:
             if not value:return reason
         return 'You have recorded '+money(m['received_cents'])+' received. Keep the next quote moving.'
+    if any(w in q for w in ('monthly','plan','subscription','recurring')):
+        return 'Monthly plans bring in '+money(m['plan_monthly_cents'])+' a month from active clients. See Monthly clients for who is due.'
     if any(w in q for w in ('money','revenue','paid','earn','cash','profit')):
-        return 'Money you have recorded as received: '+money(m['received_cents'])+'. Expenses: '+money(m['expense_cents'])+'. Test and simulated payments are not counted.'
+        return 'Money you have recorded as received: '+money(m['received_cents'])+'. Expenses: '+money(m['expense_cents'])+'. Monthly plans add '+money(m['plan_monthly_cents'])+' a month. Test and simulated payments are not counted.'
     if any(w in q for w in ('working','doing','job','agent','busy')):
         return 'The agency is '+state+'. Right now '+str(running)+' job(s) are running and '+str(queued)+' are queued.'
     if any(w in q for w in ('need','todo','to do','should','waiting','approve')):
@@ -207,11 +218,11 @@ def register(app,get_db,login_required):
         if request.form.get('confirm')!='yes':raise WorkflowError('Confirm the approved owner identity and package creation. GST is a separate owner decision.')
         conn=get_db();owner=session['user_id'];conn.execute('BEGIN IMMEDIATE')
         # Existing commercial records/quotes/packages remain immutable.
-        for name,cents,category,scope in PACKAGES:
+        for name,cents,category,cycle,scope in PACKAGES:
             previous=conn.execute('SELECT * FROM p5_packages WHERE user_id=? AND name=? ORDER BY version DESC LIMIT 1',(owner,name)).fetchone()
-            if not previous or (previous['price_cents'],previous['category'],previous['scope'],previous['exclusions'])!=(cents,category,scope,EXCLUSIONS):
+            if not previous or (previous['price_cents'],previous['category'],previous['cycle'],previous['scope'],previous['exclusions'])!=(cents,category,cycle,scope,EXCLUSIONS):
                 version=previous['version']+1 if previous else 1
-                conn.execute('INSERT INTO p5_packages(user_id,name,version,category,price_cents,cycle,scope,exclusions,created_at) VALUES(?,?,?,?,?,\'one-off\',?,?,?)',(owner,name,version,category,cents,scope,EXCLUSIONS,stamp()))
+                conn.execute('INSERT INTO p5_packages(user_id,name,version,category,price_cents,cycle,scope,exclusions,created_at) VALUES(?,?,?,?,?,?,?,?,?)',(owner,name,version,category,cents,cycle,scope,EXCLUSIONS,stamp()))
         conn.execute("UPDATE p5_control SET sender=?,provider='mock',daily_cents=0,daily_requests=0,input_rate=0,output_rate=0 WHERE id=1",(gmail_agent.ACCOUNT,))
         conn.execute("UPDATE p7_control SET business_name='Benji Price',business_email=?,provider='mock' WHERE id=1",(gmail_agent.ACCOUNT,))
         # No ABN, address or GST registration is invented or overwritten.
