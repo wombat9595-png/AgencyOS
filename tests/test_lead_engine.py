@@ -131,6 +131,34 @@ class LeadEngineTest(unittest.TestCase):
         page=self.page()
         self.assertIn('Price Web Co',page);self.assertIn('based in Penrith NSW',page);self.assertIn('0 of 15',page)
 
+    def test_approved_email_goes_to_gmail_drafts_and_is_noticed_when_sent(self):
+        import os,time,sqlite3,base64
+        from contextlib import closing
+        from cryptography.fernet import Fernet
+        import gmail_agent as gmail,app as application
+        with patch.dict(os.environ,AGENCYOS_GMAIL_KEY=Fernet.generate_key().decode(),AGENCYOS_GMAIL_KEY_FILE=''):
+            self.search();pid=self.prospect('Fictional Pipes')['id']
+            with closing(sqlite3.connect(application.DB_PATH)) as conn:
+                token=dict(access_token='synthetic',refresh_token='synthetic',expires_at=time.time()+3600,scope=gmail.READ+' '+gmail.COMPOSE)
+                conn.execute('INSERT INTO gmail_accounts(owner_id,email,token_cipher,connected_at) VALUES(1,?,?,?)',(gmail.ACCOUNT,gmail.seal(token),'fixture'));conn.commit()
+            calls=[]
+            def google(url,token=None,data=None,form=False):
+                calls.append((url,data))
+                if url.endswith('/drafts'):return {'id':'draft-1'}
+                if '/messages?' in url:return {'messages':[{'id':'m1'}]} if len(calls)>2 else {}
+                raise AssertionError('unexpected '+url)
+            with patch('gmail_agent.google_request',side_effect=google),patch('lead_engine.today',return_value=TODAY):
+                self.post(f'/find-customers/{pid}/approve',dict(subject='Website for Fictional Pipes?',body='Hi there, a message. Reply no thanks to stop.'))
+                self.assertEqual(self.prospect('Fictional Pipes')['gmail_draft_id'],'draft-1')
+                raw=base64.urlsafe_b64decode(calls[0][1]['message']['raw']).decode()
+                self.assertIn('To: hello@fictional-pipes.example',raw);self.assertNotIn('send',calls[0][0])
+                self.assertIn('Open Gmail Drafts',self.page())  # page load checks Sent: nothing yet
+                self.assertEqual(self.prospect('Fictional Pipes')['stage'],'Approved')
+                self.page()  # now Gmail shows it sent
+            p=self.prospect('Fictional Pipes')
+            self.assertEqual((p['stage'],p['touches'],p['gmail_draft_id']),('Contacted',1,''))
+            self.assertFalse(any('send' in url for url,_ in calls))
+
     def test_check_site_never_follows_to_bad_scheme(self):
         result=lead_engine.check_site('https://x.example',get=lambda url,timeout=8:(302,'file:///etc/passwd',b''))
         self.assertEqual(result['findings'],['down'])

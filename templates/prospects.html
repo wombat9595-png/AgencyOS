@@ -28,6 +28,7 @@
 
 <section class="panel"><div class="panel-heading"><div><span class="eyebrow">STEP 2</span><h2>Today's list <span class="count">{{ work|length }}</span></h2></div></div>
 <p class="muted">Best leads first. Before you contact someone with "No website listed", tap Google to check they really have none.</p>
+{% if gmail %}<form method="post" action="{{ url_for('prospects_gmail') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn secondary">Check Gmail for sent emails</button></form>{% else %}<p class="tiny muted">Tip: connect Gmail on the <a href="{{ url_for('gmail_home') }}">Inbox</a> page and approved emails go straight into your Gmail Drafts.</p>{% endif %}
 {% for p in work %}<article class="panel stack section-gap" id="p{{ p.id }}">
 <p><strong>{{ p.name }}</strong> · {{ p.trade }}{% if p.suburb %} · {{ p.suburb }}{% endif %} <span class="pill">{{ p.why }}</span> <span class="pill">{{ p.stage if p.stage!='Contacted' else p.step+' due' }}</span></p>
 <p class="tiny">{% if p.phone %}<a href="tel:{{ p.phone|replace(' ','') }}">{{ p.phone }}</a> · {% endif %}{% if p.email %}{{ p.email }} · {% endif %}{% if p.website %}<a href="{{ p.website }}" target="_blank" rel="noopener">website</a> · {% endif %}{% if p.facebook %}<a href="{{ p.facebook }}" target="_blank" rel="noopener">Facebook</a> · {% endif %}<a href="{{ p.google }}" target="_blank" rel="noopener">Google</a></p>
@@ -43,7 +44,7 @@
 <div style="white-space:pre-line;overflow-wrap:anywhere"><strong>Subject: {{ p.subject }}</strong>
 
 {{ p.body }}</div>
-<p><a class="btn primary" href="{{ p.mailto }}">Open in my email</a></p>
+{% if p.gmail_draft_id %}<p>It is in your Gmail Drafts. Check it there and press Send. This card moves on by itself once Gmail shows it sent.</p><p><a class="btn primary" href="https://mail.google.com/mail/u/0/#drafts" target="_blank" rel="noopener">Open Gmail Drafts</a></p>{% else %}<p><a class="btn primary" href="{{ p.mailto }}">Open in my email</a></p>{% endif %}
 <form method="post" action="{{ url_for('prospects_action',prospect_id=p.id,action='sent') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn secondary">I sent it</button></form>
 {% elif p.channel=='email' %}
 <form method="post" action="{{ url_for('prospects_action',prospect_id=p.id,action='approve') }}" class="stack"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

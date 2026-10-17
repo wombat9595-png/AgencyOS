@@ -19,6 +19,7 @@ from zoneinfo import ZoneInfo
 from flask import flash,redirect,render_template,request,session,url_for
 from phase3_store import WorkflowError,stamp
 from sales_store import log
+import gmail_agent
 
 NOMINATIM='https://nominatim.openstreetmap.org/search'
 OVERPASS='https://overpass-api.de/api/interpreter'
@@ -68,6 +69,10 @@ def migrate(conn):
     CREATE TABLE IF NOT EXISTS geo_cache (query TEXT PRIMARY KEY, lat REAL NOT NULL, lon REAL NOT NULL, label TEXT NOT NULL, created_at TEXT NOT NULL);
     CREATE INDEX IF NOT EXISTS prospects_stage_idx ON prospects(owner_id,stage);
     ''')
+    columns={r[1] for r in conn.execute('PRAGMA table_info(prospects)')}
+    if 'gmail_draft_id' not in columns:
+        conn.execute("ALTER TABLE prospects ADD COLUMN gmail_draft_id TEXT NOT NULL DEFAULT ''")
+        conn.execute('ALTER TABLE prospects ADD COLUMN approved_epoch INTEGER NOT NULL DEFAULT 0')
 
 
 def settings(conn,owner):
@@ -358,6 +363,24 @@ def queue(conn,owner,on=None,limit=12):
       ORDER BY CASE WHEN stage='Interested' THEN 0 WHEN stage='Contacted' THEN 1 WHEN stage='Approved' THEN 2 ELSE 3 END, score DESC, id LIMIT ?""",(owner,iso,limit)).fetchall()
 
 
+def mark_sent(conn,owner,p,on):
+    touches=p['touches']+1;gap=FOLLOW_UP_DAYS[min(touches,3)-1]
+    conn.execute("UPDATE prospects SET stage='Contacted',touches=?,last_contact_on=?,next_on=?,subject='',message='',gmail_draft_id='' WHERE id=?",(touches,on.isoformat(),(on+timedelta(days=gap)).isoformat(),p['id']))
+    record(conn,owner,p,'sent','message '+str(touches))
+    return 'Logged. '+('Follow-up drafted for '+(on+timedelta(days=gap)).strftime('%a %-d %b')+' if they have not replied.' if touches<3 else 'That was the last follow-up. If there is no reply in a week it moves to No reply.')
+
+
+def sync_gmail(conn,owner,on=None):
+    """Mark approved emails as sent once they show up in Gmail's Sent folder. Read-only; never sends."""
+    if not gmail_agent.can_draft(conn,owner):return 0
+    done=0
+    for p in conn.execute("SELECT * FROM prospects WHERE owner_id=? AND stage='Approved' AND gmail_draft_id!='' ORDER BY id LIMIT 25",(owner,)).fetchall():
+        if gmail_agent.sent_since(conn,owner,p['email'],p['approved_epoch']-60):
+            mark_sent(conn,owner,p,on or today());done+=1
+    conn.commit()
+    return done
+
+
 def prospect_for(conn,owner,prospect_id):
     p=conn.execute('SELECT * FROM prospects WHERE id=? AND owner_id=?',(prospect_id,owner)).fetchone()
     if not p:raise WorkflowError('That business is not in your list.')
@@ -378,11 +401,14 @@ def register(app,get_db,login_required,insert_lead):
     @app.get('/find-customers',strict_slashes=False)
     @login_required
     def prospects_home():
-        conn=get_db();owner=session['user_id'];s=settings(conn,owner);c=counts(conn,owner);conn.commit()
+        conn=get_db();owner=session['user_id'];s=settings(conn,owner)
+        try:sync_gmail(conn,owner)
+        except WorkflowError:conn.rollback()  # Offline or Gmail signed out: the owner can still tap "I sent it".
+        c=counts(conn,owner);conn.commit()
         work=[card(p,s) for p in queue(conn,owner)]
         stage=request.args.get('stage','')
         everyone=conn.execute('SELECT * FROM prospects WHERE owner_id=?'+(' AND stage=?' if stage in STAGES else '')+' ORDER BY score DESC,id DESC LIMIT 200',(owner,stage) if stage in STAGES else (owner,)).fetchall()
-        return render_template('prospects.html',counts=c,work=work,everyone=everyone,trades=TRADES,radii=RADII,stages=STAGES,stage=stage,settings=s,reasons=REASONS,attribution=ATTRIBUTION,
+        return render_template('prospects.html',gmail=gmail_agent.can_draft(conn,owner),counts=c,work=work,everyone=everyone,trades=TRADES,radii=RADII,stages=STAGES,stage=stage,settings=s,reasons=REASONS,attribution=ATTRIBUTION,
           unchecked=conn.execute("SELECT COUNT(*) FROM prospects WHERE owner_id=? AND website!='' AND checked_at='' AND stage='New'",(owner,)).fetchone()[0])
 
     @app.post('/find-customers/search')
@@ -400,6 +426,13 @@ def register(app,get_db,login_required,insert_lead):
     def prospects_check():
         conn=get_db();n=check_websites(conn,session['user_id'])
         flash('Checked '+str(n)+' websites.' if n else 'No websites left to check.','success');return redirect(url_for('prospects_home'))
+
+    @app.post('/find-customers/gmail')
+    @login_required
+    def prospects_gmail():
+        conn=get_db();n=sync_gmail(conn,session['user_id'])
+        flash(('Gmail shows '+str(n)+' approved email'+('s' if n>1 else '')+' sent. Follow-ups are scheduled.') if n else 'Nothing new in your Gmail Sent folder yet.','success')
+        return redirect(url_for('prospects_home'))
 
     @app.post('/find-customers/add')
     @login_required
@@ -427,14 +460,18 @@ def register(app,get_db,login_required,insert_lead):
             subject=' '.join(request.form.get('subject','').split());body=request.form.get('body','').strip()
             if not 1<=len(subject)<=200 or not 20<=len(body)<=5000:raise WorkflowError('The message needs a subject and some text.')
             if p['email'] and 'no thanks' not in body.casefold():raise WorkflowError('Keep the "no thanks" opt-out line. The Spam Act requires a way to unsubscribe.')
-            conn.execute("UPDATE prospects SET stage='Approved',subject=?,message=? WHERE id=?",(subject,body,p['id']));record(conn,owner,p,'approved')
-            message='Approved. Tap "Open in my email", press send, then tap "I sent it".'
+            conn.execute("UPDATE prospects SET stage='Approved',subject=?,message=?,gmail_draft_id='',approved_epoch=? WHERE id=?",(subject,body,int(time.time()),p['id']));record(conn,owner,p,'approved')
+            conn.commit();message='Approved. Tap "Open in my email", press send, then tap "I sent it".'
+            if p['email'] and gmail_agent.can_draft(conn,owner):
+                try:
+                    draft_id=gmail_agent.create_outreach_draft(conn,owner,p['email'],subject,body)
+                    conn.execute('UPDATE prospects SET gmail_draft_id=? WHERE id=?',(draft_id,p['id']))
+                    message='Approved and put in your Gmail Drafts. Open Gmail, check it and press Send. AgencyOS notices once it is sent.'
+                except WorkflowError as exc:
+                    conn.rollback();message='Approved, but Gmail did not take the draft ('+str(exc)+'). Use "Open in my email" instead.'
         elif action=='sent':
             if p['stage'] not in ('Approved','Contacted'):raise WorkflowError('Approve the message first.')
-            touches=p['touches']+1;gap=FOLLOW_UP_DAYS[min(touches,3)-1]
-            conn.execute("UPDATE prospects SET stage='Contacted',touches=?,last_contact_on=?,next_on=?,subject='',message='' WHERE id=?",(touches,on.isoformat(),(on+timedelta(days=gap)).isoformat(),p['id']))
-            record(conn,owner,p,'sent','message '+str(touches))
-            message='Logged. '+('Follow-up drafted for '+(on+timedelta(days=gap)).strftime('%a %-d %b')+' if they have not replied.' if touches<3 else 'That was the last follow-up. If there is no reply in a week it moves to No reply.')
+            message=mark_sent(conn,owner,p,on)
         elif action=='call':
             outcome=request.form.get('outcome','')
             if outcome not in ('no_answer','message','interested','not_interested','do_not_contact'):raise WorkflowError('Pick how the call went.')
