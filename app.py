@@ -32,6 +32,7 @@ import email_preparation
 import gmail_agent
 import first_sale
 import client_plans
+import lead_engine
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = runtime_status.database_path(os.environ.get("AGENCYOS_DB"))
@@ -113,6 +114,7 @@ def init_db():
     gmail_agent.migrate(conn)
     first_sale.migrate(conn)
     client_plans.migrate(conn)
+    lead_engine.migrate(conn)
     conn.commit()
     conn.close()
 
@@ -523,6 +525,7 @@ email_preparation.register(app,db)
 gmail_agent.register(app,db,login_required)
 first_sale.register(app,db,login_required)
 client_plans.register(app,db,login_required)
+lead_engine.register(app,db,login_required,insert_lead)
 register_phase3(app, db, login_required, insert_lead)
 register_phase4(app, db, login_required, insert_lead)
 register_sales(app, db, login_required)

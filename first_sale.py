@@ -10,6 +10,7 @@ from production_security import audit
 import gmail_agent
 import discovery_preparation
 import client_plans
+import lead_engine
 
 # Two offers, each a build fee plus a no-lock-in monthly plan. Ordered so the A$800 build keeps its saved position.
 TERMS="No lock-in: month to month, paid in advance, cancel with 30 days' notice. Yearly prepay costs 10 months' fees. On leaving, the customer keeps their domain; site files are a one-off A$250 handover, otherwise the site is taken down at the end of notice."
@@ -68,6 +69,7 @@ def metrics(conn,owner):
       gmail_sent=n("SELECT COUNT(*) FROM gmail_drafts WHERE owner_id=? AND status='Sent'",(owner,)),
       suppressed=n('SELECT COUNT(*) FROM p5_suppressions WHERE user_id=?',(owner,)),
       plan_monthly_cents=client_plans.summary(conn,owner)['monthly_cents'],
+      prospects=lead_engine.counts(conn,owner),
       projects=n('SELECT COUNT(*) FROM p5_project_briefs b JOIN p5_acceptances a ON a.id=b.acceptance_id JOIN p5_quotes q ON q.id=a.quote_id JOIN p5_flows f ON f.id=q.flow_id WHERE f.user_id=? AND f.synthetic=0',(owner,)))
 
 
@@ -132,14 +134,21 @@ def priorities(conn,owner,m,gmail,config):
     def add(text,label,endpoint,anchor=''):items.append(dict(text=text,label=label,url=url_for(endpoint)+anchor))
     if m['failed_jobs']:add(str(m['failed_jobs'])+' job'+('s' if m['failed_jobs']>1 else '')+' failed and need a look','Open','operations')
     if m['pending_approvals']:add(str(m['pending_approvals'])+' item'+('s' if m['pending_approvals']>1 else '')+' waiting for your review','Review','sales_home')
+    p=m['prospects']
+    if p['interested']:add(str(p['interested'])+' business'+('es are' if p['interested']>1 else ' is')+' interested: send the mock-up','Open','prospects_home')
+    due=p['follow_ups']+p['ready']+min(p['to_review'],max(0,p['target']-p['contacted_today']))
+    if due:add(str(due)+' business'+('es' if due>1 else '')+' to contact today, messages drafted','Contact','prospects_home')
+    if not p['total'] and not m['leads']:add('Find your first local businesses that need a website','Find','prospects_home')
     plans=client_plans.summary(conn,owner)
     if plans['requests']:add(str(plans['requests'])+' change request'+('s' if plans['requests']>1 else '')+' from monthly clients','Open','plan_clients')
     if plans['overdue']:add(str(plans['overdue'])+' monthly payment'+('s are' if plans['overdue']>1 else ' is')+' overdue','Check','plan_clients')
     if m['gmail_drafts']:add(str(m['gmail_drafts'])+' email repl'+('ies' if m['gmail_drafts']>1 else 'y')+' drafted for you to check','Check','gmail_home')
     if config['gst_mode']=='unset':add('Confirm your GST status before your first quote','Set GST','sales_home')
     if not gmail:add('Connect your business Gmail (one-time sign-in)','Connect','gmail_home')
-    if not m['leads']:add('Add your first potential customer','Add lead','leads')
     return items[:5]
+
+
+NO_PROSPECTS=dict(total=0,contacted=0,interested=0,customers=0,follow_ups=0,contacted_today=0,target=10)
 
 
 def ceo_answer(question,m,todo,is_paused,runtime):
@@ -150,7 +159,10 @@ def ceo_answer(question,m,todo,is_paused,runtime):
     state='paused' if is_paused else ('running' if runtime['workers'] else 'switched on, but the background worker is not running (open the AgencyOS launcher)')
     def money(cents):return 'A$'+format(cents/100,',.2f')
     if any(w in q for w in ('customer','sale','why','stuck','sell')):
-        steps=[(m['leads'],'You have no leads yet. Add a real business you are allowed to contact; that is the first step.'),
+        p=m.get('prospects') or NO_PROSPECTS
+        steps=[(m['leads'] or p['total'],'You have no leads yet. Open Find customers, pick a trade and your suburb, and AgencyOS will find local businesses and draft the first messages.'),
+          (m['leads'] or p['contacted'],'You have '+str(p['total'])+' businesses found but have not contacted any yet. Open Find customers and send today\'s drafts.'),
+          (m['leads'] or p['interested'] or p['customers'],'You have contacted '+str(p['contacted'])+' businesses and none has said yes yet. Most say yes after a follow-up or a phone call, so keep going: aim for '+str(p['target'])+' a day.'),
           (m['opportunities'],'You have '+str(m['leads'])+' lead(s) but none has been started as an opportunity. Open Customers and start one.'),
           (m['quotes'],'You have '+str(m['opportunities'])+' opportunity(ies) but no quote yet. Finish the questionnaire and prepare a quote.'),
           (m['accepted'],'You have '+str(m['quotes'])+' quote(s) out and none accepted yet. Follow up with those customers.'),
@@ -158,6 +170,10 @@ def ceo_answer(question,m,todo,is_paused,runtime):
         for value,reason in steps:
             if not value:return reason
         return 'You have recorded '+money(m['received_cents'])+' received. Keep the next quote moving.'
+    if any(w in q for w in ('lead','prospect','pipeline','outreach','contact','follow')):
+        p=m.get('prospects') or NO_PROSPECTS
+        return ('Found '+str(p['total'])+' businesses, contacted '+str(p['contacted'])+', '+str(p['interested'])+' interested and '+str(p['customers'])+' moved to Customers. '
+          +str(p['follow_ups'])+' follow-up(s) are due and you have contacted '+str(p['contacted_today'])+' of your '+str(p['target'])+' today.')
     if any(w in q for w in ('monthly','plan','subscription','recurring')):
         return 'Monthly plans bring in '+money(m['plan_monthly_cents'])+' a month from active clients. See Monthly clients for who is due.'
     if any(w in q for w in ('money','revenue','paid','earn','cash','profit')):

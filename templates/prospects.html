@@ -1,0 +1,82 @@
+{% extends "base.html" %}{% block title %}Find customers · AgencyOS{% endblock %}{% block page_heading %}Find customers{% endblock %}
+{% block content %}
+<div class="page-intro"><div><span class="eyebrow">LEADS</span><h1>Find customers</h1><p class="muted">AgencyOS finds local businesses with no website or a weak one, checks their site and drafts the message. You read it, tap send in your own email or make the call. Nothing is sent from here.</p></div></div>
+<div class="stat-grid">
+<div class="stat-card"><div class="stat-top"><span>CONTACTED TODAY</span></div><strong>{{ counts.contacted_today }} of {{ counts.target }}</strong><small>Your daily target</small></div>
+<div class="stat-card"><div class="stat-top"><span>FOLLOW-UPS DUE</span></div><strong>{{ counts.follow_ups }}</strong><small>Drafted and waiting below</small></div>
+<div class="stat-card"><div class="stat-top"><span>READY TO CONTACT</span></div><strong>{{ counts.to_review + counts.ready }}</strong><small>Good leads with an email or phone</small></div>
+<div class="stat-card"><div class="stat-top"><span>INTERESTED</span></div><strong>{{ counts.interested }}</strong><small>{{ counts.customers }} moved to Customers · {{ counts.waiting }} waiting on a reply</small></div>
+</div>
+
+<section class="panel"><div class="panel-heading"><div><span class="eyebrow">STEP 1</span><h2>Find businesses near you</h2></div></div>
+<form method="post" action="{{ url_for('prospects_search') }}" class="stack"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<label>Trade<select name="trade">{% for t in trades %}<option>{{ t }}</option>{% endfor %}</select></label>
+<label>Suburb or town<input name="town" maxlength="100" required placeholder="Penrith NSW" value="{{ settings.area }}"></label>
+<label>Within<select name="radius">{% for r in radii %}<option value="{{ r }}" {% if r==10 %}selected{% endif %}>{{ r }} km</option>{% endfor %}</select></label>
+<div class="wide"><button class="btn primary">Find businesses</button> <small class="muted">Takes up to 30 seconds. Free, from OpenStreetMap, which does not list every business.</small></div></form>
+{% if unchecked %}<form method="post" action="{{ url_for('prospects_check') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn secondary">Check {{ unchecked }} more website{{ 's' if unchecked>1 }}</button></form>{% endif %}
+<details><summary>Add one yourself (from Google Maps, a van, a flyer)</summary>
+<form method="post" action="{{ url_for('prospects_add') }}" class="stack"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<label>Business name<input name="name" maxlength="160" required></label>
+<label>Trade<input name="trade" maxlength="80" placeholder="Plumbers"></label>
+<label>Suburb<input name="suburb" maxlength="100"></label>
+<label>Phone<input name="phone" maxlength="60"></label>
+<label>Email<input name="email" type="email" maxlength="254"></label>
+<label>Website or Facebook page<input name="website" maxlength="300" placeholder="Leave empty if they have none"></label>
+<div class="wide"><button class="btn primary">Add and draft a message</button></div></form></details>
+</section>
+
+<section class="panel"><div class="panel-heading"><div><span class="eyebrow">STEP 2</span><h2>Today's list <span class="count">{{ work|length }}</span></h2></div></div>
+<p class="muted">Best leads first. Before you contact someone with "No website listed", tap Google to check they really have none.</p>
+{% for p in work %}<article class="panel stack section-gap" id="p{{ p.id }}">
+<p><strong>{{ p.name }}</strong> · {{ p.trade }}{% if p.suburb %} · {{ p.suburb }}{% endif %} <span class="pill">{{ p.why }}</span> <span class="pill">{{ p.stage if p.stage!='Contacted' else p.step+' due' }}</span></p>
+<p class="tiny">{% if p.phone %}<a href="tel:{{ p.phone|replace(' ','') }}">{{ p.phone }}</a> · {% endif %}{% if p.email %}{{ p.email }} · {% endif %}{% if p.website %}<a href="{{ p.website }}" target="_blank" rel="noopener">website</a> · {% endif %}{% if p.facebook %}<a href="{{ p.facebook }}" target="_blank" rel="noopener">Facebook</a> · {% endif %}<a href="{{ p.google }}" target="_blank" rel="noopener">Google</a></p>
+{% if p.stage=='Interested' %}
+<p>They said yes. Send the free mock-up, then move them to Customers to quote.</p>
+<form method="post" action="{{ url_for('prospects_action',prospect_id=p.id,action='customer') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn primary">Make them a customer</button></form>
+{% elif p.channel=='call' %}
+<details open><summary>Call script</summary><div style="white-space:pre-line;overflow-wrap:anywhere">{{ p.body }}</div></details>
+<form method="post" action="{{ url_for('prospects_action',prospect_id=p.id,action='call') }}" class="stack"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<label>How did the call go?<select name="outcome"><option value="no_answer">No answer</option><option value="message">Left a message</option><option value="interested">Interested</option><option value="not_interested">Not interested</option><option value="do_not_contact">Asked me not to contact them</option></select></label>
+<button class="btn primary">Log call</button></form>
+{% elif p.stage=='Approved' %}
+<div style="white-space:pre-line;overflow-wrap:anywhere"><strong>Subject: {{ p.subject }}</strong>
+
+{{ p.body }}</div>
+<p><a class="btn primary" href="{{ p.mailto }}">Open in my email</a></p>
+<form method="post" action="{{ url_for('prospects_action',prospect_id=p.id,action='sent') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn secondary">I sent it</button></form>
+{% elif p.channel=='email' %}
+<form method="post" action="{{ url_for('prospects_action',prospect_id=p.id,action='approve') }}" class="stack"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<label class="wide">Subject<input name="subject" maxlength="200" value="{{ p.subject }}"></label>
+<label class="wide">Message (edit anything, then approve)<textarea name="body" rows="12" maxlength="5000">{{ p.body }}</textarea></label>
+<div class="wide"><button class="btn primary">Approve</button></div></form>
+{% endif %}
+{% if p.stage in ('New','Approved','Contacted') %}<details><summary>Other</summary><div class="stack">
+{% if p.stage=='Contacted' %}<form method="post" action="{{ url_for('prospects_action',prospect_id=p.id,action='interested') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn secondary">They replied: interested</button></form>{% endif %}
+<form method="post" action="{{ url_for('prospects_action',prospect_id=p.id,action='not_interested') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn secondary">Not interested</button></form>
+<form method="post" action="{{ url_for('prospects_action',prospect_id=p.id,action='do_not_contact') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn secondary">Never contact again</button></form>
+{% if p.stage=='New' %}<form method="post" action="{{ url_for('prospects_action',prospect_id=p.id,action='skip') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn secondary">Skip, not a good fit</button></form>{% endif %}
+</div></details>{% endif %}
+</article>
+{% else %}<div class="empty"><strong>Nothing to do right now</strong><p>{% if counts.total %}Everyone is contacted or waiting on a reply. Find more businesses above.{% else %}Pick a trade and your suburb above to find your first local businesses.{% endif %}</p></div>{% endfor %}
+<p class="tiny muted">Emails say who you are and include a "no thanks" opt-out, as the Spam Act 2003 requires. Only use email addresses the business publishes itself. {{ attribution }}.</p>
+</section>
+
+<section class="panel"><div class="panel-heading"><div><span class="eyebrow">EVERYONE</span><h2>All businesses <span class="count">{{ counts.total }}</span></h2></div></div>
+<p class="tiny">{% for s in stages %}<a href="{{ url_for('prospects_home',stage=s) }}#all">{{ s }}</a> · {% endfor %}<a href="{{ url_for('prospects_home') }}#all">All</a></p>
+{% if everyone %}<div class="table-wrap" id="all"><table><thead><tr><th>BUSINESS</th><th>WHY</th><th>STAGE</th><th>NEXT</th></tr></thead><tbody>
+{% for p in everyone %}<tr><td><strong>{{ p.name }}</strong><small>{{ p.trade }}{% if p.suburb %} · {{ p.suburb }}{% endif %}</small></td><td>{{ reasons[p.reason][1] }}<small>Score {{ p.score }}</small></td><td>{{ p.stage }}{% if p.touches %}<small>{{ p.touches }} contact{{ 's' if p.touches>1 }}</small>{% endif %}</td>
+<td>{% if p.next_on %}{{ p.next_on }}{% elif p.stage in ('Skipped','No reply') %}<form method="post" action="{{ url_for('prospects_action',prospect_id=p.id,action='reopen') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn secondary">Put back</button></form>{% endif %}</td></tr>{% endfor %}
+</tbody></table></div>{% else %}<div class="empty"><strong>No businesses yet</strong></div>{% endif %}
+</section>
+
+<section class="panel"><details><summary>Your details in messages</summary>
+<form method="post" action="{{ url_for('prospects_settings') }}" class="stack"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<label>Your name<input name="name" maxlength="160" value="{{ settings.name }}" required></label>
+<label>Business name<input name="business" maxlength="160" value="{{ settings.business }}" required></label>
+<label>Email people reply to<input name="email" type="email" maxlength="160" value="{{ settings.email }}" required></label>
+<label>Phone (optional)<input name="phone" maxlength="60" value="{{ settings.phone }}"></label>
+<label>Where you are based (optional)<input name="area" maxlength="100" value="{{ settings.area }}" placeholder="Penrith NSW"></label>
+<label>Daily target<input name="daily_target" type="number" min="1" max="50" value="{{ settings.daily_target }}"></label>
+<div class="wide"><button class="btn primary">Save</button></div></form></details></section>
+{% endblock %}
