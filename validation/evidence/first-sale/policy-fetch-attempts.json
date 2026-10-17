@@ -1,0 +1,92 @@
+[
+  {
+    "key": "abn",
+    "url": "https://www.abr.gov.au/business-super-funds-charities/applying-abn",
+    "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+  },
+  {
+    "key": "sole-trader",
+    "url": "https://business.gov.au/planning/business-structures-and-types/business-structures/sole-trader",
+    "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+  },
+  {
+    "key": "name",
+    "url": "https://www.asic.gov.au/for-business-and-companies/business-names/register-a-business-name/",
+    "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+  },
+  {
+    "key": "gst",
+    "url": "https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/registering-for-gst",
+    "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+  },
+  {
+    "key": "spam",
+    "url": "https://www.acma.gov.au/avoid-sending-spam",
+    "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+  },
+  {
+    "key": "privacy",
+    "url": "https://www.oaic.gov.au/privacy/your-privacy-rights/small-business",
+    "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+  },
+  {
+    "key": "gmail-scopes",
+    "url": "https://developers.google.com/workspace/gmail/api/auth/scopes",
+    "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+  },
+  {
+    "key": "gmail-policy",
+    "url": "https://developers.google.com/workspace/gmail/api/policy",
+    "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+  },
+  {
+    "key": "gmail-oauth",
+    "url": "https://developers.google.com/identity/protocols/oauth2/native-app",
+    "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+  },
+  {
+    "key": "oauth-testing",
+    "url": "https://developers.google.com/identity/protocols/oauth2",
+    "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+  },
+  {
+    "key": "google-policy",
+    "url": "https://developers.google.com/terms/api-services-user-data-policy",
+    "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+  },
+  {
+    "key": "gmail-limits",
+    "url": "https://support.google.com/mail/answer/22839",
+    "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+  },
+  {
+    "key": "abr-data",
+    "url": "https://data.gov.au/data/dataset/abn-bulk-extract",
+    "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+  },
+  {
+    "key": "osm",
+    "url": "https://operations.osmfoundation.org/policies/nominatim/",
+    "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+  },
+  {
+    "key": "cloudflare",
+    "url": "https://developers.cloudflare.com/pages/platform/limits/",
+    "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+  },
+  {
+    "key": "github-pages",
+    "url": "https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits",
+    "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+  },
+  {
+    "key": "netlify",
+    "url": "https://www.netlify.com/pricing/",
+    "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+  },
+  {
+    "key": "ollama",
+    "url": "https://docs.ollama.com/faq",
+    "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+  }
+]

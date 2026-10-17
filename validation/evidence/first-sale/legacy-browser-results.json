@@ -1,0 +1,22 @@
+{
+  "steps": [
+    "Owner setup and login through real Chromium forms",
+    "Leads, Sales Team, Agency Manager, Agent Control Center and unified Operations navigation",
+    "Multiple fictional lead creation",
+    "Wrong-phase Attempts 0 reproduced; matching Phase 4 watch worker drains research and UI review succeeds",
+    "Phase 5 watch worker claims local research and approved handoff produces personalised outreach",
+    "Missing sender error is actionable; configure metadata and resume preserved draft in existing opportunity",
+    "Mock dispatch, owner-recorded original reply, stopped follow-up and reviewed reply-agent handoff",
+    "Proposal review, exact GST quote approval and one owner-attested project brief with complete acceptance evidence",
+    "Phase 6 local worker build, QA review, isolated desktop/mobile previews, revision and version approval",
+    "Emergency pause/resume and matching database/worker diagnostics",
+    "Launch dashboard desktop/mobile, Canberra settings and no horizontal overflow"
+  ],
+  "page_errors": [],
+  "server_errors": [],
+  "blocked_external_requests": [],
+  "browser": "Chromium",
+  "passed": true,
+  "browser_version": "154.0.8037.57",
+  "mobile_horizontal_overflow": false
+}

@@ -1,0 +1,109 @@
+{
+  "passed": true,
+  "python": "3.13.16",
+  "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+  "seconds": 58.907,
+  "checks": [
+    {
+      "name": "unit-tests",
+      "command": [
+        "/Users/benjiprice/Documents/ChatGPT/agency os/.venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ],
+      "passed": true,
+      "seconds": 58.84
+    },
+    {
+      "name": "http-smoke",
+      "command": [
+        "/Users/benjiprice/Documents/ChatGPT/agency os/.venv/bin/python",
+        "tests/smoke_server.py"
+      ],
+      "passed": true,
+      "seconds": 2.37
+    },
+    {
+      "name": "sales-smoke",
+      "command": [
+        "/Users/benjiprice/Documents/ChatGPT/agency os/.venv/bin/python",
+        "tests/smoke_sales.py"
+      ],
+      "passed": true,
+      "seconds": 2.674
+    },
+    {
+      "name": "gunicorn-smoke",
+      "command": [
+        "/Users/benjiprice/Documents/ChatGPT/agency os/.venv/bin/python",
+        "tests/smoke_production.py"
+      ],
+      "passed": true,
+      "seconds": 1.866
+    },
+    {
+      "name": "overnight",
+      "command": [
+        "/Users/benjiprice/Documents/ChatGPT/agency os/.venv/bin/python",
+        "tests/smoke_overnight.py",
+        "--artifacts",
+        "/Users/benjiprice/Documents/ChatGPT/agency os/validation/evidence/production-final"
+      ],
+      "passed": true,
+      "seconds": 1.401
+    },
+    {
+      "name": "browser",
+      "command": [
+        "/Users/benjiprice/Documents/ChatGPT/agency os/.venv/bin/python",
+        "tests/browser_phase5.py",
+        "--artifacts",
+        "/Users/benjiprice/Documents/ChatGPT/agency os/validation/evidence/production-final"
+      ],
+      "passed": true,
+      "seconds": 13.291
+    },
+    {
+      "name": "dependency-check",
+      "command": [
+        "/Users/benjiprice/Documents/ChatGPT/agency os/.venv/bin/python",
+        "-m",
+        "pip",
+        "check"
+      ],
+      "passed": true,
+      "seconds": 0.249
+    },
+    {
+      "name": "dependency-audit",
+      "command": [
+        "/Users/benjiprice/Documents/ChatGPT/agency os/.venv/bin/python",
+        "-m",
+        "pip_audit",
+        "--local",
+        "--format",
+        "json",
+        "--output",
+        "/Users/benjiprice/Documents/ChatGPT/agency os/validation/evidence/production-final/dependency-audit.json"
+      ],
+      "passed": true,
+      "seconds": 2.235
+    },
+    {
+      "name": "source-and-service-static-check",
+      "passed": true,
+      "units": [
+        "agencyos-failure@.service",
+        "agencyos-web.service",
+        "agencyos-worker@.service",
+        "agencyos-backup.service",
+        "agencyos-check.service"
+      ],
+      "limitation": "Syntax/structure only. Linux systemd/nginx and public TLS not executed."
+    }
+  ]
+}

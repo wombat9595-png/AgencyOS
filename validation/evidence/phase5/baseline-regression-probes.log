@@ -1,0 +1,53 @@
+test_duplicate_new_opportunity_reopens_existing_without_losing_work (test_phase5_validation.ValidationRegression.test_duplicate_new_opportunity_reopens_existing_without_losing_work) ... FAIL
+test_missing_sender_error_links_to_configuration_and_preserves_draft (test_phase5_validation.ValidationRegression.test_missing_sender_error_links_to_configuration_and_preserves_draft) ... FAIL
+test_project_brief_includes_exact_recorded_acceptance_evidence (test_phase5_validation.ValidationRegression.test_project_brief_includes_exact_recorded_acceptance_evidence) ... FAIL
+test_relative_database_path_has_same_absolute_meaning_in_both_terminals (test_phase5_validation.ValidationRegression.test_relative_database_path_has_same_absolute_meaning_in_both_terminals) ... FAIL
+
+======================================================================
+FAIL: test_duplicate_new_opportunity_reopens_existing_without_losing_work (test_phase5_validation.ValidationRegression.test_duplicate_new_opportunity_reopens_existing_without_losing_work)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/agencyos-baseline-reproduction-jy4ey5hq/tests/test_phase5_validation.py", line 43, in test_duplicate_new_opportunity_reopens_existing_without_losing_work
+    self.assertEqual(second.status_code, 302)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 400 != 302
+
+======================================================================
+FAIL: test_missing_sender_error_links_to_configuration_and_preserves_draft (test_phase5_validation.ValidationRegression.test_missing_sender_error_links_to_configuration_and_preserves_draft)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/agencyos-baseline-reproduction-jy4ey5hq/tests/test_phase5_validation.py", line 53, in test_missing_sender_error_links_to_configuration_and_preserves_draft
+    self.assertIn(b'/sales#sales-settings', response.data)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: b'/sales#sales-settings' not found in b'<!doctype html>\n<html lang="en">\n<head>\n  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n  <title>AgencyOS</title>\n  <link rel="stylesheet" href="/static/style.css">\n</head>\n<body>\n<div class="app-shell">\n  \n  <aside class="sidebar">\n    <a class="brand" href="/"><span class="brand-mark">A</span><span>AgencyOS<small>WEBSITE AGENCY</small></span></a>\n    <div class="nav-label">WORKSPACE</div>\n    <nav>\n      <a href="/">\xe2\x97\xab <span>Overview</span></a>\n      <a href="/sales">\xe2\x86\x97 <span>Sales team</span></a>\n      <a href="/agency">\xe2\x9c\xa6 <span>Agency Manager</span></a>\n      <a href="/discovery/licensed">\xe2\x8c\x95 <span>Licensed discovery</span></a>\n      <a href="/agents">\xe2\x9c\xa6 <span>Agent Control Center</span></a>\n      <a href="/discovery">\xe2\x8c\x95 <span>Business Discovery</span></a>\n      <a href="/workflows">\xe2\x9c\xa6 <span>Research queue</span></a>\n      <a href="/lead-finder">\xe2\x8c\x95 <span>Lead Finder</span></a>\n      <a href="/leads">\xe2\x97\x8e <span>Leads & clients</span></a>\n      <a href="/outreach">\xe2\x86\x97 <span>AI outreach drafts</span></a>\n      <a href="/quotes">\xe2\x96\xa4 <span>Quotes</span></a>\n      <a href="/invoices">\xe2\x96\xa3 <span>Invoices</span></a>\n      <a href="/projects">\xe2\x8c\x98 <span>Website projects</span></a>\n    </nav>\n    <div class="sidebar-bottom"><div class="avatar">O</div><div class="user-meta"><strong>owner</strong><small>Workspace owner</small></div><form method="post" action="/logout"><input type="hidden" name="csrf_token" value="test-form-token"><button class="logout" title="Sign out">\xe2\x86\x97</button></form></div>\n  </aside>\n  \n  <main class="main-area ">\n    <header class="topbar"><div><span class="eyebrow">AGENCY WORKSPACE</span><strong>Overview</strong></div><div class="topbar-right"><span class="status-dot"></span><span>Local workspace</span></div></header>\n    <section class="content">\n      <div class="flash success">Lead saved.</div>\n      <section class="panel"><div class="empty"><h1>Request could not be completed</h1><p>Configure sender metadata before preparing correspondence.</p><a href="/agents">Agent Control Center</a> \xc2\xb7 <a href="/lead-finder">Lead Finder</a></div></section>\n      <footer>AGENCYOS <span>\xc2\xb7</span> PHASE 5 <span>\xc2\xb7</span> LOCAL-FIRST WORKSPACE</footer>\n    </section>\n  </main>\n</div>\n</body>\n</html>'
+
+======================================================================
+FAIL: test_project_brief_includes_exact_recorded_acceptance_evidence (test_phase5_validation.ValidationRegression.test_project_brief_includes_exact_recorded_acceptance_evidence)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/agencyos-baseline-reproduction-jy4ey5hq/tests/test_phase5_validation.py", line 63, in test_project_brief_includes_exact_recorded_acceptance_evidence
+    self.assertIn('acceptance', brief)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'acceptance' not found in {'acceptance_id': 1, 'acceptance_provenance': 'Owner-attested; not independently verified', 'branding_references': 'Fixture blue brand', 'customer_name': 'Fictional Customer', 'flow_id': 1, 'lead_id': 1, 'project_id': 1, 'publication_authorised': False, 'quote': {'branding': 'Fixture blue brand', 'currency': 'AUD', 'gst_mode': 'not_registered', 'items': [{'cycle': 'one-off', 'description': 'Fictional one-page package', 'exclusions': 'Hosting, domain, payments and publication', 'gst_cents': 0, 'package_id': 1, 'package_version': 1, 'quantity': 1, 'scope': 'One responsive page; client supplies copy', 'subtotal_cents': 10005, 'total_cents': 10005, 'unit_cents': 10005}], 'limitation': 'Draft quote, not an invoice, payment record or customer agreement. Monthly totals are recurring and not added to one-off totals.', 'pricing': 'Package prices exclude GST where registered; GST rounded per line, half up.', 'proposal': {'body': 'Draft proposal\n\nOwner-recorded customer requirements:\nFictional customer requested one service page\n\nSource of requirements (not independently verified):\nSynthetic fixture email — not a real customer\n\nProposed scope:\nFictional one-page package: One responsive page; client supplies copy\nExclusions: Hosting, domain, payments and publication\n\nPricing will be itemised in the reviewed AUD quote. No agreement or payment is implied.', 'evidence_ids': [], 'generation_reason': 'Owner-requested proposal from approved saved inputs', 'limitation': 'Recorded source facts are not independent business verification. Suggestions and offers are not proven needs.', 'mode': 'Local rules; no AI request', 'subject': 'Website proposal for Fictional Studio', 'tone': 'professional'}, 'requirements': 'Fictional customer requested one service page', 'requirements_source': 'Synthetic fixture email — not a real customer', 'totals': {'monthly': {'gst_cents': 0, 'subtotal_cents': 0, 'total_cents': 0}, 'one-off': {'gst_cents': 0, 'subtotal_cents': 10005, 'total_cents': 10005}}}, 'quote_hash': '57d4a711dce7bfb70c9699e7bf9e42c4dbe62222544d0a3966da801fe893fd1a', 'quote_id': 1, 'quote_version': 1, 'requirements': 'Fictional customer requested one service page', 'requirements_source': 'Synthetic fixture email — not a real customer', 'schema_version': 1, 'website_generation_authorised': False}
+
+======================================================================
+FAIL: test_relative_database_path_has_same_absolute_meaning_in_both_terminals (test_phase5_validation.ValidationRegression.test_relative_database_path_has_same_absolute_meaning_in_both_terminals)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/agencyos-baseline-reproduction-jy4ey5hq/tests/test_phase5_validation.py", line 37, in test_relative_database_path_has_same_absolute_meaning_in_both_terminals
+    self.assertEqual(paths, [str(Path(application.APP_DIR) / '.development/relative-validation.db')] * 2)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: ['.development/relative-validation.db', '.d[30 chars].db'] != ['/tmp/agencyos-baseline-reproduction-jy4ey[120 chars].db']
+
+First differing element 0:
+'.development/relative-validation.db'
+'/tmp/agencyos-baseline-reproduction-jy4ey[35 chars]n.db'
+
+- ['.development/relative-validation.db', '.development/relative-validation.db']
++ ['/tmp/agencyos-baseline-reproduction-jy4ey5hq/.development/relative-validation.db',
++  '/tmp/agencyos-baseline-reproduction-jy4ey5hq/.development/relative-validation.db']
+
+----------------------------------------------------------------------
+Ran 4 tests in 1.799s
+
+FAILED (failures=4)

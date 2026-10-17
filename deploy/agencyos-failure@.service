@@ -1,0 +1,5 @@
+[Unit]
+Description=AgencyOS service failure journal alert for %i
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/logger -p daemon.err AgencyOS service failed: %i; inspect systemd journal and owner launch dashboard

@@ -1,0 +1,13 @@
+{
+  "date": "2026-10-17",
+  "base_commit": "60d366c2c566322f9c490ef388a411a286887bfe",
+  "files": {
+    "local_run.py": "0ab39730a56e689471e7ad2e8d9c1cbd7b59b8e996d7c88b996f2a8b3c8f2876",
+    "Launch AgencyOS.command": "6784fa794b20ea006da55cd6effc4a42b8d52b43953a741daa3a13be5aac0b11",
+    "first_sale.py": "69c3fec2b56bf19aa67e290a51f425500c7cd3131abeb1c792a0f03ea107f2ad",
+    "gmail_agent.py": "0fb290a2d641792856abc21de2ae66da94bab3e7884bef835d97e68f0cba3499",
+    "production_portal.py": "0e10a8fd96dd0e935dc27421b8915f30efd6e590ee2d2091a343f7f7f8e7a0e0",
+    "tests/test_local_startup.py": "4b2ce67c09d2532c84c950291b9d0522eb6766f9a0065d0f1678faa978c0af18",
+    "tests/smoke_startup_recovery.py": "0fc99a0eb36a6769c025093a1cff5daee673e535096c6f558a65a4b219e2d74c"
+  }
+}

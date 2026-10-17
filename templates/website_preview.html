@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Website preview · AgencyOS{% endblock %}
+{% block page_heading %}Isolated website preview{% endblock %}
+{% block content %}
+<div class="page-intro"><div><span class="eyebrow">PRIVATE · SANDBOXED</span><h1>Website preview · v{{ item.version }}</h1><p class="muted">The preview is isolated from AgencyOS data and credentials. Contact form submissions are disabled. The read-only preview link expires after ten minutes; reopen this page to refresh it.</p></div><a class="btn secondary" href="{{ url_for('website_project',project_id=project_id) }}">Back to build</a></div>
+<div class="viewport-switch"><a class="btn secondary" href="?viewport=desktop">Desktop</a><a class="btn secondary" href="?viewport=mobile">Mobile</a></div>
+<div class="preview-canvas"><iframe title="Generated website preview" sandbox="allow-forms" referrerpolicy="no-referrer" src="{{ url_for('website_preview_document',capability=preview_capability) }}" class="{{ 'mobile-frame' if request.args.get('viewport')=='mobile' else 'desktop-frame' }}"></iframe></div>
+{% endblock %}

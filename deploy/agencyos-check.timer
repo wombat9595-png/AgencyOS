@@ -1,0 +1,8 @@
+[Unit]
+Description=AgencyOS five-minute operational checks
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+Persistent=true
+[Install]
+WantedBy=timers.target
