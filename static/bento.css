@@ -74,3 +74,13 @@ h1{font-weight:800;letter-spacing:-.04em}h2{font-weight:700}
 
 @media(max-width:900px){.b-row-2,.b-row-chart{grid-template-columns:1fr}.b-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.b-status{border-radius:24px}}
 @media(max-width:650px){.tile{padding:22px;border-radius:24px}.bars{height:200px}.bar-value{font-size:11px}.b-stats .tile strong{font-size:36px}.bento .todo li,.bento .todo-form{flex-direction:column;align-items:flex-start}}
+
+/* Older pages: keep text off the rounded edges and give every form field the same look */
+.panel>h2,.panel>h3,.panel>p,.panel>details,.panel>ul,.panel>ol,.panel>dl,.panel>.agent-details{margin-left:24px;margin-right:24px}
+.panel>h2:first-child,.panel>h3:first-child,.panel>details:first-child{margin-top:22px}
+.panel>p:last-child,.panel>.agent-details:last-child,.panel>details:last-child,.panel>ul:last-child{margin-bottom:22px}
+.panel>h2+p{margin-top:8px}
+.content input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=submit]),.content select,.content textarea{border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--text);padding:10px 12px;font:14px var(--b-font);outline:none;max-width:100%}
+.content input:focus,.content select:focus,.content textarea:focus{border-color:var(--accent)}
+.content fieldset{border:1px solid var(--line);border-radius:16px;padding:14px 16px}
+.content label{line-height:1.5}
