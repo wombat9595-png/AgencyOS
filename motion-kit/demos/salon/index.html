@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maison Rosé Hair &amp; Beauty | Cuts, colour and beauty treatments</title>
+<meta name="description" content="Cuts, colour, blow-dries and beauty treatments in a calm, friendly salon. Book online in under a minute.">
+<meta name="theme-color" content="#2a1d1a">
+<link rel="preload" href="../../kit/fonts/cormorant-garamond-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../../kit/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../../kit/vendor/lenis.css">
+<link rel="stylesheet" href="../../kit/motion.css">
+<style>
+  :root {
+    --bg: #f8f1ec;
+    --surface: #fffaf7;
+    --ink: #2a1d1a;
+    --muted: #7a6660;
+    --line: rgba(42, 29, 26, 0.12);
+    --accent: #b5654f;
+    --accent-ink: #ffffff;
+    --dark: #2a1d1a;
+    --dark-ink: #f6ebe4;
+    --font-display: 'Cormorant Garamond', Georgia, serif;
+    --display-weight: 500;
+    --display-tracking: -0.01em;
+    --radius: 28px;
+  }
+  h1 { font-size: clamp(3rem, 10vw, 8rem); line-height: 0.95; }
+  h2 { font-size: clamp(2.4rem, 6vw, 4.8rem); line-height: 1; }
+  h1 em, h2 em { font-style: italic; color: var(--accent); }
+  .section-dark h2 em { color: #e7b3a3; }
+  .eyebrow { color: var(--accent); }
+
+  .hero { align-items: center; background: var(--bg); --hero-shade: none; }
+  .hero-media { pointer-events: none; }
+  .blob { position: absolute; border-radius: 50%; filter: blur(10px); }
+  .blob-a { width: 52vmax; height: 52vmax; right: -12vmax; top: -14vmax; background: radial-gradient(circle at 40% 40%, #f3c7b6, #e9a48f 55%, rgba(233,164,143,0) 70%); }
+  .blob-b { width: 36vmax; height: 36vmax; left: -10vmax; bottom: -12vmax; background: radial-gradient(circle, #f1dccf, rgba(241,220,207,0) 70%); }
+  .arch { position: absolute; border-radius: 999px 999px 24px 24px; overflow: hidden; box-shadow: 0 40px 80px -40px rgba(42,29,26,0.5); }
+  .arch-1 { width: clamp(150px, 22vw, 320px); aspect-ratio: 3 / 4.4; right: 8%; top: 18%; background: linear-gradient(170deg, #f0cdbf, #b5654f 70%, #6f3a2e); }
+  .arch-2 { width: clamp(110px, 15vw, 220px); aspect-ratio: 3 / 4.4; right: 30%; top: 46%; background: linear-gradient(170deg, #efe3d7, #c9a58c 60%, #8a6650); }
+  .arch-3 { width: clamp(90px, 11vw, 160px); aspect-ratio: 3 / 4.4; right: 4%; top: 64%; background: linear-gradient(170deg, #f6e2dc, #d99a8a 60%, #9b5848); }
+  @media (max-width: 799px) {
+    .arch-1 { right: -6%; top: 9%; opacity: 0.75; }
+    .arch-2 { right: 48%; top: 72%; opacity: 0.6; }
+    .arch-3 { display: none; }
+  }
+  .hero-copy { max-width: 760px; padding-right: var(--gutter); margin-left: max(var(--gutter), calc((100% - var(--max)) / 2)); }
+
+  .menu { display: grid; gap: 0 56px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); }
+  .menu-group h3 { font-family: var(--font-display); font-size: clamp(1.7rem, 3vw, 2.2rem); font-weight: 500; margin: 1.6rem 0 0.6rem; }
+  .menu-item { display: flex; align-items: baseline; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+  .menu-item span:first-child { font-weight: 500; }
+  .menu-item .dots { flex: 1; border-bottom: 1px dotted var(--line); transform: translateY(-4px); }
+  .menu-item .price { font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 600; }
+
+  .look-a { background: linear-gradient(170deg, #f3d3c5, #c77a62 60%, #7b3f31); }
+  .look-b { background: linear-gradient(170deg, #f2e6d8, #d0ae8a 60%, #8d6a4b); }
+  .look-c { background: linear-gradient(170deg, #e7dde4, #a98aa0 60%, #5f4459); }
+  .look-d { background: linear-gradient(170deg, #f5e0d5, #e0a68f 60%, #a2604b); }
+  .look-e { background: linear-gradient(170deg, #ece2d6, #b9a088 60%, #6c5442); }
+  .project-frame { border-radius: 999px 999px var(--radius) var(--radius); }
+  .project-tag { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); white-space: nowrap; background: rgba(255,250,247,0.92); color: var(--ink); padding: 7px 14px; border-radius: 999px; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+  .card-art::after { content: ''; position: absolute; inset: 22% 26% 30%; border-radius: 50% 50% 46% 46%; background: rgba(255,255,255,0.18); }
+  .marquee { border-color: var(--line); }
+  .marquee-row { font-style: italic; }
+  .marquee-row span::after { content: '\2022'; }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="scroll-progress" aria-hidden="true"></div>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="#top" style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 600;">Maison Rosé</a>
+    <nav class="nav" aria-label="Main">
+      <a href="#menu">Services</a>
+      <a href="#visit">Your visit</a>
+      <a href="#looks">Looks</a>
+      <a href="#reviews">Reviews</a>
+      <a class="btn btn-primary" href="#book">Book now</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero" id="top" data-hero data-parallax-scope>
+    <div class="hero-media" aria-hidden="true">
+      <div class="blob blob-a" data-parallax="0.3"></div>
+      <div class="blob blob-b" data-parallax="-0.2"></div>
+      <div class="arch arch-1" data-parallax="0.5"></div>
+      <div class="arch arch-2" data-parallax="1"></div>
+      <div class="arch arch-3" data-parallax="1.4"></div>
+    </div>
+    <div class="hero-copy">
+      <span class="eyebrow">Hair · Colour · Beauty</span>
+      <h1>Hair that feels <em>like you.</em></h1>
+      <p class="lead">Cuts, colour and treatments in a calm, friendly salon where nobody rushes you out the door.</p>
+      <div class="btn-row">
+        <a class="btn btn-primary" href="#book">Book online</a>
+        <a class="btn btn-ghost" href="#menu">See prices</a>
+      </div>
+      <div class="hero-badges"><span>Book in under a minute</span><span>Free consultation</span><span>Open late Thursdays</span></div>
+    </div>
+  </section>
+
+  <div class="marquee" data-marquee="36" aria-hidden="true">
+    <div class="marquee-row"><span>Precision cuts</span><span>Balayage</span><span>Colour correction</span><span>Blow-dries</span><span>Brows and lashes</span><span>Bridal</span></div>
+  </div>
+
+  <section class="section" id="menu">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Services and prices</span>
+          <h2 data-split>Honest prices, <em>no surprises.</em></h2>
+        </div>
+        <p class="lead" data-reveal>Every colour starts with a free chat, so you know the price before we pick up a brush.</p>
+      </div>
+      <div class="menu">
+        <div class="menu-group" data-reveal>
+          <h3>Hair</h3>
+          <div class="menu-item"><span>Women's cut and blow-dry</span><span class="dots"></span><span class="price">from $95</span></div>
+          <div class="menu-item"><span>Men's cut</span><span class="dots"></span><span class="price">from $45</span></div>
+          <div class="menu-item"><span>Blow-dry and style</span><span class="dots"></span><span class="price">from $60</span></div>
+          <div class="menu-item"><span>Treatment and gloss</span><span class="dots"></span><span class="price">from $45</span></div>
+        </div>
+        <div class="menu-group" data-reveal>
+          <h3>Colour</h3>
+          <div class="menu-item"><span>Root touch-up</span><span class="dots"></span><span class="price">from $110</span></div>
+          <div class="menu-item"><span>Half head foils</span><span class="dots"></span><span class="price">from $165</span></div>
+          <div class="menu-item"><span>Balayage</span><span class="dots"></span><span class="price">from $260</span></div>
+          <div class="menu-item"><span>Brows and lashes</span><span class="dots"></span><span class="price">from $35</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="steps section-dark" id="visit" data-pin-steps>
+    <div class="wrap steps-layout">
+      <div>
+        <span class="eyebrow">Your visit</span>
+        <h2>An hour that's <em>just for you.</em></h2>
+        <p class="lead">From the first message to walking out feeling great.</p>
+        <div class="steps-rail" aria-hidden="true"><span class="step-dot is-active"></span><span class="step-dot"></span><span class="step-dot"></span><span class="step-dot"></span></div>
+      </div>
+      <div class="steps-stage">
+        <div class="step" data-step><div class="step-num">01</div><h3>Book in a minute</h3><p class="muted">Pick your stylist and time online, any time of day. You get a text reminder the day before.</p></div>
+        <div class="step" data-step><div class="step-num">02</div><h3>Consultation</h3><p class="muted">Bring photos, tell us what you love and hate. We'll be honest about what will suit you.</p></div>
+        <div class="step" data-step><div class="step-num">03</div><h3>Relax</h3><p class="muted">A proper head massage, a good coffee and no rushing. This is your time.</p></div>
+        <div class="step" data-step><div class="step-num">04</div><h3>Walk out glowing</h3><p class="muted">We'll show you how to style it at home and book your next visit if you'd like.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="hscroll" id="looks" data-hscroll>
+    <div class="wrap hscroll-intro">
+      <span class="eyebrow">Recent looks</span>
+      <h2>A little <em>inspiration.</em></h2>
+    </div>
+    <div class="hscroll-track">
+      <figure class="project"><div class="project-frame"><div class="card-art look-a"></div><span class="project-tag">Copper balayage</span></div></figure>
+      <figure class="project"><div class="project-frame"><div class="card-art look-b"></div><span class="project-tag">Honey blonde</span></div></figure>
+      <figure class="project"><div class="project-frame"><div class="card-art look-c"></div><span class="project-tag">Soft lilac</span></div></figure>
+      <figure class="project"><div class="project-frame"><div class="card-art look-d"></div><span class="project-tag">Bridal waves</span></div></figure>
+      <figure class="project"><div class="project-frame"><div class="card-art look-e"></div><span class="project-tag">Lived-in brunette</span></div></figure>
+    </div>
+  </section>
+
+  <section class="section section-dark">
+    <div class="wrap stats">
+      <div data-reveal><div class="stat-num" data-counter="9" data-suffix=" yrs">9 yrs</div><div class="stat-label">in the neighbourhood</div></div>
+      <div data-reveal><div class="stat-num" data-counter="6">6</div><div class="stat-label">senior stylists</div></div>
+      <div data-reveal><div class="stat-num" data-counter="2400" data-suffix="+">2,400+</div><div class="stat-label">regular clients</div></div>
+      <div data-reveal><div class="stat-num" data-counter="5" data-suffix=".0 ★">5.0 ★</div><div class="stat-label">average Google rating</div></div>
+    </div>
+  </section>
+
+  <section class="section" id="reviews">
+    <div class="wrap">
+      <div class="section-head"><div><span class="eyebrow">Reviews</span><h2 data-split>Kind words from <em>lovely people.</em></h2></div></div>
+      <div class="grid">
+        <article class="card review" data-reveal><div class="stars" aria-label="5 stars">★★★★★</div><blockquote>"Finally a colour that doesn't go brassy after two weeks. I won't go anywhere else."</blockquote><cite>Sample review<span>Balayage client</span></cite></article>
+        <article class="card review" data-reveal><div class="stars" aria-label="5 stars">★★★★★</div><blockquote>"Calm, warm and they actually listen. Best haircut I've had in years."</blockquote><cite>Sample review<span>Cut and blow-dry</span></cite></article>
+        <article class="card review" data-reveal><div class="stars" aria-label="5 stars">★★★★★</div><blockquote>"They did hair for my whole bridal party and everyone looked incredible."</blockquote><cite>Sample review<span>Bridal client</span></cite></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-dark" id="book">
+    <div class="wrap quote-grid">
+      <div>
+        <span class="eyebrow">Book now</span>
+        <h2 data-split>Your chair is <em>waiting.</em></h2>
+        <p class="lead">Book online any time, or send us a message and we'll find a time that suits.</p>
+        <div class="contact-lines">
+          <a href="tel:0400000000">Call 0400 000 000</a>
+          <a href="mailto:hello@example.com">hello@example.com</a>
+          <span class="muted">Tue to Sat · Late nights Thursday</span>
+        </div>
+      </div>
+      <form class="form" data-reveal onsubmit="event.preventDefault(); this.querySelector('button').textContent = 'Demo only: this form is not connected';">
+        <label>Name<input name="name" autocomplete="name" required></label>
+        <label>Mobile<input name="phone" type="tel" autocomplete="tel" required></label>
+        <label>Service<select name="service"><option>Cut and blow-dry</option><option>Colour</option><option>Balayage</option><option>Blow-dry</option><option>Brows and lashes</option><option>Bridal</option></select></label>
+        <label>Preferred day<select name="day"><option>Any day</option><option>Tuesday</option><option>Wednesday</option><option>Thursday (late)</option><option>Friday</option><option>Saturday</option></select></label>
+        <button class="btn btn-primary" type="submit">Request my booking</button>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <span>© 2026 Maison Rosé Hair &amp; Beauty</span>
+    <span class="demo-note">Demo site by Benji Price Web Design. Maison Rosé is a made-up business; reviews, prices and numbers are samples.</span>
+  </div>
+</footer>
+
+<div class="callbar">
+  <a class="btn btn-primary" href="#book">Book now</a>
+  <a class="btn btn-ghost" href="tel:0400000000">Call</a>
+</div>
+
+<script src="../../kit/vendor/gsap.min.js" defer></script>
+<script src="../../kit/vendor/ScrollTrigger.min.js" defer></script>
+<script src="../../kit/vendor/SplitText.min.js" defer></script>
+<script src="../../kit/vendor/lenis.min.js" defer></script>
+<script src="../../kit/motion.js" defer></script>
+</body>
+</html>

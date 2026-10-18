@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Northline Building Co. | Custom homes, extensions and renovations</title>
+<meta name="description" content="Locally owned builder for custom homes, extensions and renovations. Fixed-price quotes and a builder who picks up the phone.">
+<meta name="theme-color" content="#101418">
+<link rel="preload" href="../../kit/fonts/archivo-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../../kit/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../../kit/vendor/lenis.css">
+<link rel="stylesheet" href="../../kit/motion.css">
+<style>
+  :root {
+    --bg: #f4f1ec;
+    --surface: #ffffff;
+    --ink: #14181c;
+    --muted: #5a6168;
+    --accent: #e8622c;
+    --dark: #101418;
+    --dark-ink: #eef0ee;
+    --font-display: 'Archivo', system-ui, sans-serif;
+    --display-weight: 800;
+  }
+  .hero { color: #fff; background: #0e1216; }
+  .hero-art { position: absolute; inset: 0; background:
+      radial-gradient(1200px 600px at 75% 20%, rgba(232,98,44,0.35), transparent 60%),
+      linear-gradient(180deg, #1b2530 0%, #0e1216 100%); }
+  .hero-art .grid-lines { position: absolute; inset: 0; opacity: 0.18;
+      background-image: linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px);
+      background-size: 64px 64px; mask-image: linear-gradient(180deg, #000 20%, transparent 85%); -webkit-mask-image: linear-gradient(180deg, #000 20%, transparent 85%); }
+  .hero-art svg { position: absolute; right: -4%; bottom: 12%; width: min(78vw, 980px); opacity: 0.95; }
+  .hero h1 em { font-style: normal; color: var(--accent); }
+  .hero .lead { color: rgba(255,255,255,0.78); }
+  .hero .btn-ghost { color: #fff; }
+
+  /* Blueprint build section */
+  .build { height: 260vh; background: #12324f; color: #e9f1f8; }
+  .build-sticky { position: sticky; top: 0; height: 100svh; display: grid; align-items: center; overflow: hidden;
+      background-image: linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px);
+      background-size: 40px 40px; }
+  .build-layout { display: grid; gap: 24px; align-items: center; }
+  @media (min-width: 900px) { .build-layout { grid-template-columns: 0.75fr 1.25fr; } }
+  .build svg { width: 100%; height: auto; max-height: 70svh; }
+  .build svg .bp { fill: none; stroke: #cfe4f7; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .build svg .bp-accent { stroke: var(--accent); stroke-width: 3; }
+  .build svg [data-fill] { fill: rgba(232,98,44,0.18); stroke: none; }
+  .build .lead { color: rgba(233,241,248,0.75); }
+  .motion-off .build { height: auto; }
+  .motion-off .build-sticky { position: relative; height: auto; padding: 100px 0; }
+
+  .proj-a { background: linear-gradient(160deg, #d8c7a8, #8f7a5c); }
+  .proj-b { background: linear-gradient(160deg, #a8b8c4, #46596a); }
+  .proj-c { background: linear-gradient(160deg, #e3d4c0, #b98d63); }
+  .proj-d { background: linear-gradient(160deg, #9fb19b, #44583f); }
+  .proj-e { background: linear-gradient(160deg, #cfd3d6, #6f777e); }
+  .card-art svg { position: absolute; left: 8%; right: 8%; bottom: 0; width: 84%; }
+  .project-tag { position: absolute; top: 16px; left: 16px; background: rgba(255,255,255,0.9); color: #14181c; padding: 6px 12px; border-radius: 999px; font-size: 0.8rem; font-weight: 600; }
+
+  .compare-before { background: linear-gradient(180deg, #c9ccc7, #9a9d97); }
+  .compare-after { background: linear-gradient(180deg, #f6d9b8, #e8a46f 55%, #6b8f5b 56%, #4f7343); }
+  .compare svg { position: absolute; left: 10%; bottom: 0; width: 80%; }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="scroll-progress" aria-hidden="true"></div>
+
+<header class="site-header on-dark">
+  <div class="wrap">
+    <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true">N</span>Northline Building Co.</a>
+    <nav class="nav" aria-label="Main">
+      <a href="#services">Services</a>
+      <a href="#process">How it works</a>
+      <a href="#projects">Projects</a>
+      <a href="#reviews">Reviews</a>
+      <a class="btn btn-primary" href="#quote">Free quote</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero" id="top" data-hero>
+    <div class="hero-media" aria-hidden="true">
+      <div class="hero-art">
+        <div class="grid-lines"></div>
+        <svg viewBox="0 0 900 420" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="2">
+          <path d="M40 400h820"/>
+          <path d="M120 400V220l190-130 190 130v180"/>
+          <path d="M500 400V250h320v150"/>
+          <path d="M480 250l170-110 190 110" stroke="#e8622c" stroke-width="3"/>
+          <rect x="170" y="280" width="80" height="80"/>
+          <rect x="370" y="290" width="70" height="110"/>
+          <rect x="560" y="290" width="200" height="70"/>
+          <path d="M210 280v80M170 320h80M660 290v70"/>
+        </svg>
+      </div>
+    </div>
+    <div class="wrap hero-copy">
+      <span class="eyebrow">Licensed builder · Locally owned</span>
+      <h1>Homes built <em>properly</em>,<br>on time and on budget.</h1>
+      <p class="lead">Custom homes, extensions and renovations with a fixed-price quote and a builder who actually picks up the phone.</p>
+      <div class="btn-row">
+        <a class="btn btn-primary" href="#quote">Get a free quote</a>
+        <a class="btn btn-ghost" href="#projects">See our work</a>
+      </div>
+      <div class="hero-badges"><span>Fixed-price contracts</span><span>Fully insured</span><span>7-year structural warranty</span></div>
+    </div>
+  </section>
+
+  <div class="marquee" data-marquee="28" aria-hidden="true">
+    <div class="marquee-row"><span>Custom homes</span><span>Extensions</span><span>Renovations</span><span>Decks and alfresco</span><span>Granny flats</span><span>Knockdown rebuilds</span></div>
+  </div>
+
+  <section class="section" id="services">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">What we build</span>
+          <h2 data-split>Everything from a new deck to a whole new home.</h2>
+        </div>
+        <p class="lead" data-reveal>One team from first sketch to handover, so nothing gets lost between trades and you always know who to call.</p>
+      </div>
+      <div class="grid" data-stagger>
+        <article class="card" data-reveal>
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg></div>
+          <h3>Custom homes</h3>
+          <p class="muted">Designed around how you live, built to last, with a fixed price before we start.</p>
+        </article>
+        <article class="card" data-reveal>
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V9l6-4 6 4v12M15 13h6v8"/></svg></div>
+          <h3>Extensions</h3>
+          <p class="muted">More room without moving. Second storeys, rear extensions and open-plan living.</p>
+        </article>
+        <article class="card" data-reveal>
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 6l4 4M4 20l3-1 11-11-2-2L5 17z"/></svg></div>
+          <h3>Renovations</h3>
+          <p class="muted">Kitchens, bathrooms and full makeovers, finished cleanly and on schedule.</p>
+        </article>
+        <article class="card" data-reveal>
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18h18M5 18V10h14v8M8 10V6h8v4"/></svg></div>
+          <h3>Decks and alfresco</h3>
+          <p class="muted">Outdoor living spaces in hardwood or composite, roofed or open.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="build" aria-labelledby="build-title">
+    <div class="build-sticky">
+      <div class="wrap build-layout">
+        <div>
+          <span class="eyebrow">Watch it come together</span>
+          <h2 id="build-title" data-split>From plans to keys in your hand.</h2>
+          <p class="lead">Every Northline build starts as a drawing you sign off on, so the house you get is the house you agreed to.</p>
+        </div>
+        <svg viewBox="0 0 800 520" data-draw data-draw-start="top top" data-draw-end="bottom bottom" role="img" aria-label="A house plan drawing itself">
+          <path class="bp" d="M40 470h720"/>
+          <path class="bp" d="M110 470V250"/>
+          <path class="bp" d="M690 470V250"/>
+          <path class="bp bp-accent" d="M80 270L400 60l320 210"/>
+          <path class="bp" d="M110 250h580"/>
+          <rect data-fill x="110" y="250" width="580" height="220"/>
+          <path class="bp" d="M330 470V350h110v120"/>
+          <path class="bp" d="M160 300h120v90H160zM520 300h120v90H520z"/>
+          <path class="bp" d="M220 300v90M160 345h120M580 300v90M520 345h120"/>
+          <path class="bp" d="M560 150V80h50v100"/>
+          <path class="bp" d="M40 500h720M40 492v16M760 492v16"/>
+          <path class="bp" d="M400 60v-30M370 30h60"/>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <section class="steps section-dark" id="process" data-pin-steps>
+    <div class="wrap steps-layout">
+      <div>
+        <span class="eyebrow">How it works</span>
+        <h2>Four steps. No surprises.</h2>
+        <p class="lead">You get one fixed price, a clear timeline and a weekly update, whatever the size of the job.</p>
+        <div class="steps-rail" aria-hidden="true"><span class="step-dot is-active"></span><span class="step-dot"></span><span class="step-dot"></span><span class="step-dot"></span></div>
+      </div>
+      <div class="steps-stage">
+        <div class="step" data-step><div class="step-num">01</div><h3>Free site visit</h3><p class="muted">We come out, listen, measure up and talk budget honestly. No pressure, no cost.</p></div>
+        <div class="step" data-step><div class="step-num">02</div><h3>Plans and fixed quote</h3><p class="muted">Drawings, specs and a fixed price in writing. What we quote is what you pay.</p></div>
+        <div class="step" data-step><div class="step-num">03</div><h3>We build</h3><p class="muted">A dedicated site lead, a tidy site and a photo update every Friday.</p></div>
+        <div class="step" data-step><div class="step-num">04</div><h3>Handover</h3><p class="muted">Final walkthrough, every defect fixed, keys in your hand and warranty in writing.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="hscroll" id="projects" data-hscroll>
+    <div class="wrap hscroll-intro">
+      <span class="eyebrow">Recent projects</span>
+      <h2>Scroll through our latest work.</h2>
+    </div>
+    <div class="hscroll-track">
+      <figure class="project"><div class="project-frame"><div class="card-art proj-a"><svg viewBox="0 0 300 200" fill="rgba(255,255,255,0.85)"><path d="M20 200V110l90-60 90 60v90zM200 200v-70h80v70z"/></svg></div><span class="project-tag">Custom home</span></div><figcaption><strong>Two-storey family home</strong><span class="muted">7 months</span></figcaption></figure>
+      <figure class="project"><div class="project-frame"><div class="card-art proj-b"><svg viewBox="0 0 300 200" fill="rgba(255,255,255,0.85)"><path d="M30 200V90h120v110zM150 200v-60h120v60z"/></svg></div><span class="project-tag">Extension</span></div><figcaption><strong>Rear living extension</strong><span class="muted">14 weeks</span></figcaption></figure>
+      <figure class="project"><div class="project-frame"><div class="card-art proj-c"><svg viewBox="0 0 300 200" fill="rgba(255,255,255,0.85)"><path d="M40 200v-80l110-70 110 70v80z"/></svg></div><span class="project-tag">Renovation</span></div><figcaption><strong>Queenslander restoration</strong><span class="muted">5 months</span></figcaption></figure>
+      <figure class="project"><div class="project-frame"><div class="card-art proj-d"><svg viewBox="0 0 300 200" fill="rgba(255,255,255,0.85)"><path d="M10 200v-40h280v40zM40 160v-60h220v60z"/></svg></div><span class="project-tag">Alfresco</span></div><figcaption><strong>Hardwood deck and roof</strong><span class="muted">4 weeks</span></figcaption></figure>
+      <figure class="project"><div class="project-frame"><div class="card-art proj-e"><svg viewBox="0 0 300 200" fill="rgba(255,255,255,0.85)"><path d="M60 200v-100l90-50 90 50v100z"/></svg></div><span class="project-tag">Granny flat</span></div><figcaption><strong>Two-bedroom granny flat</strong><span class="muted">11 weeks</span></figcaption></figure>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Before and after</span>
+          <h2 data-split>Drag to see the difference.</h2>
+        </div>
+        <p class="lead" data-reveal>A tired 1970s brick home turned into a bright, modern family house without leaving the street they love.</p>
+      </div>
+      <div class="compare" data-compare data-reveal="scale">
+        <div class="compare-layer compare-before" aria-hidden="true"><svg viewBox="0 0 400 220" fill="#6f726c"><path d="M20 220V120l120-70 120 70v100z"/><rect x="60" y="140" width="40" height="40" fill="#b9bbb5"/><rect x="170" y="150" width="40" height="70" fill="#b9bbb5"/></svg></div>
+        <div class="compare-layer compare-after" aria-hidden="true"><svg viewBox="0 0 400 220"><path d="M20 220V110l120-80 120 80v110z" fill="#fbfaf7"/><path d="M260 220v-90h120v90z" fill="#2c3a44"/><rect x="50" y="130" width="70" height="60" fill="#8fc3e6"/><rect x="170" y="140" width="45" height="80" fill="#14181c"/><rect x="280" y="150" width="80" height="40" fill="#8fc3e6"/></svg></div>
+        <div class="compare-handle" aria-hidden="true"></div>
+        <span class="compare-label before">Before</span><span class="compare-label after">After</span>
+        <input type="range" min="0" max="100" value="50" aria-label="Drag to compare before and after">
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-dark">
+    <div class="wrap stats">
+      <div data-reveal><div class="stat-num" data-counter="18" data-suffix=" yrs">18 yrs</div><div class="stat-label">building locally</div></div>
+      <div data-reveal><div class="stat-num" data-counter="240" data-suffix="+">240+</div><div class="stat-label">homes and extensions finished</div></div>
+      <div data-reveal><div class="stat-num" data-counter="97" data-suffix="%">97%</div><div class="stat-label">finished on or before the date we promised</div></div>
+      <div data-reveal><div class="stat-num" data-counter="5" data-suffix=".0 ★">5.0 ★</div><div class="stat-label">average Google rating</div></div>
+    </div>
+  </section>
+
+  <section class="section" id="reviews">
+    <div class="wrap">
+      <div class="section-head"><div><span class="eyebrow">Reviews</span><h2 data-split>What our clients say.</h2></div></div>
+      <div class="grid">
+        <article class="card review" data-reveal><div class="stars" aria-label="5 stars">★★★★★</div><blockquote>"They quoted a price and stuck to it. Weekly photos meant we never had to chase anyone."</blockquote><cite>Sample review<span>Extension client</span></cite></article>
+        <article class="card review" data-reveal><div class="stars" aria-label="5 stars">★★★★★</div><blockquote>"Tidy site, polite team, and finished a week early. We'd use them again tomorrow."</blockquote><cite>Sample review<span>New home client</span></cite></article>
+        <article class="card review" data-reveal><div class="stars" aria-label="5 stars">★★★★★</div><blockquote>"The only builder who actually called us back. Couldn't be happier with the deck."</blockquote><cite>Sample review<span>Deck client</span></cite></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-dark" id="quote">
+    <div class="wrap quote-grid">
+      <div>
+        <span class="eyebrow">Free quote</span>
+        <h2 data-split>Tell us about your project.</h2>
+        <p class="lead">We reply within one business day, usually the same day.</p>
+        <div class="contact-lines">
+          <a href="tel:0400000000">Call 0400 000 000</a>
+          <a href="mailto:hello@example.com">hello@example.com</a>
+          <span class="muted">Mon to Fri, 7am to 5pm</span>
+        </div>
+      </div>
+      <form class="form" data-reveal onsubmit="event.preventDefault(); this.querySelector('button').textContent = 'Demo only: this form is not connected';">
+        <label>Name<input name="name" autocomplete="name" required></label>
+        <label>Phone<input name="phone" type="tel" autocomplete="tel" required></label>
+        <label>Project type<select name="type"><option>New home</option><option>Extension</option><option>Renovation</option><option>Deck or alfresco</option><option>Something else</option></select></label>
+        <label>Tell us a bit more<textarea name="message" rows="4"></textarea></label>
+        <button class="btn btn-primary" type="submit">Request my free quote</button>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <span>© 2026 Northline Building Co.</span>
+    <span class="demo-note">Demo site by Benji Price Web Design. Northline is a made-up business; reviews and numbers are samples.</span>
+  </div>
+</footer>
+
+<div class="callbar">
+  <a class="btn btn-primary" href="tel:0400000000">Call now</a>
+  <a class="btn btn-ghost" href="#quote">Free quote</a>
+</div>
+
+<script src="../../kit/vendor/gsap.min.js" defer></script>
+<script src="../../kit/vendor/ScrollTrigger.min.js" defer></script>
+<script src="../../kit/vendor/SplitText.min.js" defer></script>
+<script src="../../kit/vendor/lenis.min.js" defer></script>
+<script src="../../kit/motion.js" defer></script>
+</body>
+</html>

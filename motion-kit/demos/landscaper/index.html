@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Greenhaven Landscapes | Garden design, landscaping and maintenance</title>
+<meta name="description" content="Garden design, landscaping and maintenance. Turn a tired backyard into the place you want to be.">
+<meta name="theme-color" content="#1f3a2b">
+<link rel="preload" href="../../kit/fonts/fraunces-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../../kit/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../../kit/vendor/lenis.css">
+<link rel="stylesheet" href="../../kit/motion.css">
+<style>
+  :root {
+    --bg: #f3f0e6;
+    --surface: #fbfaf5;
+    --ink: #1c2a21;
+    --muted: #59665c;
+    --accent: #3f7a4f;
+    --accent-ink: #ffffff;
+    --dark: #1f3a2b;
+    --dark-ink: #eef2e8;
+    --font-display: 'Fraunces', Georgia, serif;
+    --display-weight: 600;
+    --display-tracking: -0.02em;
+    --radius: 24px;
+  }
+  h1 em, h2 em { font-style: italic; font-weight: 400; color: var(--accent); }
+  .section-dark h2 em { color: #b9dba0; }
+  .hero { align-items: flex-start; padding-top: clamp(130px, 18vh, 200px); background: #f6dcb4; --hero-shade: none; }
+  .sky { position: absolute; inset: 0; background: linear-gradient(180deg, #f9e7c6 0%, #f4c99a 45%, #e8a77a 70%, #c98c6e 100%); }
+  .sun { position: absolute; width: min(36vw, 380px); aspect-ratio: 1; border-radius: 50%; right: 14%; top: 22%; background: radial-gradient(circle, #fff6df 0%, #ffd99a 55%, rgba(255,217,154,0) 72%); }
+  .layer { position: absolute; left: -5%; width: 110%; bottom: -8%; }
+  .layer svg { width: 100%; height: auto; }
+  @media (max-width: 799px) { .layer svg { height: 30svh; } .layer { bottom: 0; } }
+  .hero .lead { color: #3d4a40; }
+  .hero-badges { color: #2b3a2f; }
+
+  .proj-a { background: linear-gradient(170deg, #cfe3c1, #6f9a63 60%, #3e6a3c); }
+  .proj-b { background: linear-gradient(170deg, #e9dcc3, #b9a27b 60%, #7a6a4f); }
+  .proj-c { background: linear-gradient(170deg, #c7e0e4, #74a9a3 60%, #3d6f6a); }
+  .proj-d { background: linear-gradient(170deg, #e6e2bc, #a8b06b 60%, #5b6a37); }
+  .proj-e { background: linear-gradient(170deg, #d9e8d0, #8fb486 60%, #4b7448); }
+  .card-art svg { position: absolute; left: 0; bottom: 0; width: 100%; }
+  .project-tag { position: absolute; top: 16px; left: 16px; background: rgba(255,255,255,0.9); color: var(--ink); padding: 6px 12px; border-radius: 999px; font-size: 0.8rem; font-weight: 600; }
+
+  .compare-before { background: linear-gradient(180deg, #dcd6c8 0 55%, #b4a68c 55%); }
+  .compare-after { background: linear-gradient(180deg, #d7ecf2 0 55%, #6e9d5a 55%); }
+  .compare svg { position: absolute; left: 0; bottom: 0; width: 100%; }
+  .leaf-band { background: var(--dark); color: var(--dark-ink); border: 0; }
+  .leaf-band .marquee-row span::after { content: '\2767'; color: #b9dba0; }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="scroll-progress" aria-hidden="true"></div>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true">G</span>Greenhaven Landscapes</a>
+    <nav class="nav" aria-label="Main">
+      <a href="#services">Services</a>
+      <a href="#process">Our process</a>
+      <a href="#projects">Gardens</a>
+      <a href="#reviews">Reviews</a>
+      <a class="btn btn-primary" href="#quote">Free design chat</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero" id="top" data-hero data-parallax-scope>
+    <div class="hero-media" aria-hidden="true">
+      <div class="sky"></div>
+      <div class="sun" data-parallax="0.6"></div>
+      <div class="layer" data-parallax="0.5"><svg viewBox="0 0 1440 420" preserveAspectRatio="none"><path fill="#c79a7e" d="M0 260 C200 160 360 210 520 170 C700 120 860 220 1040 160 C1200 110 1320 170 1440 140 V420 H0Z"/></svg></div>
+      <div class="layer" data-parallax="0.35"><svg viewBox="0 0 1440 420" preserveAspectRatio="none"><path fill="#8c9a6d" d="M0 300 C180 230 320 280 500 240 C680 200 820 300 1000 250 C1180 200 1300 260 1440 230 V420 H0Z"/></svg></div>
+      <div class="layer" data-parallax="0.2"><svg viewBox="0 0 1440 420" preserveAspectRatio="none"><path fill="#557a4c" d="M0 330 C240 280 400 340 640 300 C860 265 1040 350 1240 310 C1340 290 1400 300 1440 300 V420 H0Z"/><g fill="#3d6238"><circle cx="180" cy="300" r="34"/><circle cx="215" cy="288" r="26"/><circle cx="1180" cy="300" r="40"/><circle cx="1225" cy="285" r="30"/></g></svg></div>
+      <div class="layer" data-parallax="0.05"><svg viewBox="0 0 1440 420" preserveAspectRatio="none"><path fill="#2f4f2c" d="M0 370 C300 330 520 390 800 360 C1060 332 1260 380 1440 360 V420 H0Z"/></svg></div>
+    </div>
+    <div class="wrap hero-copy">
+      <span class="eyebrow">Garden design · Landscaping · Maintenance</span>
+      <h1>Your backyard,<br><em>only better.</em></h1>
+      <p class="lead">We design, build and look after gardens you'll actually want to spend your weekends in.</p>
+      <div class="btn-row">
+        <a class="btn btn-primary" href="#quote">Book a free design chat</a>
+        <a class="btn btn-ghost" href="#projects">See our gardens</a>
+      </div>
+      <div class="hero-badges"><span>Fully insured</span><span>Plants guaranteed for 12 months</span><span>Local family business</span></div>
+    </div>
+  </section>
+
+  <div class="marquee leaf-band" data-marquee="34" aria-hidden="true">
+    <div class="marquee-row"><span>Garden design</span><span>Turf and irrigation</span><span>Retaining walls</span><span>Paving and decks</span><span>Native gardens</span><span>Ongoing maintenance</span></div>
+  </div>
+
+  <section class="section" id="services">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">What we do</span>
+          <h2 data-split>Gardens that look good <em>and</em> stay that way.</h2>
+        </div>
+        <p class="lead" data-reveal>Drought-tolerant planting, smart irrigation and honest advice about what will actually grow in your yard.</p>
+      </div>
+      <div class="grid">
+        <article class="card" data-reveal><div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22V12M12 12C12 7 8 4 3 4c0 5 4 8 9 8zM12 14c0-4 3-7 9-7 0 5-4 7-9 7z"/></svg></div><h3>Garden design</h3><p class="muted">A plan drawn for your block, your budget and how much time you want to spend on it.</p></article>
+        <article class="card" data-reveal><div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 20h18M5 20v-6h14v6M7 14v-4h10v4"/></svg></div><h3>Walls and paving</h3><p class="muted">Retaining walls, steps, paths and entertaining areas built to handle real weather.</p></article>
+        <article class="card" data-reveal><div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg></div><h3>Turf and irrigation</h3><p class="muted">The right grass for your shade and soil, watered automatically so it stays green.</p></article>
+        <article class="card" data-reveal><div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20l6-6M14 4l6 6-8 8-6-6z"/></svg></div><h3>Maintenance</h3><p class="muted">Fortnightly or monthly visits so your garden keeps looking like the day we finished.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="steps section-dark" id="process" data-pin-steps>
+    <div class="wrap steps-layout">
+      <div>
+        <span class="eyebrow">Our process</span>
+        <h2>From bare dirt to <em>backyard oasis.</em></h2>
+        <p class="lead">Clear steps, a written quote and one team the whole way through.</p>
+        <div class="steps-rail" aria-hidden="true"><span class="step-dot is-active"></span><span class="step-dot"></span><span class="step-dot"></span><span class="step-dot"></span></div>
+      </div>
+      <div class="steps-stage">
+        <div class="step" data-step><div class="step-num">01</div><h3>Free design chat</h3><p class="muted">We walk the yard with you, talk about how you want to use it and what you want to spend.</p></div>
+        <div class="step" data-step><div class="step-num">02</div><h3>Your garden plan</h3><p class="muted">A drawn plan with plant choices and a fixed quote, so you know exactly what you're getting.</p></div>
+        <div class="step" data-step><div class="step-num">03</div><h3>We build it</h3><p class="muted">Earthworks, walls, paving, irrigation and planting, done in the right order with a tidy site.</p></div>
+        <div class="step" data-step><div class="step-num">04</div><h3>We look after it</h3><p class="muted">Optional maintenance visits, and every plant is guaranteed for 12 months.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="hscroll" id="projects" data-hscroll>
+    <div class="wrap hscroll-intro">
+      <span class="eyebrow">Recent gardens</span>
+      <h2>Take a <em>walk</em> through our work.</h2>
+    </div>
+    <div class="hscroll-track">
+      <figure class="project"><div class="project-frame"><div class="card-art proj-a"><svg viewBox="0 0 300 160" fill="rgba(255,255,255,0.35)"><circle cx="60" cy="110" r="50"/><circle cx="230" cy="120" r="60"/><path fill="rgba(255,255,255,0.7)" d="M0 140h300v20H0z"/></svg></div><span class="project-tag">Native garden</span></div><figcaption><strong>Low-water native front yard</strong><span class="muted">3 weeks</span></figcaption></figure>
+      <figure class="project"><div class="project-frame"><div class="card-art proj-b"><svg viewBox="0 0 300 160" fill="rgba(255,255,255,0.6)"><path d="M0 160V100h80v-30h80v-30h140v120z"/></svg></div><span class="project-tag">Retaining walls</span></div><figcaption><strong>Terraced sloping block</strong><span class="muted">5 weeks</span></figcaption></figure>
+      <figure class="project"><div class="project-frame"><div class="card-art proj-c"><svg viewBox="0 0 300 160" fill="rgba(255,255,255,0.55)"><rect x="40" y="90" width="220" height="50" rx="10"/><circle cx="40" cy="70" r="30" fill="rgba(255,255,255,0.3)"/></svg></div><span class="project-tag">Pool surrounds</span></div><figcaption><strong>Pool garden and paving</strong><span class="muted">4 weeks</span></figcaption></figure>
+      <figure class="project"><div class="project-frame"><div class="card-art proj-d"><svg viewBox="0 0 300 160" fill="rgba(255,255,255,0.5)"><path d="M0 160V120h300v40zM30 120V70h40v50zM230 120V60h40v60z"/></svg></div><span class="project-tag">Entertaining</span></div><figcaption><strong>Deck, fire pit and lawn</strong><span class="muted">6 weeks</span></figcaption></figure>
+      <figure class="project"><div class="project-frame"><div class="card-art proj-e"><svg viewBox="0 0 300 160" fill="rgba(255,255,255,0.4)"><circle cx="150" cy="100" r="70"/><path fill="rgba(255,255,255,0.7)" d="M0 150h300v10H0z"/></svg></div><span class="project-tag">Courtyard</span></div><figcaption><strong>Small courtyard makeover</strong><span class="muted">10 days</span></figcaption></figure>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Before and after</span>
+          <h2 data-split>Drag to see the <em>transformation.</em></h2>
+        </div>
+        <p class="lead" data-reveal>A patchy, sloping backyard turned into a level lawn, garden beds and a paved area for the barbecue.</p>
+      </div>
+      <div class="compare" data-compare data-reveal="scale">
+        <div class="compare-layer compare-before" aria-hidden="true"><svg viewBox="0 0 400 250"><path fill="#9c8c70" d="M0 250V150l400 40v60z"/><g fill="#8a7c62"><circle cx="70" cy="170" r="6"/><circle cx="210" cy="185" r="8"/><circle cx="320" cy="190" r="5"/></g></svg></div>
+        <div class="compare-layer compare-after" aria-hidden="true"><svg viewBox="0 0 400 250"><path fill="#5d8c4b" d="M0 250V140h400v110z"/><rect x="240" y="150" width="140" height="70" rx="6" fill="#d9d2c3"/><g fill="#355f34"><circle cx="40" cy="135" r="28"/><circle cx="85" cy="128" r="22"/><circle cx="380" cy="132" r="26"/></g></svg></div>
+        <div class="compare-handle" aria-hidden="true"></div>
+        <span class="compare-label before">Before</span><span class="compare-label after">After</span>
+        <input type="range" min="0" max="100" value="50" aria-label="Drag to compare before and after">
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-dark">
+    <div class="wrap stats">
+      <div data-reveal><div class="stat-num" data-counter="12" data-suffix=" yrs">12 yrs</div><div class="stat-label">designing local gardens</div></div>
+      <div data-reveal><div class="stat-num" data-counter="430" data-suffix="+">430+</div><div class="stat-label">gardens built</div></div>
+      <div data-reveal><div class="stat-num" data-counter="18000" data-suffix="+">18,000+</div><div class="stat-label">plants in the ground</div></div>
+      <div data-reveal><div class="stat-num" data-counter="5" data-suffix=".0 ★">5.0 ★</div><div class="stat-label">average Google rating</div></div>
+    </div>
+  </section>
+
+  <section class="section" id="reviews">
+    <div class="wrap">
+      <div class="section-head"><div><span class="eyebrow">Reviews</span><h2 data-split>Happy gardens, <em>happy people.</em></h2></div></div>
+      <div class="grid">
+        <article class="card review" data-reveal><div class="stars" aria-label="5 stars">★★★★★</div><blockquote>"We finally use our backyard. The kids are out there every afternoon."</blockquote><cite>Sample review<span>Backyard makeover</span></cite></article>
+        <article class="card review" data-reveal><div class="stars" aria-label="5 stars">★★★★★</div><blockquote>"They told us honestly what would survive our clay soil. Everything's thriving a year on."</blockquote><cite>Sample review<span>Native garden</span></cite></article>
+        <article class="card review" data-reveal><div class="stars" aria-label="5 stars">★★★★★</div><blockquote>"On time, on budget, and the team cleaned up better than they found it."</blockquote><cite>Sample review<span>Retaining walls</span></cite></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-dark" id="quote">
+    <div class="wrap quote-grid">
+      <div>
+        <span class="eyebrow">Free design chat</span>
+        <h2 data-split>Let's talk about <em>your yard.</em></h2>
+        <p class="lead">Send a few details and we'll call to book a time to come out. No cost, no pressure.</p>
+        <div class="contact-lines">
+          <a href="tel:0400000000">Call 0400 000 000</a>
+          <a href="mailto:hello@example.com">hello@example.com</a>
+          <span class="muted">Mon to Sat, 7am to 5pm</span>
+        </div>
+      </div>
+      <form class="form" data-reveal onsubmit="event.preventDefault(); this.querySelector('button').textContent = 'Demo only: this form is not connected';">
+        <label>Name<input name="name" autocomplete="name" required></label>
+        <label>Phone<input name="phone" type="tel" autocomplete="tel" required></label>
+        <label>What are you after?<select name="type"><option>Full garden design and build</option><option>Retaining walls or paving</option><option>Turf and irrigation</option><option>Regular maintenance</option><option>Not sure yet</option></select></label>
+        <label>Rough budget<select name="budget"><option>Under $5,000</option><option>$5,000 to $15,000</option><option>$15,000 to $40,000</option><option>$40,000 plus</option></select></label>
+        <button class="btn btn-primary" type="submit">Book my free design chat</button>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <span>© 2026 Greenhaven Landscapes</span>
+    <span class="demo-note">Demo site by Benji Price Web Design. Greenhaven is a made-up business; reviews and numbers are samples.</span>
+  </div>
+</footer>
+
+<div class="callbar">
+  <a class="btn btn-primary" href="tel:0400000000">Call now</a>
+  <a class="btn btn-ghost" href="#quote">Free design chat</a>
+</div>
+
+<script src="../../kit/vendor/gsap.min.js" defer></script>
+<script src="../../kit/vendor/ScrollTrigger.min.js" defer></script>
+<script src="../../kit/vendor/SplitText.min.js" defer></script>
+<script src="../../kit/vendor/lenis.min.js" defer></script>
+<script src="../../kit/motion.js" defer></script>
+</body>
+</html>
