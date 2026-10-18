@@ -16,7 +16,7 @@ from datetime import date,datetime,timedelta
 from urllib import parse,request as urlrequest,error as urlerror
 from urllib.parse import urlsplit,urljoin,quote
 from zoneinfo import ZoneInfo
-from flask import flash,redirect,render_template,request,session,url_for
+from flask import Response,flash,redirect,render_template,request,session,url_for
 from phase3_store import WorkflowError,stamp
 from sales_store import log
 import gmail_agent
@@ -326,6 +326,39 @@ def draft(p,s,kind=None):
       hello+'\n\nLast note from me, I promise. If a new website is not a priority right now, no worries at all. If it ever is, reply to this email and I will put that free mock-up together.'+sign+optout)
 
 
+# ---------- Free one-page mock-up ----------
+# Generic copy per trade so the mock-up is ready in one tap. Benji edits anything before sending.
+MOCKUP={
+ 'Plumbers':('#0b5fa5',['Blocked drains','Hot water systems','Leaking taps and toilets','Gas fitting','Bathroom and kitchen plumbing','Emergency call-outs']),
+ 'Electricians':('#c77700',['Power points and lighting','Switchboard upgrades','Safety switches','Ceiling fans and air con','Smoke alarms','Emergency call-outs']),
+ 'Builders':('#6b4f2a',['Renovations','Extensions','Decks and pergolas','New homes','Bathrooms and kitchens','Repairs and maintenance']),
+ 'Carpenters':('#7a5230',['Decks and pergolas','Doors and windows','Custom shelving','Framing','Repairs','Renovation carpentry']),
+ 'Painters':('#2f7d6d',['Interior painting','Exterior painting','Roof painting','Feature walls','Commercial painting','Colour advice']),
+ 'Roofers':('#8a3b2e',['Roof repairs','Re-roofing','Gutter replacement','Roof restoration','Leak detection','Storm damage']),
+ 'Gardeners and landscapers':('#3d7a2a',['Garden makeovers','Lawn mowing','Hedging and pruning','Paving and retaining walls','Turf laying','Green waste removal']),
+ 'Mechanics':('#333d47',['Logbook servicing','Brakes and clutches','Tyres and wheel alignment','Diagnostics','Rego inspections','Air con regas']),
+ 'Hairdressers and barbers':('#8c4a7a',['Cuts and styling','Colour and foils','Fades and beard trims','Blow-waves','Treatments','Kids cuts']),
+ 'Beauty salons':('#b0577d',['Facials','Brows and lashes','Waxing','Nails','Spray tans','Skin treatments']),
+ 'Cafes':('#7b4b2a',['Specialty coffee','All-day breakfast','Lunch menu','Fresh pastries','Takeaway','Catering']),
+ 'Restaurants':('#9b2f2f',['Dine in','Takeaway','Functions','Set menus','Seasonal specials','Gift vouchers']),
+ 'Bakeries':('#a8742c',['Fresh bread daily','Pies and sausage rolls','Cakes to order','Pastries','Coffee','Wholesale']),
+ 'Florists':('#b5527a',['Bouquets','Same-day delivery','Weddings','Sympathy flowers','Events','Plants and gifts']),
+ 'Dentists':('#1f7a8c',['Check-ups and cleans','Fillings','Teeth whitening','Children\'s dentistry','Emergency dental','Payment plans']),
+ 'Physios':('#2a6f97',['Sports injuries','Back and neck pain','Post-surgery rehab','Dry needling','Pilates','Health fund rebates']),
+ 'Vets':('#3a7d44',['Check-ups and vaccinations','Desexing','Dental care','Surgery','Puppy and kitten packs','After-hours advice']),
+ 'Gyms':('#c0392b',['Memberships','Personal training','Group classes','24/7 access','Strength and conditioning','Free trial']),
+ 'Tattoo studios':('#222222',['Custom designs','Fine line','Black and grey','Colour work','Cover-ups','Walk-ins']),
+}
+
+
+def mockup(p,s):
+    colour,services=MOCKUP.get(p['trade'],('#1d4f91',['Service one','Service two','Service three','Quotes','Local and reliable','Friendly team']))
+    trade=p['trade'] if p['trade'] in MOCKUP else 'local business'
+    place=p['suburb'] or s['area'] or 'your area'
+    return dict(name=p['name'],trade=trade,place=place,colour=colour,services=services,phone=p['phone'],email=p['email'],
+      tel=re.sub(r'[^0-9+]','',p['phone']),maker=s['business'],maker_email=s['email'],year=today().year)
+
+
 def mailto(p,subject,body):
     return 'mailto:'+quote(p['email'])+'?subject='+quote(subject)+'&body='+quote(body)
 
@@ -451,6 +484,16 @@ def register(app,get_db,login_required,insert_lead):
             raise WorkflowError('Add your name, business name, a working email and a daily target of 1 to 50. The Spam Act requires every email to say who it is from.')
         conn.execute('INSERT OR REPLACE INTO prospect_settings VALUES(?,?,?,?,?,?,?)',(owner,values['name'],values['business'],values['email'],values['phone'],values['area'],target))
         conn.commit();flash('Saved. Your drafts now use these details.','success');return redirect(url_for('prospects_home'))
+
+    @app.get('/find-customers/<int:prospect_id>/mockup')
+    @login_required
+    def prospects_mockup(prospect_id):
+        conn=get_db();owner=session['user_id'];p=prospect_for(conn,owner,prospect_id)
+        html=render_template('mockup.html',m=mockup(p,settings(conn,owner)))
+        if request.args.get('download'):
+            slug=re.sub(r'[^a-z0-9]+','-',p['name'].casefold()).strip('-') or 'mockup'
+            return Response(html,mimetype='text/html',headers={'Content-Disposition':'attachment; filename="'+slug+'-mockup.html"'})
+        return html
 
     @app.post('/find-customers/<int:prospect_id>/<action>')
     @login_required

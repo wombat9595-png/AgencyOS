@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{ m.name }} · {{ m.trade }} in {{ m.place }}</title>
+<style>
+:root{--brand:{{ m.colour }};--ink:#17202a;--soft:#f4f6f8}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);background:#fff;line-height:1.55}
+.note{background:#fff8d6;border-bottom:1px solid #eadb8f;padding:8px 16px;font-size:13px;text-align:center}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 20px;max-width:1080px;margin:auto}
+.logo{font-weight:800;font-size:20px;color:var(--brand)}
+.btn{display:inline-block;background:var(--brand);color:#fff;text-decoration:none;font-weight:700;padding:12px 20px;border-radius:10px}
+.btn.light{background:#fff;color:var(--brand)}
+.hero{background:linear-gradient(135deg,var(--brand),#0d1117);color:#fff;padding:72px 20px}
+.hero div{max-width:1080px;margin:auto}.hero h1{font-size:clamp(30px,5vw,52px);line-height:1.1;margin:0 0 14px}
+.hero p{font-size:19px;max-width:560px;opacity:.92;margin:0 0 26px}
+section{max-width:1080px;margin:auto;padding:56px 20px}h2{font-size:28px;margin:0 0 22px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.card{background:var(--soft);border-radius:14px;padding:20px;font-weight:600}
+.card:before{content:"";display:block;width:34px;height:4px;border-radius:2px;background:var(--brand);margin-bottom:12px}
+.why{background:var(--soft);max-width:none}.why .grid{max-width:1040px;margin:auto}.why .card{background:#fff;font-weight:400}
+.why strong{display:block;margin-bottom:4px}
+.review{border-left:4px solid var(--brand);padding:6px 16px;margin:0 0 14px;font-style:italic}
+.contact{text-align:center}footer{text-align:center;font-size:13px;color:#667;padding:24px 16px 90px}
+.call{position:fixed;left:16px;right:16px;bottom:16px;text-align:center;display:none}
+@media(max-width:640px){.call{display:block}header .btn{display:none}}
+</style></head><body>
+<div class="note">Free mock-up made for {{ m.name }} by {{ m.maker }}. Sample text and layout only; your own photos, reviews and wording go in the real site.</div>
+<header><span class="logo">{{ m.name }}</span>{% if m.phone %}<a class="btn" href="tel:{{ m.tel }}">Call {{ m.phone }}</a>{% endif %}</header>
+<div class="hero"><div><h1>{{ m.trade if m.trade!='local business' else 'Your local business' }} you can count on in {{ m.place }}</h1>
+<p>Friendly, reliable and local. Get a fast quote from {{ m.name }} today.</p>
+{% if m.phone %}<a class="btn light" href="tel:{{ m.tel }}">Call now</a>{% elif m.email %}<a class="btn light" href="mailto:{{ m.email }}">Get a quote</a>{% else %}<a class="btn light" href="#contact">Get a quote</a>{% endif %}</div></div>
+<section><h2>What we do</h2><div class="grid">{% for s in m.services %}<div class="card">{{ s }}</div>{% endfor %}</div></section>
+<section class="why"><div class="grid">
+<div class="card"><strong>Local to {{ m.place }}</strong>We know the area and turn up when we say we will.</div>
+<div class="card"><strong>Upfront quotes</strong>Clear pricing before any work starts. No surprises.</div>
+<div class="card"><strong>Fast replies</strong>Call or message and hear back the same day.</div>
+</div></section>
+<section><h2>What customers say</h2>
+<p class="review">"Your real Google reviews will show here."</p>
+<p class="review">"And another happy customer review here."</p></section>
+<section class="contact" id="contact"><h2>Get a quote</h2><p>Tell us what you need and we will get back to you today.</p>
+{% if m.phone %}<p><a class="btn" href="tel:{{ m.tel }}">Call {{ m.phone }}</a></p>{% endif %}
+{% if m.email %}<p><a href="mailto:{{ m.email }}">{{ m.email }}</a></p>{% endif %}</section>
+<footer>© {{ m.year }} {{ m.name }} · {{ m.place }}<br>Mock-up by {{ m.maker }} · {{ m.maker_email }}</footer>
+{% if m.phone %}<a class="btn call" href="tel:{{ m.tel }}">Call {{ m.phone }}</a>{% endif %}
+</body></html>

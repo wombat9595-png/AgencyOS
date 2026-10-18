@@ -159,6 +159,17 @@ class LeadEngineTest(unittest.TestCase):
             self.assertEqual((p['stage'],p['touches'],p['gmail_draft_id']),('Contacted',1,''))
             self.assertFalse(any('send' in url for url,_ in calls))
 
+    def test_free_mockup_is_one_tap(self):
+        self.search();p=self.prospect('Old Site Plumbing')
+        with patch('lead_engine.today',return_value=TODAY):
+            page=self.client.get(f'/find-customers/{p["id"]}/mockup').data.decode()
+            download=self.client.get(f'/find-customers/{p["id"]}/mockup?download=1')
+        self.assertIn('Old Site Plumbing',page);self.assertIn('Blocked drains',page);self.assertIn('Emu Plains',page)
+        self.assertIn('tel:0400000002',page);self.assertIn('Free mock-up made for',page)
+        self.assertIn('attachment; filename="old-site-plumbing-mockup.html"',download.headers['Content-Disposition'])
+        self.assertIn('Free mock-up',self.page())
+        self.assertEqual(self.client.get('/find-customers/9999/mockup').status_code,400)
+
     def test_check_site_never_follows_to_bad_scheme(self):
         result=lead_engine.check_site('https://x.example',get=lambda url,timeout=8:(302,'file:///etc/passwd',b''))
         self.assertEqual(result['findings'],['down'])
