@@ -165,7 +165,7 @@ class LeadEngineTest(unittest.TestCase):
             page=self.client.get(f'/find-customers/{p["id"]}/mockup').data.decode()
             download=self.client.get(f'/find-customers/{p["id"]}/mockup?download=1')
         self.assertIn('Old Site Plumbing',page);self.assertIn('Blocked drains',page);self.assertIn('Emu Plains',page)
-        self.assertIn('tel:0400000002',page);self.assertIn('Free mock-up made for',page)
+        self.assertIn('tel:0400000002',page);self.assertIn('Free mock-up made for',page);self.assertIn('How it works',page)
         self.assertIn('attachment; filename="old-site-plumbing-mockup.html"',download.headers['Content-Disposition'])
         self.assertIn('Free mock-up',self.page())
         self.assertEqual(self.client.get('/find-customers/9999/mockup').status_code,400)
