@@ -110,6 +110,39 @@
     <div class="marquee-row"><span>Precision cuts</span><span>Balayage</span><span>Colour correction</span><span>Blow-dries</span><span>Brows and lashes</span><span>Bridal</span></div>
   </div>
 
+  <section class="scene" id="hair" data-scene="hair" data-scene-fit="1200,700,600,330,0.5,660,0.6" data-scene-length="700" style="--scene-bg:#f6ebe4; --scene-panel: rgba(42,29,26,0.72); --scene-accent:#efb9a6" aria-label="Hair that cuts, waves, curls and changes colour as you scroll">
+    <svg class="scene-svg" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <defs>
+        <radialGradient id="s-bg" cx="0.55" cy="0.35" r="0.8"><stop offset="0" stop-color="#fbeee6"/><stop offset="0.6" stop-color="#f3dccf"/><stop offset="1" stop-color="#e9c4b3"/></radialGradient>
+        <linearGradient id="hair-grad" gradientUnits="userSpaceOnUse" x1="0" y1="-100" x2="0" y2="680"><stop offset="0" stop-color="#2b1a12"/><stop offset="1" stop-color="#4a2e1f"/></linearGradient>
+        <linearGradient id="hair-dark" gradientUnits="userSpaceOnUse" x1="0" y1="-100" x2="0" y2="680"><stop offset="0" stop-color="#1c110b"/><stop offset="1" stop-color="#301e14"/></linearGradient>
+        <linearGradient id="hair-shine" gradientUnits="userSpaceOnUse" x1="0" y1="-100" x2="0" y2="680"><stop offset="0" stop-color="#5a4438"/><stop offset="1" stop-color="#9c7c66"/></linearGradient>
+      </defs>
+      <rect x="-1200" y="-2000" width="3600" height="4400" fill="url(#s-bg)"/>
+      <circle cx="930" cy="160" r="220" fill="#f0c4b2" opacity="0.5"/>
+      <circle cx="240" cy="560" r="180" fill="#f7e0d4" opacity="0.7"/>
+      <g id="strands" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"></g>
+      <g id="snips" stroke="#3a2216" stroke-width="3" fill="none" stroke-linecap="round"><path d="M330 462q6 8 2 18"/><path d="M368 462q6 8 2 18"/><path d="M406 462q6 8 2 18"/><path d="M444 462q6 8 2 18"/><path d="M482 462q6 8 2 18"/><path d="M520 462q6 8 2 18"/><path d="M558 462q6 8 2 18"/><path d="M596 462q6 8 2 18"/><path d="M634 462q6 8 2 18"/><path d="M672 462q6 8 2 18"/><path d="M710 462q6 8 2 18"/><path d="M748 462q6 8 2 18"/><path d="M786 462q6 8 2 18"/><path d="M824 462q6 8 2 18"/><path d="M862 462q6 8 2 18"/></g>
+      <g id="scissors" transform="translate(600 460)">
+        <g id="blade-a"><path d="M-70 -6L80 -2L-4 6Z" fill="#c9ced2"/><circle cx="-86" cy="-14" r="16" fill="none" stroke="#b5654f" stroke-width="8"/></g>
+        <g id="blade-b"><path d="M-70 6L80 2L-4 -6Z" fill="#dfe3e6"/><circle cx="-86" cy="14" r="16" fill="none" stroke="#b5654f" stroke-width="8"/></g>
+        <circle cx="0" cy="0" r="5" fill="#6d7378"/>
+      </g>
+      <g id="sparkles" fill="#fff6dc"><path d="M380 180l5 15 15 5-15 5-5 15-5-15-15-5 15-5z"/><path d="M820 240l5 15 15 5-15 5-5 15-5-15-15-5 15-5z"/><path d="M520 330l5 15 15 5-15 5-5 15-5-15-15-5 15-5z"/><path d="M700 140l5 15 15 5-15 5-5 15-5-15-15-5 15-5z"/><path d="M450 420l5 15 15 5-15 5-5 15-5-15-15-5 15-5z"/><path d="M760 400l5 15 15 5-15 5-5 15-5-15-15-5 15-5z"/><path d="M610 250l5 15 15 5-15 5-5 15-5-15-15-5 15-5z"/></g>
+    </svg>
+    <div class="scene-ui">
+      <div class="scene-captions">
+        <div class="scene-caption" data-scene-caption="flow"><span class="eyebrow">Your hair, your way</span><h2>Healthy hair moves.</h2><p>Scroll and watch what we can do with it.</p></div>
+        <div class="scene-caption" data-scene-caption="cut"><span class="eyebrow">Precision cuts</span><h2>A cut that grows out well.</h2><p>Shaped for your face, your texture and how much time you have in the morning.</p></div>
+        <div class="scene-caption" data-scene-caption="waves"><span class="eyebrow">Blow-dries and styling</span><h2>Soft, effortless waves.</h2><p>The kind that look like you woke up like this.</p></div>
+        <div class="scene-caption" data-scene-caption="curls"><span class="eyebrow">Curls and texture</span><h2>Bounce that lasts.</h2><p>Curl-friendly cuts and products that keep definition without the frizz.</p></div>
+        <div class="scene-caption" data-scene-caption="colour"><span class="eyebrow">Colour and balayage</span><h2>Colour that glows.</h2><p>Honey, copper or something new, blended by hand so it grows out softly.</p></div>
+      </div>
+      <div class="scene-steps" aria-hidden="true"><span data-scene-dot></span><span data-scene-dot></span><span data-scene-dot></span><span data-scene-dot></span><span data-scene-dot></span></div>
+      <div class="scene-hint" style="color: var(--ink)">Keep scrolling</div>
+    </div>
+  </section>
+
   <section class="section" id="menu">
     <div class="wrap">
       <div class="section-head">
@@ -228,6 +261,7 @@
 <script src="../../kit/vendor/ScrollTrigger.min.js" defer></script>
 <script src="../../kit/vendor/SplitText.min.js" defer></script>
 <script src="../../kit/vendor/lenis.min.js" defer></script>
+<script src="scene.js" defer></script>
 <script src="../../kit/motion.js" defer></script>
 </body>
 </html>

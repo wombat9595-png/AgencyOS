@@ -39,8 +39,21 @@ Then go to http://localhost:8765. To try it on a phone on the same Wi-Fi, use th
 | `data-counter="250"` | Number counts up (`data-suffix="+"`) |
 | `data-marquee="30"` | Endless text band that speeds up with scroll |
 | `data-compare` | Before/after drag slider |
+| `data-scene="name"` | Full-screen story scene: the section pins and scrolling plays a timeline (see below) |
 
 Smooth scrolling (Lenis), the scroll progress bar, the hide-on-scroll header and the phone call bar come for free.
+
+## Story scenes (the Signature centrepiece)
+
+Each demo has one scroll-driven story, in `demos/<name>/scene.js`:
+
+- **Builder:** blueprint draws itself, excavator and slab, frame and crane-lifted trusses, lock-up, handover at dusk, then an extension is added.
+- **Landscaper:** overcast junk-filled yard, dozer levels it, crew builds pool, paving and fence, turf and planting roll in, golden hour.
+- **Salon:** hair drawn live from numbers. Scissors cut it, then it waves, curls and changes colour as you scroll.
+
+A scene is an `<svg class="scene-svg">` plus captions marked `data-scene-caption="label"`. The scene script registers `window.MotionScenes[name] = function (tl, section) { ... }` and adds the same labels to the timeline. `data-scene-fit="artW,artH,centreX,groundY,groundAt,minPhoneW,wideAt"` keeps the subject framed on phones and wide screens. With reduced motion on, visitors see the finished picture with all captions listed underneath.
+
+For a client, keep the story and swap the details: their colours, their house style or pool shape, their actual services as captions. Budget roughly a day for a custom scene.
 
 ## New client in about an hour
 

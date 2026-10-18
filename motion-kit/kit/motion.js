@@ -14,6 +14,9 @@
  *   data-counter="250"     number counts up (data-suffix="+" optional)
  *   data-marquee           endless text band that speeds up with scroll
  *   data-compare           before/after slider (needs input[type=range] inside)
+ *   data-scene="name"      pinned story scene: scroll plays a timeline registered as
+ *                          window.MotionScenes[name] = function (tl, section) {...}
+ *                          Captions: [data-scene-caption="label"] show when the timeline passes that label.
  *
  * Visitors with "reduce motion" switched on get the same page, fully visible, with no animation.
  * Without JavaScript everything is visible too: initial states are only set from here.
@@ -43,7 +46,72 @@
     lastY = y;
   }
 
+
+  // Story scenes: a scene script builds a timeline, scrolling plays it while the section is pinned.
+  // Reduced motion (or no ScrollTrigger) shows the finished picture with every caption.
+  function fitScene(section) {
+    var svg = section.querySelector('svg.scene-svg');
+    if (!svg) return;
+    var fit = (section.dataset.sceneFit || '1200,700,600,560,0.8').split(',').map(Number);
+    var w = section.clientWidth, h = section.clientHeight || window.innerHeight;
+    var W = fit[0], H = fit[1], cx = fit[2], groundY = fit[3], groundAt = fit[4];
+    var vbW = W, vbH = H, x = 0, y = 0;
+    if (w / h < W / H) {
+      // narrower than the artwork: zoom in on the centre, extend sky above and ground below
+      vbW = Math.max(fit[5] || 640, Math.min(W, H * w / h));
+      vbH = vbW * h / w;
+      x = cx - vbW / 2;
+      y = groundY - vbH * groundAt;
+    } else {
+      vbH = W * h / w;
+      x = cx - vbW * (fit[6] || 0.5); // where the subject sits across a wide screen
+      y = groundY - vbH * groundAt;
+    }
+    svg.setAttribute('viewBox', [x, y, vbW, vbH].map(function (n) { return Math.round(n); }).join(' '));
+  }
+
+  function setupScenes(animated) {
+    var registry = window.MotionScenes || {};
+    document.querySelectorAll('[data-scene]').forEach(function (section) {
+      var build = registry[section.dataset.scene];
+      if (!build || !window.gsap) return;
+      fitScene(section);
+      window.addEventListener('resize', function () { fitScene(section); });
+      var tl = gsap.timeline({ defaults: { ease: 'none' }, paused: true });
+      build(tl, section);
+      var captions = Array.prototype.slice.call(section.querySelectorAll('[data-scene-caption]'));
+      var stepDots = Array.prototype.slice.call(section.querySelectorAll('[data-scene-dot]'));
+      function syncCaptions() {
+        var t = tl.time(), active = -1;
+        captions.forEach(function (c, i) {
+          var at = tl.labels[c.dataset.sceneCaption];
+          if (at !== undefined && t >= at - 0.001) active = i;
+        });
+        captions.forEach(function (c, i) { c.classList.toggle('is-active', i === active); });
+        stepDots.forEach(function (d, i) { d.classList.toggle('is-active', i <= active); });
+      }
+      if (!animated) {
+        tl.progress(1);
+        section.classList.add('scene-static');
+        syncCaptions();
+        return;
+      }
+      ScrollTrigger.create({
+        animation: tl,
+        trigger: section,
+        start: 'top top',
+        end: '+=' + (section.dataset.sceneLength || 600) + '%',
+        pin: true,
+        scrub: 1,
+        onUpdate: syncCaptions,
+        onRefresh: syncCaptions,
+      });
+      syncCaptions();
+    });
+  }
+
   if (reduce || !window.gsap || !window.ScrollTrigger) {
+    setupScenes(false);
     root.classList.add('motion-off');
     window.addEventListener('scroll', function () { onScrollHeader(window.scrollY); }, { passive: true });
     document.querySelectorAll('[data-counter]').forEach(function (el) {
@@ -162,6 +230,8 @@
       });
     }
   });
+
+  setupScenes(true);
 
   var mm = gsap.matchMedia();
 

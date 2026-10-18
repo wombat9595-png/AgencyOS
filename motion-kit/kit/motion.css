@@ -222,3 +222,40 @@ section { position: relative; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }
+
+/* Story scenes (data-scene): full-screen pinned artwork with captions */
+.scene { height: 100svh; position: relative; overflow: hidden; background: var(--scene-bg, #0f1720); }
+.scene-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.scene-ui { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+.scene-captions { position: absolute; left: var(--gutter); top: clamp(88px, 14vh, 140px); width: min(440px, calc(100% - 2 * var(--gutter))); display: grid; }
+.scene-caption {
+  grid-area: 1 / 1; opacity: 0; transform: translateY(16px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+  color: var(--scene-ink, #fff);
+  background: var(--scene-panel, rgba(12, 18, 26, 0.5));
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border-radius: var(--radius);
+  padding: clamp(18px, 2.4vw, 28px);
+}
+.scene-caption.is-active { opacity: 1; transform: none; }
+.scene-caption .eyebrow { color: var(--scene-accent, var(--accent)); margin-bottom: 0.6rem; }
+.scene-caption h2 { font-size: clamp(1.9rem, 4.4vw, 3.6rem); margin-bottom: 0.3em; }
+.scene-caption p { font-size: clamp(1rem, 1.4vw, 1.15rem); opacity: 0.88; max-width: 30em; margin: 0; }
+.scene-steps { position: absolute; right: var(--gutter); top: 50%; transform: translateY(-50%); display: grid; gap: 10px; }
+.scene-steps span { width: 4px; height: 34px; border-radius: 4px; background: rgba(255,255,255,0.28); transition: background-color 0.3s ease; }
+.scene-steps span.is-active { background: var(--scene-accent, var(--accent)); }
+.scene-hint { position: absolute; left: 50%; bottom: 96px; transform: translateX(-50%); font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--scene-ink, #fff); opacity: 0.7; }
+@media (min-width: 800px) { .scene-hint { bottom: 32px; } }
+@media (max-width: 799px) {
+  .scene-captions { top: 84px; }
+  .scene-caption p { font-size: 0.95rem; }
+  .scene-steps { top: auto; bottom: 96px; right: auto; left: var(--gutter); transform: none; grid-auto-flow: column; }
+  .scene-steps span { width: 26px; height: 4px; }
+}
+/* Reduced motion: finished picture, captions listed under it */
+.scene-static { height: auto; }
+.scene-static .scene-svg { position: relative; height: 75svh; }
+.scene-static .scene-ui { position: relative; padding: 24px 0 40px; }
+.scene-static .scene-captions { position: relative; top: auto; left: auto; margin: 0 auto; width: min(100% - 2 * var(--gutter), var(--max)); grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 16px; }
+.scene-static .scene-caption { opacity: 1; transform: none; grid-area: auto; }
+.scene-static .scene-hint, .scene-static .scene-steps { display: none; }
