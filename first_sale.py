@@ -13,6 +13,7 @@ import client_plans
 import lead_engine
 import brain
 import office
+import night_shift
 
 # Two offers, each a build fee plus a no-lock-in monthly plan. Ordered so the A$800 build keeps its saved position.
 TERMS="No lock-in: month to month, paid in advance, cancel with 30 days' notice. Yearly prepay costs 10 months' fees. On leaving, the customer keeps their domain; site files are a one-off A$250 handover, otherwise the site is taken down at the end of notice."
@@ -205,7 +206,7 @@ def register(app,get_db,login_required):
         answer=ceo_answer(question,m,todo,paused(conn),runtime,brain.describe(brain.snapshot(conn,owner,worker=bool(runtime['workers'])))) if question else ''
         return render_template('business_classic.html' if request.cookies.get('look')=='classic' else 'business.html',metrics=m,paused=paused(conn),worker=bool(runtime['workers']),todo=todo,
           configured=configured(conn,owner),question=question,answer=answer,suggestions=CEO_SUGGESTIONS,
-          money=money_in(conn,owner),milestone=next_milestone(m['received_cents']),office=office.state(conn,owner))
+          money=money_in(conn,owner),milestone=next_milestone(m['received_cents']),office=office.state(conn,owner),morning=night_shift.morning(conn,owner))
 
     @app.get('/look/<name>')
     @login_required

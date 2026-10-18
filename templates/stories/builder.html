@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Northline Building Co. | Custom homes, extensions and renovations</title>
+<meta name="description" content="Locally owned builder for custom homes, extensions and renovations. Fixed-price quotes and a builder who picks up the phone.">
+<meta name="theme-color" content="#101418">
+<link rel="preload" href="../../kit/fonts/archivo-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../../kit/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../../kit/vendor/lenis.css">
+<link rel="stylesheet" href="../../kit/motion.css">
+<style>
+  :root {
+    --bg: #f4f1ec;
+    --surface: #ffffff;
+    --ink: #14181c;
+    --muted: #5a6168;
+    --accent: #e8622c;
+    --dark: #101418;
+    --dark-ink: #eef0ee;
+    --font-display: 'Archivo', system-ui, sans-serif;
+    --display-weight: 800;
+  }
+  .hero { color: #fff; background: #0e1216; }
+  .hero-art { position: absolute; inset: 0; background:
+      radial-gradient(1200px 600px at 75% 20%, rgba(232,98,44,0.35), transparent 60%),
+      linear-gradient(180deg, #1b2530 0%, #0e1216 100%); }
+  .hero-art .grid-lines { position: absolute; inset: 0; opacity: 0.18;
+      background-image: linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px);
+      background-size: 64px 64px; mask-image: linear-gradient(180deg, #000 20%, transparent 85%); -webkit-mask-image: linear-gradient(180deg, #000 20%, transparent 85%); }
+  .hero-art svg { position: absolute; right: -4%; bottom: 12%; width: min(78vw, 980px); opacity: 0.95; }
+  .hero h1 em { font-style: normal; color: var(--accent); }
+  .hero .lead { color: rgba(255,255,255,0.78); }
+  .hero .btn-ghost { color: #fff; }
+
+  .proj-a { background: linear-gradient(160deg, #d8c7a8, #8f7a5c); }
+  .proj-b { background: linear-gradient(160deg, #a8b8c4, #46596a); }
+  .proj-c { background: linear-gradient(160deg, #e3d4c0, #b98d63); }
+  .proj-d { background: linear-gradient(160deg, #9fb19b, #44583f); }
+  .proj-e { background: linear-gradient(160deg, #cfd3d6, #6f777e); }
+  .card-art svg { position: absolute; left: 8%; right: 8%; bottom: 0; width: 84%; }
+  .project-tag { position: absolute; top: 16px; left: 16px; background: rgba(255,255,255,0.9); color: #14181c; padding: 6px 12px; border-radius: 999px; font-size: 0.8rem; font-weight: 600; }
+
+  .compare-before { background: linear-gradient(180deg, #c9ccc7, #9a9d97); }
+  .compare-after { background: linear-gradient(180deg, #f6d9b8, #e8a46f 55%, #6b8f5b 56%, #4f7343); }
+  .compare svg { position: absolute; left: 10%; bottom: 0; width: 80%; }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="scroll-progress" aria-hidden="true"></div>
+
+<header class="site-header on-dark">
+  <div class="wrap">
+    <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true">N</span>Northline Building Co.</a>
+    <nav class="nav" aria-label="Main">
+      <a href="#services">Services</a>
+      <a href="#process">How it works</a>
+      <a href="#projects">Projects</a>
+      <a href="#reviews">Reviews</a>
+      <a class="btn btn-primary" href="#quote">Free quote</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero" id="top" data-hero>
+    <div class="hero-media" aria-hidden="true">
+      <div class="hero-art">
+        <div class="grid-lines"></div>
+        <svg viewBox="0 0 900 420" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="2">
+          <path d="M40 400h820"/>
+          <path d="M120 400V220l190-130 190 130v180"/>
+          <path d="M500 400V250h320v150"/>
+          <path d="M480 250l170-110 190 110" stroke="#e8622c" stroke-width="3"/>
+          <rect x="170" y="280" width="80" height="80"/>
+          <rect x="370" y="290" width="70" height="110"/>
+          <rect x="560" y="290" width="200" height="70"/>
+          <path d="M210 280v80M170 320h80M660 290v70"/>
+        </svg>
+      </div>
+    </div>
+    <div class="wrap hero-copy">
+      <span class="eyebrow">Licensed builder · Locally owned</span>
+      <h1>Homes built <em>properly</em>,<br>on time and on budget.</h1>
+      <p class="lead">Custom homes, extensions and renovations with a fixed-price quote and a builder who actually picks up the phone.</p>
+      <div class="btn-row">
+        <a class="btn btn-primary" href="#quote">Get a free quote</a>
+        <a class="btn btn-ghost" href="#projects">See our work</a>
+      </div>
+      <div class="hero-badges"><span>Fixed-price contracts</span><span>Fully insured</span><span>7-year structural warranty</span></div>
+    </div>
+  </section>
+
+  <div class="marquee" data-marquee="28" aria-hidden="true">
+    <div class="marquee-row"><span>Custom homes</span><span>Extensions</span><span>Renovations</span><span>Decks and alfresco</span><span>Granny flats</span><span>Knockdown rebuilds</span></div>
+  </div>
+
+  <section class="section" id="services">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">What we build</span>
+          <h2 data-split>Everything from a new deck to a whole new home.</h2>
+        </div>
+        <p class="lead" data-reveal>One team from first sketch to handover, so nothing gets lost between trades and you always know who to call.</p>
+      </div>
+      <div class="grid" data-stagger>
+        <article class="card" data-reveal>
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg></div>
+          <h3>Custom homes</h3>
+          <p class="muted">Designed around how you live, built to last, with a fixed price before we start.</p>
+        </article>
+        <article class="card" data-reveal>
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V9l6-4 6 4v12M15 13h6v8"/></svg></div>
+          <h3>Extensions</h3>
+          <p class="muted">More room without moving. Second storeys, rear extensions and open-plan living.</p>
+        </article>
+        <article class="card" data-reveal>
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 6l4 4M4 20l3-1 11-11-2-2L5 17z"/></svg></div>
+          <h3>Renovations</h3>
+          <p class="muted">Kitchens, bathrooms and full makeovers, finished cleanly and on schedule.</p>
+        </article>
+        <article class="card" data-reveal>
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18h18M5 18V10h14v8M8 10V6h8v4"/></svg></div>
+          <h3>Decks and alfresco</h3>
+          <p class="muted">Outdoor living spaces in hardwood or composite, roofed or open.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene" id="build" data-scene="build" data-scene-fit="1200,700,690,600,0.74,720,0.6" data-scene-length="750" style="--scene-bg:#14365a" aria-label="Watch a house get built as you scroll">
+    <svg class="scene-svg" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <defs>
+        <linearGradient id="b-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5f9ccc"/><stop offset="1" stop-color="#cfe5f2"/></linearGradient>
+        <linearGradient id="b-dusk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d2547"/><stop offset="0.55" stop-color="#8a4f6b"/><stop offset="1" stop-color="#f2a65e"/></linearGradient>
+        <pattern id="b-grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="rgba(255,255,255,0.09)" stroke-width="1"/></pattern>
+        <clipPath id="b-wall-cp"><rect id="wall-clip" x="380" y="420" width="440" height="168"/></clipPath>
+        <clipPath id="b-roof-cp"><rect id="roof-clip" x="350" y="280" width="520" height="150"/></clipPath>
+        <clipPath id="b-ext-cp"><rect id="ext-wall-clip" x="820" y="470" width="180" height="118"/></clipPath>
+      </defs>
+
+      <rect x="-1200" y="-1600" width="3600" height="2300" fill="url(#b-sky)"/>
+      <circle cx="930" cy="170" r="46" fill="#fff4cf"/>
+      <g id="dusk" opacity="0">
+        <rect x="-1200" y="-1600" width="3600" height="2300" fill="url(#b-dusk)"/>
+        <g fill="#fff" opacity="0.8"><circle cx="160" cy="80" r="1.6"/><circle cx="300" cy="150" r="1.2"/><circle cx="520" cy="60" r="1.4"/><circle cx="760" cy="120" r="1.2"/><circle cx="1040" cy="70" r="1.6"/><circle cx="420" cy="-60" r="1.3"/><circle cx="880" cy="-120" r="1.5"/></g>
+      </g>
+
+      <g id="ground">
+        <rect x="-1200" y="600" width="3600" height="1400" fill="#8a6a4c"/>
+        <rect x="-1200" y="600" width="3600" height="8" fill="#6f533a"/>
+      </g>
+      <rect id="lawn" x="-1200" y="598" width="3600" height="260" fill="#5f9150"/>
+      <polygon id="path" points="580,600 620,600 680,860 520,860" fill="#d9cfbd"/>
+
+      <rect id="slab" x="370" y="588" width="460" height="12" fill="#a9adaf"/>
+      <rect id="ext-slab" x="820" y="588" width="190" height="12" fill="#a9adaf"/>
+
+      <g id="studs" fill="#c99e6a"></g>
+      <rect id="top-plate" x="380" y="414" width="440" height="8" fill="#b5884f"/>
+      <g id="trusses" fill="none" stroke="#c99e6a" stroke-width="6" stroke-linejoin="round">
+        <path d="M368 420L600 298L832 420Z"/><path d="M600 298V420M484 360L540 420M716 360L660 420M484 360L600 420M716 360L600 420"/>
+      </g>
+
+      <g clip-path="url(#b-wall-cp)">
+        <rect x="380" y="420" width="440" height="168" fill="#e3d8c6"/>
+        <g id="boards" stroke="rgba(0,0,0,0.08)" stroke-width="2"></g>
+        <g id="paint" opacity="0"><rect x="380" y="420" width="440" height="168" fill="#f6f3ee"/><rect x="380" y="420" width="440" height="168" fill="none" stroke="#2d3338" stroke-width="6"/></g>
+      </g>
+      <g id="windows">
+        <g><rect x="415" y="455" width="100" height="78" rx="3" fill="#2a3a46"/><path d="M465 455v78M415 494h100" stroke="#f6f3ee" stroke-width="4"/></g>
+        <g><rect x="685" y="455" width="100" height="78" rx="3" fill="#2a3a46"/><path d="M735 455v78M685 494h100" stroke="#f6f3ee" stroke-width="4"/></g>
+      </g>
+      <g id="glow" opacity="0" fill="#ffd27a"><rect x="419" y="459" width="44" height="33"/><rect x="467" y="459" width="44" height="33"/><rect x="419" y="496" width="44" height="33"/><rect x="467" y="496" width="44" height="33"/><rect x="689" y="459" width="44" height="33"/><rect x="737" y="459" width="44" height="33"/><rect x="689" y="496" width="44" height="33"/><rect x="737" y="496" width="44" height="33"/></g>
+      <g id="door"><rect x="572" y="500" width="56" height="88" rx="2" fill="#e8622c"/><circle cx="617" cy="546" r="3.5" fill="#fff"/></g>
+
+      <g clip-path="url(#b-roof-cp)"><polygon points="356,424 600,294 844,424" fill="#30373d"/><path d="M420 390L600 296M500 404L600 352" stroke="rgba(255,255,255,0.06)" stroke-width="3"/></g>
+      <rect id="gutter" x="356" y="420" width="488" height="8" rx="2" fill="#22282d"/>
+
+      <g id="ext-studs" fill="#c99e6a"></g>
+      <g clip-path="url(#b-ext-cp)">
+        <rect x="820" y="470" width="180" height="118" fill="#e3d8c6"/>
+        <g id="ext-boards" stroke="rgba(0,0,0,0.08)" stroke-width="2"></g>
+        <g id="ext-paint" opacity="0"><rect x="820" y="470" width="180" height="118" fill="#3a4148"/></g>
+      </g>
+      <g id="ext-glass"><rect x="842" y="492" width="136" height="96" fill="#2a3a46"/><path d="M887 492v96M932 492v96" stroke="#9aa4ab" stroke-width="3"/></g>
+      <rect id="ext-glow" x="845" y="495" width="130" height="93" fill="#ffd27a" opacity="0"/>
+      <polygon id="ext-roof" points="812,476 1012,452 1012,466 812,486" fill="#22282d"/>
+
+      <g id="garden">
+        <circle cx="400" cy="590" r="22" fill="#3f6d38"/><circle cx="436" cy="594" r="16" fill="#4d7f43"/>
+        <circle cx="770" cy="592" r="18" fill="#4d7f43"/><circle cx="802" cy="588" r="24" fill="#3f6d38"/>
+        <g><rect x="246" y="510" width="10" height="90" fill="#6b4a32"/><circle cx="251" cy="500" r="44" fill="#3f6d38"/><circle cx="226" cy="520" r="28" fill="#4d7f43"/></g>
+        <g><rect x="676" y="566" width="6" height="34" fill="#2d3338"/><rect x="668" y="552" width="22" height="16" rx="3" fill="#2d3338"/></g>
+      </g>
+      <g id="ext-garden"><circle cx="1030" cy="592" r="20" fill="#3f6d38"/><circle cx="1060" cy="595" r="14" fill="#4d7f43"/></g>
+
+      <g id="family">
+        <g transform="translate(640 560)"><circle cx="0" cy="-26" r="9" fill="#2d3338"/><rect x="-9" y="-16" width="18" height="34" rx="8" fill="#e8622c"/><rect x="-7" y="16" width="5" height="22" fill="#2d3338"/><rect x="2" y="16" width="5" height="22" fill="#2d3338"/></g>
+        <g transform="translate(668 566)"><circle cx="0" cy="-22" r="8" fill="#2d3338"/><rect x="-8" y="-13" width="16" height="30" rx="7" fill="#5f9ccc"/><rect x="-6" y="15" width="4" height="19" fill="#2d3338"/><rect x="2" y="15" width="4" height="19" fill="#2d3338"/></g>
+        <g transform="translate(690 576)"><circle cx="0" cy="-14" r="6" fill="#2d3338"/><rect x="-6" y="-8" width="12" height="20" rx="5" fill="#f2c14e"/><rect x="-4" y="10" width="3" height="14" fill="#2d3338"/><rect x="1" y="10" width="3" height="14" fill="#2d3338"/></g>
+      </g>
+
+      <g id="tradie-a" transform="translate(300 556)">
+        <circle cx="0" cy="-26" r="9" fill="#e6b48f"/><path d="M-11 -30a11 9 0 0 1 22 0z" fill="#f28c28"/>
+        <rect x="-10" y="-16" width="20" height="34" rx="6" fill="#f2c14e"/><rect x="-10" y="-4" width="20" height="4" fill="#cfd6db"/>
+        <rect x="-8" y="16" width="6" height="28" fill="#33414d"/><rect x="2" y="16" width="6" height="28" fill="#33414d"/>
+      </g>
+
+      <g id="excavator" transform="translate(150 0)">
+        <rect x="0" y="560" width="150" height="28" rx="14" fill="#2d3338"/>
+        <rect x="10" y="510" width="110" height="52" rx="6" fill="#f2b632"/>
+        <rect x="70" y="478" width="44" height="40" rx="4" fill="#f2b632"/><rect x="78" y="484" width="30" height="24" fill="#a9d3ee"/>
+        <g class="arm"><path d="M110 520L190 470L230 540" fill="none" stroke="#f2b632" stroke-width="14" stroke-linejoin="round"/><path d="M220 532l26 6-6 24-28-10z" fill="#2d3338"/></g>
+      </g>
+
+      <g id="crane">
+        <path d="M1080 600V96M1104 600V96M1080 600L1104 560L1080 520L1104 480L1080 440L1104 400L1080 360L1104 320L1080 280L1104 240L1080 200L1104 160L1080 120" stroke="#f2b632" stroke-width="5" fill="none"/>
+        <rect x="560" y="96" width="640" height="16" fill="#f2b632"/><rect x="1150" y="112" width="44" height="40" fill="#2d3338"/>
+        <rect x="1070" y="60" width="44" height="40" fill="#2d3338"/><rect x="1076" y="66" width="32" height="20" fill="#a9d3ee"/>
+        <g id="trolley"><rect x="966" y="112" width="28" height="12" fill="#2d3338"/><line id="hook-line" x1="980" y1="124" x2="980" y2="130" stroke="#2d3338" stroke-width="3"/></g>
+      </g>
+
+      <g id="blueprint">
+        <rect x="-1200" y="-1600" width="3600" height="3600" fill="#14365a"/>
+        <rect x="-1200" y="-1600" width="3600" height="3600" fill="url(#b-grid)"/>
+      </g>
+      <g id="bp" fill="none" stroke="#d6e8f8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path data-line d="M380 588V420H820V588"/>
+        <path data-line d="M356 424L600 294L844 424"/>
+        <path data-line d="M330 588H1030"/>
+        <path data-line d="M415 455h100v78H415zM685 455h100v78H685z"/>
+        <path data-line d="M572 588V500h56v88"/>
+        <path data-line d="M820 588V470h180v118" stroke-dasharray="8 8"/>
+        <path data-line d="M380 640H820M380 630v20M820 630v20"/>
+        <path data-line d="M870 300V420M860 300h20M860 420h20"/>
+        <g id="bp-notes" fill="#d6e8f8" stroke="none" font-family="Inter, sans-serif" font-size="15" letter-spacing="2">
+          <text x="380" y="672">FRONT ELEVATION · 12.0 M</text>
+          <text x="890" y="366">2.7 M</text>
+          <text x="842" y="460">EXTENSION (STAGE 2)</text>
+        </g>
+      </g>
+    </svg>
+    <div class="scene-ui">
+      <div class="scene-captions">
+        <div class="scene-caption" data-scene-caption="plans"><span class="eyebrow">Step 1 · Plans</span><h2>It starts on paper.</h2><p>Drawings you sign off on, so the house you get is the house you agreed to.</p></div>
+        <div class="scene-caption" data-scene-caption="slab"><span class="eyebrow">Step 2 · Site and slab</span><h2>Ground work done right.</h2><p>Site cut, footings and a level slab. The bit nobody sees, done properly.</p></div>
+        <div class="scene-caption" data-scene-caption="frame"><span class="eyebrow">Step 3 · Frame</span><h2>Up it goes.</h2><p>Frame and roof trusses in place, checked and signed off by the certifier.</p></div>
+        <div class="scene-caption" data-scene-caption="lockup"><span class="eyebrow">Step 4 · Lock-up</span><h2>Walls, windows, roof.</h2><p>Weatherproof and secure. You get photos every Friday.</p></div>
+        <div class="scene-caption" data-scene-caption="handover"><span class="eyebrow">Step 5 · Handover</span><h2>Welcome home.</h2><p>Final walkthrough, every defect fixed, keys in your hand.</p></div>
+        <div class="scene-caption" data-scene-caption="extension"><span class="eyebrow">Need more room?</span><h2>We add on, too.</h2><p>Extensions built to match, without you moving out.</p></div>
+      </div>
+      <div class="scene-steps" aria-hidden="true"><span data-scene-dot></span><span data-scene-dot></span><span data-scene-dot></span><span data-scene-dot></span><span data-scene-dot></span><span data-scene-dot></span></div>
+      <div class="scene-hint">Keep scrolling</div>
+    </div>
+  </section>
+
+  <section class="steps section-dark" id="process" data-pin-steps>
+    <div class="wrap steps-layout">
+      <div>
+        <span class="eyebrow">How it works</span>
+        <h2>Four steps. No surprises.</h2>
+        <p class="lead">You get one fixed price, a clear timeline and a weekly update, whatever the size of the job.</p>
+        <div class="steps-rail" aria-hidden="true"><span class="step-dot is-active"></span><span class="step-dot"></span><span class="step-dot"></span><span class="step-dot"></span></div>
+      </div>
+      <div class="steps-stage">
+        <div class="step" data-step><div class="step-num">01</div><h3>Free site visit</h3><p class="muted">We come out, listen, measure up and talk budget honestly. No pressure, no cost.</p></div>
+        <div class="step" data-step><div class="step-num">02</div><h3>Plans and fixed quote</h3><p class="muted">Drawings, specs and a fixed price in writing. What we quote is what you pay.</p></div>
+        <div class="step" data-step><div class="step-num">03</div><h3>We build</h3><p class="muted">A dedicated site lead, a tidy site and a photo update every Friday.</p></div>
+        <div class="step" data-step><div class="step-num">04</div><h3>Handover</h3><p class="muted">Final walkthrough, every defect fixed, keys in your hand and warranty in writing.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="hscroll" id="projects" data-hscroll>
+    <div class="wrap hscroll-intro">
+      <span class="eyebrow">Recent projects</span>
+      <h2>Scroll through our latest work.</h2>
+    </div>
+    <div class="hscroll-track">
+      <figure class="project"><div class="project-frame"><div class="card-art proj-a"><svg viewBox="0 0 300 200" fill="rgba(255,255,255,0.85)"><path d="M20 200V110l90-60 90 60v90zM200 200v-70h80v70z"/></svg></div><span class="project-tag">Custom home</span></div><figcaption><strong>Two-storey family home</strong><span class="muted">7 months</span></figcaption></figure>
+      <figure class="project"><div class="project-frame"><div class="card-art proj-b"><svg viewBox="0 0 300 200" fill="rgba(255,255,255,0.85)"><path d="M30 200V90h120v110zM150 200v-60h120v60z"/></svg></div><span class="project-tag">Extension</span></div><figcaption><strong>Rear living extension</strong><span class="muted">14 weeks</span></figcaption></figure>
+      <figure class="project"><div class="project-frame"><div class="card-art proj-c"><svg viewBox="0 0 300 200" fill="rgba(255,255,255,0.85)"><path d="M40 200v-80l110-70 110 70v80z"/></svg></div><span class="project-tag">Renovation</span></div><figcaption><strong>Queenslander restoration</strong><span class="muted">5 months</span></figcaption></figure>
+      <figure class="project"><div class="project-frame"><div class="card-art proj-d"><svg viewBox="0 0 300 200" fill="rgba(255,255,255,0.85)"><path d="M10 200v-40h280v40zM40 160v-60h220v60z"/></svg></div><span class="project-tag">Alfresco</span></div><figcaption><strong>Hardwood deck and roof</strong><span class="muted">4 weeks</span></figcaption></figure>
+      <figure class="project"><div class="project-frame"><div class="card-art proj-e"><svg viewBox="0 0 300 200" fill="rgba(255,255,255,0.85)"><path d="M60 200v-100l90-50 90 50v100z"/></svg></div><span class="project-tag">Granny flat</span></div><figcaption><strong>Two-bedroom granny flat</strong><span class="muted">11 weeks</span></figcaption></figure>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Before and after</span>
+          <h2 data-split>Drag to see the difference.</h2>
+        </div>
+        <p class="lead" data-reveal>A tired 1970s brick home turned into a bright, modern family house without leaving the street they love.</p>
+      </div>
+      <div class="compare" data-compare data-reveal="scale">
+        <div class="compare-layer compare-before" aria-hidden="true"><svg viewBox="0 0 400 220" fill="#6f726c"><path d="M20 220V120l120-70 120 70v100z"/><rect x="60" y="140" width="40" height="40" fill="#b9bbb5"/><rect x="170" y="150" width="40" height="70" fill="#b9bbb5"/></svg></div>
+        <div class="compare-layer compare-after" aria-hidden="true"><svg viewBox="0 0 400 220"><path d="M20 220V110l120-80 120 80v110z" fill="#fbfaf7"/><path d="M260 220v-90h120v90z" fill="#2c3a44"/><rect x="50" y="130" width="70" height="60" fill="#8fc3e6"/><rect x="170" y="140" width="45" height="80" fill="#14181c"/><rect x="280" y="150" width="80" height="40" fill="#8fc3e6"/></svg></div>
+        <div class="compare-handle" aria-hidden="true"></div>
+        <span class="compare-label before">Before</span><span class="compare-label after">After</span>
+        <input type="range" min="0" max="100" value="50" aria-label="Drag to compare before and after">
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-dark">
+    <div class="wrap stats">
+      <div data-reveal><div class="stat-num" data-counter="18" data-suffix=" yrs">18 yrs</div><div class="stat-label">building locally</div></div>
+      <div data-reveal><div class="stat-num" data-counter="240" data-suffix="+">240+</div><div class="stat-label">homes and extensions finished</div></div>
+      <div data-reveal><div class="stat-num" data-counter="97" data-suffix="%">97%</div><div class="stat-label">finished on or before the date we promised</div></div>
+      <div data-reveal><div class="stat-num" data-counter="5" data-suffix=".0 ★">5.0 ★</div><div class="stat-label">average Google rating</div></div>
+    </div>
+  </section>
+
+  <section class="section" id="reviews">
+    <div class="wrap">
+      <div class="section-head"><div><span class="eyebrow">Reviews</span><h2 data-split>What our clients say.</h2></div></div>
+      <div class="grid">
+        <article class="card review" data-reveal><div class="stars" aria-label="5 stars">★★★★★</div><blockquote>"They quoted a price and stuck to it. Weekly photos meant we never had to chase anyone."</blockquote><cite>Sample review<span>Extension client</span></cite></article>
+        <article class="card review" data-reveal><div class="stars" aria-label="5 stars">★★★★★</div><blockquote>"Tidy site, polite team, and finished a week early. We'd use them again tomorrow."</blockquote><cite>Sample review<span>New home client</span></cite></article>
+        <article class="card review" data-reveal><div class="stars" aria-label="5 stars">★★★★★</div><blockquote>"The only builder who actually called us back. Couldn't be happier with the deck."</blockquote><cite>Sample review<span>Deck client</span></cite></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-dark" id="quote">
+    <div class="wrap quote-grid">
+      <div>
+        <span class="eyebrow">Free quote</span>
+        <h2 data-split>Tell us about your project.</h2>
+        <p class="lead">We reply within one business day, usually the same day.</p>
+        <div class="contact-lines">
+          <a href="tel:0400000000">Call 0400 000 000</a>
+          <a href="mailto:hello@example.com">hello@example.com</a>
+          <span class="muted">Mon to Fri, 7am to 5pm</span>
+        </div>
+      </div>
+      <form class="form" data-reveal onsubmit="event.preventDefault(); this.querySelector('button').textContent = 'Demo only: this form is not connected';">
+        <label>Name<input name="name" autocomplete="name" required></label>
+        <label>Phone<input name="phone" type="tel" autocomplete="tel" required></label>
+        <label>Project type<select name="type"><option>New home</option><option>Extension</option><option>Renovation</option><option>Deck or alfresco</option><option>Something else</option></select></label>
+        <label>Tell us a bit more<textarea name="message" rows="4"></textarea></label>
+        <button class="btn btn-primary" type="submit">Request my free quote</button>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <span>© 2026 Northline Building Co.</span>
+    <span class="demo-note">Demo site by Benji Price Web Design. Northline is a made-up business; reviews and numbers are samples.</span>
+  </div>
+</footer>
+
+<div class="callbar">
+  <a class="btn btn-primary" href="tel:0400000000">Call now</a>
+  <a class="btn btn-ghost" href="#quote">Free quote</a>
+</div>
+
+<script src="../../kit/vendor/gsap.min.js" defer></script>
+<script src="../../kit/vendor/ScrollTrigger.min.js" defer></script>
+<script src="../../kit/vendor/SplitText.min.js" defer></script>
+<script src="../../kit/vendor/lenis.min.js" defer></script>
+<script src="scene.js" defer></script>
+<script src="../../kit/motion.js" defer></script>
+</body>
+</html>

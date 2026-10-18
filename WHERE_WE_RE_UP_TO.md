@@ -1,3 +1,25 @@
+# Where we're up to: Night Shift upgrade (branch claude/project-thread-mdpkej)
+
+Built on top of `claude/office-agents-nayzje` (PR #7). Benji voted YES on all six upgrades in the "AgencyOS Night Shift" preview. Nothing here sends, spends or publishes, and it is NOT installed on the Mac.
+
+## Done
+- `playbook.py`: one shared playbook (voice, offer, packages, Spam Act opt-out, banned hype words, word limits, a page per niche, which story mock-up suits each trade). Every draft is checked against it.
+- `night_shift.py` + `templates/night_shift.html` (`/night-shift`): once a day after 2 am Sydney, inside the existing worker, the agents search the next 2 search areas (OpenStreetMap), check websites, draft emails, count follow-ups and prepare monthly Profile Care posts. Catches up when the Mac wakes. "Run a shift now" button on Home.
+- Home: new "Ready for you" queue (leads to approve, plan requests, profile posts, Gmail drafts) with approve/skip in one tap.
+- `smart_writer.py`: optional Claude Haiku Writer. OFF by default; also blocked by the free-only lock (AGENCYOS_ZERO_COST=1 in local_run.py), needs ANTHROPIC_API_KEY and the `anthropic` package, and has a monthly cap (default A$5, max A$20). AI drafts must pass the playbook or the rules draft is used.
+- `story_mockups.py` + `templates/stories/` + `static/motion/`: builders, landscapers and salons get the animated scroll-story demo personalised with their name, downloadable as one self-contained file (`/find-customers/<id>/story?download=1`).
+- Profile Care add-on (A$49/month) in `client_plans.py`: 2 Google profile posts + 1 review request a month, drafted for approval.
+- `site-check/`: public "free website check" page for Cloudflare Pages + Web3Forms. Not online; needs Benji's "put it online" and a free Web3Forms key.
+- `deploy/night-shift/*.command`: optional scripts to make the Mac wake at 1:55 am (pmset). Not run.
+- `tests/test_night_shift.py`: 9 tests.
+
+## Waiting on Benji
+- Typed yes in the thread to install on the Mac.
+- Haiku: an Anthropic API key plus lifting the free-only lock, then tick the confirm box on /night-shift.
+- "Put it online" for the website check page.
+
+---
+
 # Where we're up to: Office and the shared brain (branch claude/office-agents-nayzje)
 
 Built on top of `claude/lead-engine-efqnp7` (PR #5, the copy installed on Benji's Mac). Nothing here sends, spends or publishes.

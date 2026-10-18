@@ -34,6 +34,9 @@ import first_sale
 import client_plans
 import lead_engine
 import office
+import smart_writer
+import night_shift
+import story_mockups
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = runtime_status.database_path(os.environ.get("AGENCYOS_DB"))
@@ -116,6 +119,8 @@ def init_db():
     first_sale.migrate(conn)
     client_plans.migrate(conn)
     lead_engine.migrate(conn)
+    smart_writer.migrate(conn)
+    night_shift.migrate(conn)
     conn.commit()
     conn.close()
 
@@ -528,6 +533,9 @@ first_sale.register(app,db,login_required)
 client_plans.register(app,db,login_required)
 lead_engine.register(app,db,login_required,insert_lead)
 office.register(app,db,login_required)
+smart_writer.register(app,db,login_required)
+night_shift.register(app,db,login_required)
+story_mockups.register(app,db,login_required)
 register_phase3(app, db, login_required, insert_lead)
 register_phase4(app, db, login_required, insert_lead)
 register_sales(app, db, login_required)

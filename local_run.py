@@ -77,6 +77,8 @@ def worker_tick(path,private_data):
         if paused(conn):return worked
         first_sale.daily_report(conn)
         last=conn.execute('SELECT MAX(created_at) FROM ops_backups WHERE verified=1').fetchone()[0]
+    import night_shift
+    worked=night_shift.worker_tick(path) or worked
     if not last or time.time()-last>86400:
         from production_security import secret
         destination=Path(private_data)/'backups'/('business-'+time.strftime('%Y%m%dT%H%M%S',time.gmtime())+'-'+secrets.token_hex(3)+'.enc')

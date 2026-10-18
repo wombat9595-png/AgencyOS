@@ -421,13 +421,17 @@ def prospect_for(conn,owner,prospect_id):
 
 
 def card(p,s):
-    subject,body=(p['subject'],p['message']) if p['stage']=='Approved' and p['message'] else draft(p,s)
+    import smart_writer,playbook
+    subject,body=(p['subject'],p['message']) if p['stage']=='Approved' and p['message'] else (smart_writer.stored(p) or draft(p,s))
+    story=playbook.story_for(p['trade'])
     channel='email' if p['email'] else 'call' if p['phone'] else 'none'
     if p['stage']=='Contacted' and p['email']:channel='email'
     return dict(p,why=REASONS[p['reason']][1],subject=subject,body=body,channel=channel,
       mailto=mailto(p,subject,body) if p['email'] else '',
       google='https://www.google.com/search?q='+quote(p['name']+' '+p['suburb']),
-      followup=p['stage']=='Contacted',step=('First message','Follow-up 1','Follow-up 2')[min(p['touches'],2)])
+      followup=p['stage']=='Contacted',step=('First message','Follow-up 1','Follow-up 2')[min(p['touches'],2)],
+      story=story['title'] if story else '',mockup_url=url_for('prospects_story' if story else 'prospects_mockup',prospect_id=p['id']),
+      ai=p['draft_source']=='ai' and p['stage']!='Approved')
 
 
 def register(app,get_db,login_required,insert_lead):
@@ -541,4 +545,6 @@ def register(app,get_db,login_required,insert_lead):
         elif action=='reopen':
             conn.execute("UPDATE prospects SET stage='New',next_on='' WHERE id=? AND stage IN ('Skipped','No reply')",(p['id'],));message='Back in the list.'
         else:raise WorkflowError('Unknown action.')
-        conn.commit();flash(message,'success');return redirect(url_for('prospects_home')+'#p'+str(p['id']))
+        conn.commit();flash(message,'success')
+        if request.form.get('next')=='home':return redirect(url_for('business_home')+'#ready')
+        return redirect(url_for('prospects_home')+'#p'+str(p['id']))
