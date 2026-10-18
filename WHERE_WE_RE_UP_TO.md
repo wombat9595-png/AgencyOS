@@ -1,6 +1,6 @@
 # Where we're up to: Night Shift upgrade (branch claude/project-thread-mdpkej)
 
-Built on top of `claude/office-agents-nayzje` (PR #7). Benji voted YES on all six upgrades in the "AgencyOS Night Shift" preview. Nothing here sends, spends or publishes, and it is NOT installed on the Mac.
+Built on top of `claude/office-agents-nayzje` (PR #7). Benji voted YES on all six upgrades in the "AgencyOS Night Shift" preview. Nothing here sends, spends or publishes. INSTALLED on Benji's Mac on 19 Oct 2026 (commit 521a72a; backup ~/AgencyOS-Backups/before-night-shift-20261019-104242). Runs at http://127.0.0.1:5050 in a Terminal window titled "AgencyOS".
 
 ## Done
 - `playbook.py`: one shared playbook (voice, offer, packages, Spam Act opt-out, banned hype words, word limits, a page per niche, which story mock-up suits each trade). Every draft is checked against it.
@@ -14,7 +14,7 @@ Built on top of `claude/office-agents-nayzje` (PR #7). Benji voted YES on all si
 - `tests/test_night_shift.py`: 9 tests.
 
 ## Waiting on Benji
-- Typed yes in the thread to install on the Mac.
+- Add 1-2 search areas on /night-shift (none yet, so the shift has nowhere to search).
 - Haiku: an Anthropic API key plus lifting the free-only lock, then tick the confirm box on /night-shift.
 - "Put it online" for the website check page.
 
