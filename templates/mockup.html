@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{ m.name }} · {{ m.trade }} in {{ m.place }}</title>
+<style>
+:root{--brand:{{ m.colour }};--ink:#0f1419;--muted:#5b6670;--soft:#f3f5f7;--dark:#0b0f14}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);background:#fff;line-height:1.6;overflow-x:hidden}
+a{color:inherit}
+.progress{position:fixed;top:34px;left:0;height:3px;width:100%;background:var(--brand);transform-origin:0 50%;transform:scaleX(0);z-index:60}
+.note{position:fixed;top:0;left:0;right:0;height:34px;line-height:18px;background:#fff8d6;border-bottom:1px solid #eadb8f;padding:8px 16px;font-size:12px;text-align:center;z-index:55;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+nav{position:fixed;top:34px;left:0;right:0;z-index:50;color:#fff;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:18px max(20px,calc((100% - 1120px)/2));transition:padding .3s,background .3s,box-shadow .3s}
+nav.small{color:var(--ink);padding-top:10px;padding-bottom:10px;background:rgba(255,255,255,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 1px 0 rgba(0,0,0,.06)}
+.logo{font-weight:800;font-size:20px;letter-spacing:-.02em}
+.logo span{color:var(--brand)}
+.btn{display:inline-block;background:var(--brand);color:#fff;text-decoration:none;font-weight:700;padding:13px 22px;border-radius:999px;transition:transform .2s,box-shadow .2s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 10px 24px -8px var(--brand)}
+.btn.ghost{background:transparent;border:2px solid currentColor;color:#fff}
+/* Hero */
+.hero{position:relative;min-height:92vh;display:flex;align-items:center;background:var(--dark);color:#fff;overflow:hidden;padding:150px 20px 90px}
+.blob{position:absolute;border-radius:50%;filter:blur(70px);opacity:.55;will-change:transform}
+.b1{width:520px;height:520px;background:var(--brand);top:-120px;right:-80px;animation:float 14s ease-in-out infinite}
+.b2{width:380px;height:380px;background:#3a8dde;bottom:-140px;left:-60px;opacity:.35;animation:float 18s ease-in-out infinite reverse}
+@keyframes float{50%{transform:translate(-40px,40px) scale(1.08)}}
+.hero-inner{position:relative;max-width:1120px;margin:auto;width:100%}
+.eyebrow{display:inline-block;font-size:13px;letter-spacing:.14em;text-transform:uppercase;opacity:.75;margin-bottom:18px}
+.hero h1{font-size:clamp(40px,7.5vw,88px);line-height:1.02;letter-spacing:-.035em;margin:0 0 24px;max-width:900px}
+.hero h1 .w{display:inline-block;opacity:0;transform:translateY(40px) rotate(2deg);animation:rise .8s cubic-bezier(.2,.7,.2,1) forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+.hero p{font-size:clamp(17px,2vw,21px);max-width:560px;opacity:.85;margin:0 0 34px}
+.hero .ctas{display:flex;gap:12px;flex-wrap:wrap}
+.scroll-cue{position:absolute;bottom:26px;left:50%;width:26px;height:42px;border:2px solid rgba(255,255,255,.5);border-radius:14px;transform:translateX(-50%)}
+.scroll-cue:after{content:"";position:absolute;left:50%;top:8px;width:4px;height:8px;margin-left:-2px;background:#fff;border-radius:2px;animation:cue 1.6s infinite}
+@keyframes cue{to{transform:translateY(14px);opacity:0}}
+/* Marquee */
+.marquee{background:var(--brand);color:#fff;overflow:hidden;white-space:nowrap;padding:16px 0;font-weight:700;font-size:18px}
+.marquee div{display:inline-block;animation:slide 28s linear infinite}
+.marquee span{margin:0 28px}.marquee span:before{content:"✦";margin-right:28px;opacity:.6}
+@keyframes slide{to{transform:translateX(-50%)}}
+/* Sections */
+section{max-width:1120px;margin:auto;padding:110px 20px}
+h2{font-size:clamp(32px,5vw,56px);line-height:1.05;letter-spacing:-.03em;margin:0 0 18px}
+.lead{font-size:19px;color:var(--muted);max-width:620px;margin:0 0 48px}
+.reveal{opacity:0;transform:translateY(46px);transition:opacity .9s cubic-bezier(.2,.7,.2,1),transform .9s cubic-bezier(.2,.7,.2,1)}
+.reveal.in{opacity:1;transform:none}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px}
+.card{position:relative;background:var(--soft);border-radius:22px;padding:30px;overflow:hidden;transition:transform .35s,box-shadow .35s}
+.card:hover{transform:translateY(-6px);box-shadow:0 24px 50px -24px rgba(0,0,0,.25)}
+.card .n{font-size:13px;font-weight:800;color:var(--brand);letter-spacing:.1em}
+.card h3{font-size:22px;margin:10px 0 6px;letter-spacing:-.01em}
+.card p{margin:0;color:var(--muted)}
+.card:after{content:"";position:absolute;right:-40px;bottom:-40px;width:120px;height:120px;border-radius:50%;background:var(--brand);opacity:.08;transition:transform .5s}
+.card:hover:after{transform:scale(2.2)}
+/* Pinned horizontal story: scrolls sideways as you scroll down */
+.story{height:300vh;position:relative;background:var(--dark);color:#fff}
+.story .pin{position:sticky;top:0;height:100vh;overflow:hidden;display:flex;align-items:center}
+.story .track{display:flex;gap:28px;padding:0 max(20px,calc((100vw - 1120px)/2));will-change:transform}
+.story .panel{flex:0 0 min(78vw,520px);height:min(62vh,440px);border-radius:28px;padding:40px;display:flex;flex-direction:column;justify-content:flex-end;background:linear-gradient(160deg,rgba(255,255,255,.1),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.12)}
+.story .panel:first-child{background:transparent;border:0;padding-left:0;justify-content:center}
+.story .big{font-size:clamp(70px,10vw,120px);font-weight:800;line-height:1;color:var(--brand);letter-spacing:-.04em}
+.story h3{font-size:30px;margin:12px 0 8px}.story p{opacity:.75;margin:0;font-size:17px}
+/* Split image-style block */
+.split{display:grid;grid-template-columns:1.1fr 1fr;gap:56px;align-items:center}
+.visual{aspect-ratio:4/5;border-radius:28px;background:radial-gradient(circle at 30% 20%,rgba(255,255,255,.35),transparent 40%),linear-gradient(150deg,var(--brand),var(--dark));position:relative;overflow:hidden}
+.visual .tag{position:absolute;left:22px;bottom:22px;right:22px;background:rgba(255,255,255,.92);border-radius:16px;padding:16px 18px;font-weight:700;color:var(--ink);transform:translateY(var(--py,0))}
+.visual .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.55);font-size:14px;letter-spacing:.12em;text-transform:uppercase}
+.ticks{list-style:none;padding:0;margin:26px 0 0}
+.ticks li{padding:14px 0;border-bottom:1px solid #e6e9ec;font-weight:600;display:flex;gap:12px}
+.ticks li:before{content:"✓";color:var(--brand);font-weight:800}
+/* Reviews */
+.reviews{background:var(--soft);max-width:none}.reviews>div{max-width:1080px;margin:auto}
+.quote{background:#fff;border-radius:22px;padding:30px;font-size:18px}
+.quote .stars{color:#f5a623;letter-spacing:3px;margin-bottom:10px}
+.quote small{display:block;margin-top:14px;color:var(--muted);font-size:14px}
+/* CTA */
+.cta{max-width:none;background:var(--brand);color:#fff;text-align:center;position:relative;overflow:hidden}
+.cta h2{max-width:780px;margin:0 auto 18px}.cta p{opacity:.9;font-size:19px;margin:0 0 32px}
+.cta .btn{background:#fff;color:var(--brand)}
+footer{text-align:center;font-size:13px;color:var(--muted);padding:30px 16px 100px}
+.call{position:fixed;left:16px;right:16px;bottom:16px;text-align:center;display:none;z-index:40;box-shadow:0 12px 30px -10px rgba(0,0,0,.45)}
+@media(max-width:760px){.call{display:block}nav .btn{display:none}.split{grid-template-columns:1fr}.visual{aspect-ratio:4/3}section{padding:80px 20px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}.reveal,.hero h1 .w{opacity:1;transform:none}.story{height:auto}.story .pin{position:static;height:auto;padding:80px 0}.story .track{flex-direction:column;transform:none!important}}
+</style></head><body>
+<div class="progress" id="progress"></div>
+<div class="note">Free mock-up made for {{ m.name }} by {{ m.maker }}. Sample text and layout only; your own photos, reviews and wording go in the real site.</div>
+<nav id="nav"><span class="logo">{{ m.name }}<span>.</span></span>{% if m.phone %}<a class="btn" href="tel:{{ m.tel }}">Call {{ m.phone }}</a>{% elif m.email %}<a class="btn" href="mailto:{{ m.email }}">Get a quote</a>{% endif %}</nav>
+
+<header class="hero"><div class="blob b1" data-speed="0.25"></div><div class="blob b2" data-speed="-0.15"></div>
+<div class="hero-inner"><span class="eyebrow">{{ m.trade if m.trade!='local business' else 'Local business' }} · {{ m.place }}</span>
+<h1 id="headline">The {{ m.place }} {{ (m.trade if m.trade!='local business' else 'team')|lower }} people actually recommend.</h1>
+<p>Fast quotes, honest prices and work done right the first time. That's {{ m.name }}.</p>
+<div class="ctas">{% if m.phone %}<a class="btn" href="tel:{{ m.tel }}">Call now</a>{% elif m.email %}<a class="btn" href="mailto:{{ m.email }}">Get a quote</a>{% endif %}<a class="btn ghost" href="#services">See what we do</a></div></div>
+<div class="scroll-cue"></div></header>
+
+<div class="marquee" aria-hidden="true"><div>{% for _ in range(2) %}{% for s in m.services %}<span>{{ s }}</span>{% endfor %}{% endfor %}</div></div>
+
+<section id="services"><div class="reveal"><h2>What we do</h2><p class="lead">Everything you need, from people who live locally, with one number to call.</p></div>
+<div class="grid">{% for s in m.services %}<div class="card reveal" style="transition-delay:{{ loop.index0*80 }}ms"><span class="n">0{{ loop.index }}</span><h3>{{ s }}</h3><p>Booked fast, explained clearly and finished properly.</p></div>{% endfor %}</div></section>
+
+<div class="story" id="story"><div class="pin"><div class="track" id="track">
+<div class="panel"><h2>How it works</h2><p>Three steps. No runaround.</p></div>
+<div class="panel"><div class="big">01</div><h3>You get in touch</h3><p>Call or send a message. You talk to a real person, not a call centre.</p></div>
+<div class="panel"><div class="big">02</div><h3>Clear quote</h3><p>We explain the job and the price before anything starts.</p></div>
+<div class="panel"><div class="big">03</div><h3>Job done right</h3><p>On time, tidy, and we check you're happy before we leave.</p></div>
+</div></div></div>
+
+<section><div class="split"><div class="reveal"><h2>Local to {{ m.place }}. Proud of it.</h2><p class="lead">We live and work around here, so our name is on every job.</p>
+<ul class="ticks"><li>Upfront pricing before any work starts</li><li>Same-day replies to calls and messages</li><li>Clean, careful and on time</li></ul></div>
+<div class="visual reveal" id="visual"><div class="ph">Your photo here</div><div class="tag">★★★★★ &nbsp;Your Google rating shows here</div></div></div></section>
+
+<section class="reviews"><div><div class="reveal"><h2>What customers say</h2><p class="lead">Your real Google reviews appear here.</p></div>
+<div class="grid"><div class="quote reveal"><div class="stars">★★★★★</div>"Your best review goes here."<small>Customer name · {{ m.place }}</small></div>
+<div class="quote reveal" style="transition-delay:120ms"><div class="stars">★★★★★</div>"And another happy customer here."<small>Customer name · {{ m.place }}</small></div>
+<div class="quote reveal" style="transition-delay:240ms"><div class="stars">★★★★★</div>"A third one to round it out."<small>Customer name · {{ m.place }}</small></div></div></div></section>
+
+<section class="cta" id="contact"><div class="reveal"><h2>Need a hand in {{ m.place }}?</h2><p>Tell us what you need and we'll get back to you today.</p>
+{% if m.phone %}<a class="btn" href="tel:{{ m.tel }}">Call {{ m.phone }}</a>{% elif m.email %}<a class="btn" href="mailto:{{ m.email }}">Email {{ m.email }}</a>{% else %}<a class="btn" href="#">Get a quote</a>{% endif %}</div></section>
+<footer>© {{ m.year }} {{ m.name }} · {{ m.place }}<br>Mock-up by {{ m.maker }} · {{ m.maker_email }}</footer>
+{% if m.phone %}<a class="btn call" href="tel:{{ m.tel }}">Call {{ m.phone }}</a>{% endif %}
+<script>
+(function(){
+var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+var h=document.getElementById('headline');
+h.innerHTML=h.textContent.trim().split(/\s+/).map(function(w,i){return '<span class="w" style="animation-delay:'+(120+i*70)+'ms">'+w.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</span>'}).join(' ');
+var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.15});
+document.querySelectorAll('.reveal').forEach(function(el){io.observe(el)});
+var nav=document.getElementById('nav'),bar=document.getElementById('progress'),story=document.getElementById('story'),track=document.getElementById('track'),visual=document.getElementById('visual'),blobs=document.querySelectorAll('[data-speed]');
+function frame(){
+ var y=window.scrollY,max=document.documentElement.scrollHeight-innerHeight;
+ bar.style.transform='scaleX('+(max>0?y/max:0)+')';
+ nav.classList.toggle('small',y>40);
+ if(reduce)return;
+ blobs.forEach(function(b){b.style.translate='0 '+(y*parseFloat(b.dataset.speed))+'px'});
+ var r=story.getBoundingClientRect(),run=story.offsetHeight-innerHeight,p=Math.min(1,Math.max(0,-r.top/run));
+ track.style.transform='translateX('+(-p*Math.max(0,track.scrollWidth-innerWidth))+'px)';
+ var v=visual.getBoundingClientRect();visual.style.setProperty('--py',((v.top-innerHeight/2)*-.08)+'px');
+}
+var ticking=false;addEventListener('scroll',function(){if(!ticking){ticking=true;requestAnimationFrame(function(){frame();ticking=false})}},{passive:true});
+addEventListener('resize',frame);frame();
+})();
+</script>
+</body></html>

@@ -33,7 +33,7 @@
   </div>
 
   <div class="stat-grid home-stats">
-    <a class="stat-card" href="{{ url_for('leads') }}"><span>Leads</span><strong>{{ metrics.leads }}</strong></a>
+    <a class="stat-card" href="{{ url_for('prospects_home') }}"><span>Leads</span><strong>{{ metrics.leads + metrics.prospects.total }}</strong></a>
     <a class="stat-card" href="{{ url_for('sales_home') }}"><span>Quotes</span><strong>{{ metrics.quotes }}</strong></a>
     <a class="stat-card" href="{{ url_for('projects') }}"><span>Websites</span><strong>{{ metrics.projects }}</strong></a>
     <a class="stat-card" href="{{ url_for('business_details') }}"><span>Money received</span><strong>{{ metrics.received_cents|money }}</strong><small>Cash surplus {{ metrics.cash_surplus_cents|money }} · real bank money only</small></a>
