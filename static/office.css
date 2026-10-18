@@ -14,3 +14,8 @@
 .office .pop.out{transform:scale(0);opacity:0}
 .office .dim{transition:opacity .8s;pointer-events:none}
 @media (max-width:700px){.office{border-radius:18px}.office-bar{top:8px;right:8px}}
+.b-office{gap:12px;padding-bottom:20px}
+.b-office-meta{display:flex;align-items:center;gap:8px}
+.b-office-open{display:inline-flex;width:32px;height:32px;border-radius:50%;align-items:center;justify-content:center;background:var(--bg,#141311);color:var(--text,#f4f1ea);text-decoration:none;font-weight:700}
+.b-office-open:hover{background:#2e2b27}
+.office-mini{border-radius:20px}
