@@ -33,6 +33,7 @@ import gmail_agent
 import first_sale
 import client_plans
 import lead_engine
+import office
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = runtime_status.database_path(os.environ.get("AGENCYOS_DB"))
@@ -526,6 +527,7 @@ gmail_agent.register(app,db,login_required)
 first_sale.register(app,db,login_required)
 client_plans.register(app,db,login_required)
 lead_engine.register(app,db,login_required,insert_lead)
+office.register(app,db,login_required)
 register_phase3(app, db, login_required, insert_lead)
 register_phase4(app, db, login_required, insert_lead)
 register_sales(app, db, login_required)

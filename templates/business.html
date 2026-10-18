@@ -1,4 +1,5 @@
 {% extends 'base.html' %}{% block page_heading %}Home{% endblock %}{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='office.css') }}">
 {% macro aud(cents) %}A${{ '{:,.0f}'.format(cents/100) }}{% endmacro %}
 <div class="home bento">
   <section class="b-status">
@@ -11,6 +12,15 @@
       {% if paused %}<input type="hidden" name="paused" value="0"><button class="b-btn b-btn-yellow">▶ Start agency</button>
       {% else %}<input type="hidden" name="paused" value="1"><button class="b-btn b-btn-ghost">❚❚ Pause</button>{% endif %}
     </form>
+  </section>
+
+  <section class="tile tile-dark b-office" aria-label="Your agents right now">
+    <div class="tile-top"><span>Your agents right now</span>
+      {% set needs = office.sectors|map(attribute='agents')|sum(start=[])|selectattr('state','equalto','waiting')|list|length %}
+      <span class="b-office-meta">{% if office.sample %}<span class="office-sample">Sample</span>{% elif needs %}<span class="tile-tag">{{ needs }} need{{ '' if needs>1 else 's' }} you</span>{% endif %}<a class="b-office-open" href="{{ url_for('office') }}" aria-label="Open the Office full screen" title="Open the Office">↗</a></span>
+    </div>
+    <div id="office" class="office office-mini" data-state-url="{{ url_for('office_state', sample='1' if office.sample else '0') }}"></div>
+    <script type="application/json" id="office-data">{{ office|tojson }}</script>
   </section>
 
   <div class="b-row b-row-2">
@@ -86,4 +96,5 @@
   <p class="tiny muted"><a href="{{ url_for('business_details') }}">Full business details, receipts and daily reports →</a></p>
 </div>
 <script src="{{ url_for('static', filename='voice.js') }}"></script>
+<script src="{{ url_for('static', filename='office.js') }}"></script>
 {% endblock %}

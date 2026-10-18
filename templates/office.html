@@ -1,0 +1,14 @@
+{% extends 'base.html' %}{% block title %}Office · AgencyOS{% endblock %}{% block page_heading %}Office{% endblock %}{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='office.css') }}">
+<div class="office-wrap">
+  <div class="office-bar">
+    <span class="office-sample" {% if not snap.sample %}hidden{% endif %}>Sample</span>
+    <a class="office-toggle" href="{{ url_for('office', sample='0' if snap.sample else '1') }}" aria-label="{{ 'Show real activity' if snap.sample else 'Play a sample day' }}" title="{{ 'Show real activity' if snap.sample else 'Play a sample day' }}">
+      <svg viewBox="0 0 24 24" aria-hidden="true">{% if snap.sample %}<rect x="6" y="6" width="12" height="12" rx="2"/>{% else %}<path d="M8 5l11 7-11 7z"/>{% endif %}</svg>
+    </a>
+  </div>
+  <div id="office" class="office" data-state-url="{{ url_for('office_state', sample='1' if snap.sample else '0') }}"></div>
+</div>
+<script type="application/json" id="office-data">{{ snap|tojson }}</script>
+<script src="{{ url_for('static', filename='office.js') }}"></script>
+{% endblock %}

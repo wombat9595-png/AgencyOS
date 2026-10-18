@@ -1,0 +1,21 @@
+/* Office: animated agents. No text inside the scene. */
+.office-wrap{max-width:1200px;margin:0 auto;position:relative}
+.office-bar{position:absolute;top:12px;right:12px;z-index:2;display:flex;gap:8px;align-items:center}
+.office-sample{background:#ffd43b;color:#141311;border-radius:999px;padding:4px 10px;font:700 11px/1.2 ui-sans-serif,system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase}
+.office-toggle{display:inline-flex;width:34px;height:34px;border-radius:50%;align-items:center;justify-content:center;background:#23211e;border:1px solid #3a3733}
+.office-toggle svg{width:14px;height:14px;fill:#f4f1ea}
+.office-toggle:hover{background:#2e2b27}
+.office{border-radius:28px;overflow:hidden;background:#100f0d;border:1px solid #2a2724}
+.office svg.scene{display:block;width:100%;height:auto}
+.office .room{cursor:pointer;outline:none}
+.office .room .frame{transition:stroke .2s,stroke-width .2s}
+.office .room:hover .frame,.office .room:focus-visible .frame{stroke:#f4f1ea;stroke-width:3}
+.office .pop{transform-box:fill-box;transform-origin:50% 100%;transition:transform .45s cubic-bezier(.34,1.56,.64,1),opacity .3s}
+.office .pop.out{transform:scale(0);opacity:0}
+.office .dim{transition:opacity .8s;pointer-events:none}
+@media (max-width:700px){.office{border-radius:18px}.office-bar{top:8px;right:8px}}
+.b-office{gap:12px;padding-bottom:20px}
+.b-office-meta{display:flex;align-items:center;gap:8px}
+.b-office-open{display:inline-flex;width:32px;height:32px;border-radius:50%;align-items:center;justify-content:center;background:var(--bg,#141311);color:var(--text,#f4f1ea);text-decoration:none;font-weight:700}
+.b-office-open:hover{background:#2e2b27}
+.office-mini{border-radius:20px}

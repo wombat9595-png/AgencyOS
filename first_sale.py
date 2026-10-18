@@ -11,6 +11,8 @@ import gmail_agent
 import discovery_preparation
 import client_plans
 import lead_engine
+import brain
+import office
 
 # Two offers, each a build fee plus a no-lock-in monthly plan. Ordered so the A$800 build keeps its saved position.
 TERMS="No lock-in: month to month, paid in advance, cancel with 30 days' notice. Yearly prepay costs 10 months' fees. On leaving, the customer keeps their domain; site files are a one-off A$250 handover, otherwise the site is taken down at the end of notice."
@@ -151,7 +153,7 @@ def priorities(conn,owner,m,gmail,config):
 NO_PROSPECTS=dict(total=0,contacted=0,interested=0,customers=0,follow_ups=0,contacted_today=0,target=10)
 
 
-def ceo_answer(question,m,todo,is_paused,runtime):
+def ceo_answer(question,m,todo,is_paused,runtime,agents=''):
     """Rule-based answers from local records. Not a language model; never invents numbers."""
     q=question.casefold()
     queued=sum(c.get('Queued',0) for c in runtime['queues'].values())
@@ -179,7 +181,7 @@ def ceo_answer(question,m,todo,is_paused,runtime):
     if any(w in q for w in ('money','revenue','paid','earn','cash','profit')):
         return 'Money you have recorded as received: '+money(m['received_cents'])+'. Expenses: '+money(m['expense_cents'])+'. Monthly plans add '+money(m['plan_monthly_cents'])+' a month. Test and simulated payments are not counted.'
     if any(w in q for w in ('working','doing','job','agent','busy')):
-        return 'The agency is '+state+'. Right now '+str(running)+' job(s) are running and '+str(queued)+' are queued.'
+        return 'The agency is '+state+'. Right now '+str(running)+' job(s) are running and '+str(queued)+' are queued.'+(' '+agents if agents and not is_paused else '')
     if any(w in q for w in ('need','todo','to do','should','waiting','approve')):
         if not todo:return 'Nothing needs you right now.'
         return 'Here is what needs you: '+'; '.join(t['text'] for t in todo)+'.'
@@ -200,10 +202,10 @@ def register(app,get_db,login_required):
         runtime=runtime_status.status(conn,conn.execute('PRAGMA database_list').fetchone()[2],'5')
         todo=priorities(conn,owner,m,gmail,conn.execute('SELECT * FROM p5_control WHERE id=1').fetchone())
         question=request.args.get('ask','').strip()[:300]
-        answer=ceo_answer(question,m,todo,paused(conn),runtime) if question else ''
+        answer=ceo_answer(question,m,todo,paused(conn),runtime,brain.describe(brain.snapshot(conn,owner,worker=bool(runtime['workers'])))) if question else ''
         return render_template('business_classic.html' if request.cookies.get('look')=='classic' else 'business.html',metrics=m,paused=paused(conn),worker=bool(runtime['workers']),todo=todo,
           configured=configured(conn,owner),question=question,answer=answer,suggestions=CEO_SUGGESTIONS,
-          money=money_in(conn,owner),milestone=next_milestone(m['received_cents']))
+          money=money_in(conn,owner),milestone=next_milestone(m['received_cents']),office=office.state(conn,owner))
 
     @app.get('/look/<name>')
     @login_required
