@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Signature demos | Benji Price Web Design</title>
+<link rel="stylesheet" href="kit/motion.css">
+<style>
+  body { min-height: 100svh; display: grid; align-items: center; }
+  .pick { padding: 64px 0; }
+  .demo { display: block; text-decoration: none; border-radius: var(--radius); padding: 28px; color: #fff; min-height: 220px; position: relative; overflow: hidden; transition: transform 0.3s ease; }
+  .demo:hover { transform: translateY(-6px); }
+  .demo h3 { margin-top: 70px; }
+  .demo p { opacity: 0.85; margin: 0; }
+  .d1 { background: linear-gradient(160deg, #1b2530, #e8622c); }
+  .d2 { background: linear-gradient(160deg, #f4c99a, #3f7a4f 70%); }
+  .d3 { background: linear-gradient(160deg, #e9a48f, #2a1d1a 80%); }
+</style>
+</head>
+<body>
+  <main class="wrap pick">
+    <span class="eyebrow">Signature tier demos</span>
+    <h1 style="font-size: clamp(2.2rem, 6vw, 4rem)">Open one on your phone and scroll.</h1>
+    <p class="lead">All three are made-up businesses built from the same motion kit. Swap the words, colours and photos and it becomes a client's site.</p>
+    <div class="grid" style="margin-top: 32px">
+      <a class="demo d1" href="demos/builder/"><h3>Builder</h3><p>Blueprint that draws itself, pinned steps, sideways project gallery, before/after.</p></a>
+      <a class="demo d2" href="demos/landscaper/"><h3>Landscaper</h3><p>Layered parallax hills, process steps, garden gallery, before/after.</p></a>
+      <a class="demo d3" href="demos/salon/"><h3>Beauty salon</h3><p>Floating arches, price menu, your-visit steps, looks gallery.</p></a>
+    </div>
+  </main>
+</body>
+</html>
