@@ -105,8 +105,9 @@ class NightShiftTest(unittest.TestCase):
             self.assertFalse(smart_writer.ai_status(conn,owner)['ready'])
             self.assertEqual(smart_writer.write(conn,owner,p,s,ask=ask),'rules')
             conn.execute('INSERT INTO writer_settings VALUES(?,1,500)',(owner,))
-            with patch.dict(os.environ,{'AGENCYOS_ZERO_COST':'1','ANTHROPIC_API_KEY':'test-key'}):
-                self.assertIn('free-only safety lock',smart_writer.ai_status(conn,owner)['reason'])
+            with patch.dict(os.environ,{'AGENCYOS_ZERO_COST':'1','ANTHROPIC_API_KEY':'test-key','AGENCYOS_ANTHROPIC_KEY_FILE':''}):
+                # A key inherited from the environment never lifts the free-only lock.
+                self.assertIn('no Anthropic API key is saved',smart_writer.ai_status(conn,owner)['reason'])
             with patch.dict(os.environ,{'AGENCYOS_ZERO_COST':'0','ANTHROPIC_API_KEY':'test-key'}):
                 self.assertTrue(smart_writer.ai_status(conn,owner)['ready'])
                 self.assertEqual(smart_writer.write(conn,owner,p,s,ask=ask),'ai')
@@ -164,6 +165,32 @@ class NightShiftTest(unittest.TestCase):
         beat=self.rows('night_shift_beats')[0]
         self.post(f'/night-shift/beats/{beat["id"]}/remove');self.assertEqual(self.rows('night_shift_beats'),[])
         self.post('/night-shift/toggle',dict(enabled='0'));self.assertEqual(self.rows('night_shift_settings')[0]['enabled'],0)
+
+
+    def test_api_key_saved_privately_lifts_the_lock_for_the_writer_only(self):
+        import tempfile
+        folder=tempfile.mkdtemp();path=os.path.join(folder,'anthropic.secret')
+        with patch.dict(os.environ,{'AGENCYOS_ZERO_COST':'1','AGENCYOS_ANTHROPIC_KEY_FILE':path,'ANTHROPIC_API_KEY':''}):
+            self.assertIn('does not look like',self.post('/writer/key',dict(key='hello')).data.decode())
+            self.assertFalse(os.path.exists(path))
+            self.post('/writer/key',dict(key='sk-ant-test-0123456789abcdef'))
+            self.assertEqual(oct(os.stat(path).st_mode&0o777),'0o600')
+            page=self.client.get('/night-shift').data.decode()
+            self.assertIn('saved privately on this Mac',page);self.assertNotIn('sk-ant-test',page)
+            with self.conn() as conn:
+                owner=conn.execute('SELECT id FROM users').fetchone()[0]
+                conn.execute('INSERT INTO writer_settings VALUES(?,1,500)',(owner,));conn.commit()
+                with patch.dict('sys.modules',{'anthropic':object()}):
+                    self.assertTrue(smart_writer.ai_status(conn,owner)['ready'])
+            self.post('/writer/key',dict(remove='yes'));self.assertFalse(os.path.exists(path))
+
+    def test_signature_packages_are_added_once_for_owners_already_set_up(self):
+        self.post('/business/configure',{'confirm':'yes'})
+        with self.conn() as conn:
+            conn.execute("DELETE FROM p5_packages WHERE name LIKE 'Signature%'");conn.commit()
+        self.client.get('/business');self.client.get('/business')
+        names=[p['name'] for p in self.rows('p5_packages')]
+        self.assertEqual(names.count('Signature Website'),1);self.assertEqual(names.count('Signature Website (founding)'),1)
 
 
 if __name__=='__main__':

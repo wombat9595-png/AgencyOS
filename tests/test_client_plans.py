@@ -92,7 +92,8 @@ class ClientPlansTest(unittest.TestCase):
         self.post('/business/configure',{'confirm':'yes'})
         packages={p['name']:dict(p) for p in self.rows('p5_packages')}
         self.assertEqual({k:(v['price_cents'],v['cycle']) for k,v in packages.items()},
-          {'Care Plan':(6900,'monthly'),'Care Website':(80000,'one-off'),'Autopilot Website':(140000,'one-off'),'Autopilot Plan':(14900,'monthly')})
+          {'Care Plan':(6900,'monthly'),'Care Website':(80000,'one-off'),'Autopilot Website':(140000,'one-off'),'Autopilot Plan':(14900,'monthly'),
+           'Signature Website':(240000,'one-off'),'Signature Website (founding)':(190000,'one-off')})
         self.assertIn("No lock-in",packages['Care Plan']['scope']);self.assertIn("30 days' notice",packages['Autopilot Plan']['scope'])
 
 

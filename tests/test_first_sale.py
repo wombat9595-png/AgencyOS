@@ -338,7 +338,7 @@ class BusinessWorkflowTest(unittest.TestCase):
     def test_first_sale_defaults_idempotent_no_fake_tax_or_external_activation(self):
         for _ in range(2):self.assertEqual(self.post('/business/configure',{'confirm':'yes'}).status_code,302)
         packages=[p for p in self.rows('p5_packages') if p['name'] in {x[0] for x in first_sale.PACKAGES}]
-        self.assertEqual(sorted(p['price_cents'] for p in packages),[6900,14900,80000,140000]);self.assertEqual(len(packages),4)
+        self.assertEqual(sorted(p['price_cents'] for p in packages),[6900,14900,80000,140000,190000,240000]);self.assertEqual(len(packages),6)
         self.assertEqual(self.rows('p7_control')[0]['business_abn'],'');self.assertEqual(self.rows('p5_control')[0]['daily_cents'],0)
         self.assertEqual(self.client.get('/business').status_code,200)
 

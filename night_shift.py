@@ -119,8 +119,19 @@ def worker_tick(path):
     with closing(connect(path)) as conn:
         owner=conn.execute('SELECT id FROM users ORDER BY id LIMIT 1').fetchone()
         if not owner or not due(conn,owner[0]):return False
-        run(conn,owner[0])
+        awake=_stay_awake()
+        try:run(conn,owner[0])
+        finally:
+            if awake:awake.terminate()
         return True
+
+
+def _stay_awake():
+    """On a Mac, stop it dozing off mid-shift after its 2 am wake. Free; ends when the shift does."""
+    import shutil,subprocess,sys
+    if sys.platform!='darwin' or not shutil.which('caffeinate'):return None
+    try:return subprocess.Popen(['caffeinate','-i','-t','3600'])
+    except OSError:return None
 
 
 def morning(conn,owner,limit=8):

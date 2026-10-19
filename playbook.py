@@ -8,7 +8,7 @@ import re
 VOICE=('Write like a friendly local tradie talking to another small-business owner: short sentences, plain Australian English, '
   'no hype, no jargon, no exclamation marks, no fake urgency. Mention one real thing about their business. Never promise results.')
 OFFER='a free one-page mock-up of their new website, made before they pay anything, with no obligation'
-PACKAGES=('Care: A$800 build + A$69 a month','Autopilot: A$1,400 build + A$149 a month','Signature (animated story site): A$2,400 build + A$149 a month')
+PACKAGES=('Care: A$800 build + A$69 a month','Autopilot: A$1,400 build + A$149 a month','Signature (animated story site): A$2,400 build + A$149 a month (A$1,900 founding price for the first three clients)')
 TERMS='Monthly plans are month to month with 30 days notice, no lock-in.'
 OPT_OUT='If you would rather not hear from me, just reply "no thanks" and I will not contact you again.'
 # Words that read as spam, overpromise, or breach the "no guaranteed results" rule in the packages.

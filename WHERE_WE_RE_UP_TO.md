@@ -10,8 +10,10 @@ Built on top of `claude/office-agents-nayzje` (PR #7). Benji voted YES on all si
 - `story_mockups.py` + `templates/stories/` + `static/motion/`: builders, landscapers and salons get the animated scroll-story demo personalised with their name, downloadable as one self-contained file (`/find-customers/<id>/story?download=1`).
 - Profile Care add-on (A$49/month) in `client_plans.py`: 2 Google profile posts + 1 review request a month, drafted for approval.
 - `site-check/`: public "free website check" page for Cloudflare Pages + Web3Forms. Not online; needs Benji's "put it online" and a free Web3Forms key.
-- `deploy/night-shift/*.command`: optional scripts to make the Mac wake at 1:55 am (pmset). Not run.
+- `deploy/night-shift/*.command`: optional scripts to make the Mac wake at 2:02 am (pmset). Not run.
 - `tests/test_night_shift.py`: 9 tests.
+
+- 19 Oct, Benji said "set up everything": Signature Website packages (A$2,400; founding A$1,900) are added automatically for an owner already set up; a private box on /night-shift saves the Anthropic key (0600 file next to the DB), and a key saved there is the Writer's only exception to the free-only lock; `anthropic` is added to requirements-local.lock, so the launcher installs it on next start; the shift keeps the Mac awake (caffeinate) while it runs and the wake script now wakes it at 2:02 am. Demo upload zip + steps are in the shared files (motion-kit/demos-upload.zip, PUT-DEMOS-ONLINE.md); not online. 330 tests pass.
 
 ## Waiting on Benji
 - Add 1-2 search areas on /night-shift (none yet, so the shift has nowhere to search).
