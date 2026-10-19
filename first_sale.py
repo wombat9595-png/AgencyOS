@@ -13,6 +13,7 @@ import client_plans
 import lead_engine
 import brain
 import office
+import night_shift
 
 # Two offers, each a build fee plus a no-lock-in monthly plan. Ordered so the A$800 build keeps its saved position.
 TERMS="No lock-in: month to month, paid in advance, cancel with 30 days' notice. Yearly prepay costs 10 months' fees. On leaving, the customer keeps their domain; site files are a one-off A$250 handover, otherwise the site is taken down at the end of notice."
@@ -21,7 +22,10 @@ PACKAGES=(
  ('Care Website',80000,'multi-page','one-off','Up to four responsive pages: Home, Services, About and Contact; client-approved copy and branding; basic technical SEO; two revision rounds. Requires the Care Plan. 50% to start, 50% before launch.'),
  ('Autopilot Website',140000,'custom','one-off','Everything in the Care Website plus online booking into the team\'s Google Calendars, new-review alerts and an enquiry auto-reply set up on the customer\'s own Google account. Requires the Autopilot Plan. 50% to start, 50% before launch.'),
  ('Autopilot Plan',14900,'maintenance','monthly','Everything in the Care Plan with unlimited small changes done within one business day, a monthly email on new reviews, rating and three competitors\' ratings, and booking and alert upkeep. Bigger jobs quoted at 15% off. '+TERMS),
+ ('Signature Website',240000,'custom','one-off','Everything in the Autopilot Website plus a one-of-a-kind scroll-story homepage animated for the business (for example a house built from the blueprint up, a yard turned into a pool, or a cut and colour). Requires the Autopilot Plan. 50% to start, 50% before launch, or A$800 to start then 4 monthly payments of A$400.'),
+ ('Signature Website (founding)',190000,'custom','one-off','The Signature Website at the founding price for the first three clients, in return for a written testimonial and permission to show the site as an example. Requires the Autopilot Plan. 50% to start, 50% before launch.'),
 )
+SIGNATURE=('Signature Website','Signature Website (founding)')
 EXCLUSIONS='Paid assets, e-commerce, custom backends, new pages, redesigns and copywriting beyond agreed edits are quoted separately. The domain is registered in the customer\'s name. No unlimited revisions on the build and no guaranteed results.'
 FIELDS={
  'business_name':('Business name',200),'description':('What does the business do?',800),
@@ -130,6 +134,17 @@ def configured(conn,owner):
     return bool(conn.execute("SELECT 1 FROM p5_packages WHERE user_id=? AND name='Care Website'",(owner,)).fetchone())
 
 
+def add_signature(conn,owner):
+    """Owners set up before the Signature tier get its packages once. Existing packages are never changed."""
+    added=False
+    for name,cents,category,cycle,scope in PACKAGES:
+        if name in SIGNATURE and not conn.execute('SELECT 1 FROM p5_packages WHERE user_id=? AND name=?',(owner,name)).fetchone():
+            conn.execute('INSERT INTO p5_packages(user_id,name,version,category,price_cents,cycle,scope,exclusions,created_at) VALUES(?,?,1,?,?,?,?,?,?)',(owner,name,category,cents,cycle,scope,EXCLUSIONS,stamp()))
+            added=True
+    if added:log(conn,owner,'Added the owner-approved Signature Website packages (A$2,400, founding A$1,900).')
+    return added
+
+
 def priorities(conn,owner,m,gmail,config):
     """At most five owner actions, most important first. Empty means nothing needs the owner."""
     items=[]
@@ -197,7 +212,9 @@ def register(app,get_db,login_required):
     @login_required
     def business_home():
         import runtime_status
-        conn=get_db();owner=session['user_id'];m=metrics(conn,owner)
+        conn=get_db();owner=session['user_id']
+        if configured(conn,owner) and add_signature(conn,owner):conn.commit()
+        m=metrics(conn,owner)
         gmail=conn.execute('SELECT email FROM gmail_accounts WHERE owner_id=?',(owner,)).fetchone()
         runtime=runtime_status.status(conn,conn.execute('PRAGMA database_list').fetchone()[2],'5')
         todo=priorities(conn,owner,m,gmail,conn.execute('SELECT * FROM p5_control WHERE id=1').fetchone())
@@ -205,7 +222,7 @@ def register(app,get_db,login_required):
         answer=ceo_answer(question,m,todo,paused(conn),runtime,brain.describe(brain.snapshot(conn,owner,worker=bool(runtime['workers'])))) if question else ''
         return render_template('business_classic.html' if request.cookies.get('look')=='classic' else 'business.html',metrics=m,paused=paused(conn),worker=bool(runtime['workers']),todo=todo,
           configured=configured(conn,owner),question=question,answer=answer,suggestions=CEO_SUGGESTIONS,
-          money=money_in(conn,owner),milestone=next_milestone(m['received_cents']),office=office.state(conn,owner))
+          money=money_in(conn,owner),milestone=next_milestone(m['received_cents']),office=office.state(conn,owner),morning=night_shift.morning(conn,owner))
 
     @app.get('/look/<name>')
     @login_required

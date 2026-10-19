@@ -1,0 +1,51 @@
+{% extends "base.html" %}{% block title %}Night shift · AgencyOS{% endblock %}{% block page_heading %}Night shift{% endblock %}
+{% block content %}
+<div class="page-intro"><div><span class="eyebrow">AGENTS</span><h1>Night shift</h1><p class="muted">Every night after {{ start_hour }} am the agents work your search areas on their own: find businesses, check their websites, match a story mock-up and draft the message. In the morning it all waits on Home under "Ready for you". Nothing is ever sent or published without your tap.</p></div></div>
+
+<section class="panel"><div class="panel-heading"><div><span class="eyebrow">SWITCH</span><h2>{% if settings.enabled %}The night shift is on{% else %}The night shift is off{% endif %}</h2></div></div>
+<p class="muted">{% if paused %}The agency is paused, so no shift will run until you press Start on Home. {% endif %}It runs inside AgencyOS, so the launcher must be open on your Mac. If the Mac was asleep at 2 am, the shift runs as soon as AgencyOS is open again that day.</p>
+<form method="post" action="{{ url_for('night_shift_toggle') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="enabled" value="{{ '0' if settings.enabled else '1' }}"><button class="btn {{ 'secondary' if settings.enabled else 'primary' }}">{% if settings.enabled %}Switch the night shift off{% else %}Switch the night shift on{% endif %}</button></form>
+<details><summary>Make the Mac wake itself at 2 am (one-time, optional)</summary>
+<p>Open the file <code>deploy/night-shift/Wake Mac for Night Shift.command</code> in the AgencyOS folder. It asks for your Mac password once, then the Mac wakes at 2:02 am every night when it is plugged in. To undo it, open <code>Stop Mac Waking.command</code> in the same folder.</p></details>
+</section>
+
+<section class="panel"><div class="panel-heading"><div><span class="eyebrow">WHERE THEY SEARCH</span><h2>Search areas <span class="count">{{ beats|length }}</span></h2></div></div>
+<p class="muted">Each night the Scout searches the next {{ 2 if beats|length>1 else 1 }} area{{ 's' if beats|length>1 }} on this list, then starts again from the top. Free, from OpenStreetMap.</p>
+{% if beats %}<div class="table-wrap"><table><thead><tr><th>TRADE</th><th>NEAR</th><th>WITHIN</th><th>MOCK-UP STYLE</th><th></th></tr></thead><tbody>
+{% for b in beats %}<tr><td>{{ b.trade }}</td><td>{{ b.town }}</td><td>{{ b.radius_km }} km</td><td>{% set n = niches.get(b.trade) %}{% if n and n[1] %}{{ stories[n[1]].title }}{% else %}Standard one-page{% endif %}</td>
+<td><form method="post" action="{{ url_for('night_shift_remove_beat',beat_id=b.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn secondary">Remove</button></form></td></tr>{% endfor %}
+</tbody></table></div>{% endif %}
+<form method="post" action="{{ url_for('night_shift_add_beat') }}" class="stack"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<label>Trade<select name="trade">{% for t in trades %}<option>{{ t }}</option>{% endfor %}</select></label>
+<label>Suburb or town<input name="town" maxlength="100" required placeholder="Mona Vale NSW"></label>
+<label>Within<select name="radius">{% for r in radii %}<option value="{{ r }}" {% if r==10 %}selected{% endif %}>{{ r }} km</option>{% endfor %}</select></label>
+<div class="wide"><button class="btn primary">Add search area</button> <small class="muted">Builders, landscapers and salons get the animated story mock-ups.</small></div></form>
+</section>
+
+<section class="panel"><div class="panel-heading"><div><span class="eyebrow">THE CREW</span><h2>Six agents, one playbook</h2></div></div>
+<div class="table-wrap"><table><thead><tr><th>AGENT</th><th>JOB</th></tr></thead><tbody>
+{% for key,name,job in agents %}<tr><td><strong>{{ name }}</strong></td><td>{{ job }}</td></tr>{% endfor %}
+</tbody></table></div>
+<p class="muted">They all follow one shared playbook: your voice, your offer (a free mock-up), the Spam Act rules (your name and a "no thanks" opt-out in every email) and no hype words. A draft that breaks a rule never reaches you.</p>
+</section>
+
+<section class="panel"><div class="panel-heading"><div><span class="eyebrow">SMARTER WRITING</span><h2>Claude Haiku for the Writer</h2></div></div>
+<p><strong>{{ writer.reason }}</strong></p>
+<p class="muted">With Haiku on, each email mentions something real about the business instead of a template line. It costs about a tenth of a cent per email; your cap stops it for the month. Spent this month: A${{ '%.2f'|format(writer.spent_cents/100) }} of A${{ '%.2f'|format(writer.cap_cents/100) }}.</p>
+<form method="post" action="{{ url_for('writer_key') }}" class="stack"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+{% if writer.key_saved %}<p><strong>Your Anthropic key is saved privately on this Mac.</strong></p><input type="hidden" name="remove" value="yes"><div class="wide"><button class="btn secondary">Remove the key</button></div>
+{% else %}<label class="wide">Anthropic API key<input name="key" type="password" autocomplete="off" spellcheck="false" placeholder="sk-ant-..." maxlength="300"></label>
+<div class="wide"><button class="btn primary">Save key</button> <small class="muted">Get one at console.anthropic.com → API keys. It's only stored on this Mac, never in GitHub or chat.</small></div>{% endif %}</form>
+<form method="post" action="{{ url_for('writer_settings') }}" class="stack"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<label>Writer<select name="ai_enabled"><option value="0" {% if not writer.enabled %}selected{% endif %}>Rules only (free)</option><option value="1" {% if writer.enabled %}selected{% endif %}>Claude Haiku, with a monthly cap</option></select></label>
+<label>Monthly cap (A$)<input name="cap" inputmode="decimal" value="{{ '%.2f'|format(writer.cap_cents/100) }}"></label>
+<label class="wide"><input type="checkbox" name="confirm" value="yes"> I am happy to spend up to this cap each month</label>
+<div class="wide"><button class="btn primary">Save</button></div></form>
+</section>
+
+<section class="panel"><div class="panel-heading"><div><span class="eyebrow">HISTORY</span><h2>Recent shifts</h2></div></div>
+{% if runs %}<div class="table-wrap"><table><thead><tr><th>DATE</th><th>FOUND</th><th>CHECKED</th><th>DRAFTED</th><th>FOLLOW-UPS</th><th>NOTES</th></tr></thead><tbody>
+{% for r in runs %}<tr><td>{{ r.local_date }}<small>{{ 'Run by you' if r.source=='manual' else 'Overnight' }}{% if not r.finished_at %} · did not finish{% endif %}</small></td><td>{{ r.counts.found|default(0) }}</td><td>{{ r.counts.checked|default(0) }}</td><td>{{ r.counts.drafts|default(0) }}{% if r.counts.ai_drafts %}<small>{{ r.counts.ai_drafts }} by Haiku</small>{% endif %}</td><td>{{ r.counts.follow_ups|default(0) }}</td><td><small>{{ r.notes }}</small></td></tr>{% endfor %}
+</tbody></table></div>{% else %}<div class="empty"><strong>No shifts yet</strong><p>Add a search area above. The first shift runs after {{ start_hour }} am, or press "Run a shift now" on Home.</p></div>{% endif %}
+</section>
+{% endblock %}

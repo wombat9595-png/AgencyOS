@@ -10,6 +10,7 @@ PLANS={
  'Care':dict(monthly_cents=6900,yearly_cents=69000,allowance=5,days=2),
  'Autopilot':dict(monthly_cents=14900,yearly_cents=149000,allowance=None,days=1),
 }
+PROFILE_CARE_CENTS=4900  # Google Profile Care add-on: two Google Business posts a month plus review requests
 NOTICE_DAYS=30
 SOURCES=('email','website chat','phone','text')
 
@@ -29,7 +30,14 @@ def migrate(conn):
       source TEXT NOT NULL, request TEXT NOT NULL, size TEXT NOT NULL CHECK(size IN ('small','quote')),
       status TEXT NOT NULL DEFAULT 'New' CHECK(status IN ('New','Approved','Done')), reply TEXT NOT NULL,
       created_at TEXT NOT NULL, done_at TEXT NOT NULL DEFAULT '');
+    CREATE TABLE IF NOT EXISTS profile_posts (
+      id INTEGER PRIMARY KEY, owner_id INTEGER NOT NULL, client_id INTEGER NOT NULL REFERENCES plan_clients(id), month TEXT NOT NULL,
+      kind TEXT NOT NULL CHECK(kind IN ('post','review')), slot INTEGER NOT NULL, text TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'New' CHECK(status IN ('New','Approved','Skipped')), created_at TEXT NOT NULL,
+      UNIQUE(client_id,month,kind,slot));
     ''')
+    if 'profile_care' not in {r[1] for r in conn.execute('PRAGMA table_info(plan_clients)')}:
+        conn.execute('ALTER TABLE plan_clients ADD COLUMN profile_care INTEGER NOT NULL DEFAULT 0')
 
 
 def today():
@@ -52,7 +60,30 @@ def state(client,on=None):
 def monthly_value(client):
     """What a client is worth per month; yearly prepay is spread over 12 months."""
     plan=PLANS[client['plan']]
-    return plan['monthly_cents'] if client['billing']=='monthly' else round(plan['yearly_cents']/12)
+    base=plan['monthly_cents'] if client['billing']=='monthly' else round(plan['yearly_cents']/12)
+    return base+(PROFILE_CARE_CENTS if client['profile_care'] else 0)
+
+
+# Seasonal ideas for Google Business posts (southern hemisphere). The owner edits before posting.
+SEASONS={12:'summer',1:'summer',2:'summer',3:'autumn',4:'autumn',5:'autumn',6:'winter',7:'winter',8:'winter',9:'spring',10:'spring',11:'spring'}
+POST_IDEAS=(
+ '{season} is a busy time for us at {name}. If you have been putting a job off, now is a good time to book in. Call us or send a message through this profile and we will get back to you within a day.',
+ 'Thank you to everyone who has trusted {name} this {season}. Your reviews help other locals find us, and we read every one. If we have helped you recently, we would love to hear how it went.',
+)
+REVIEW_REQUEST=('Hi, thanks again for choosing {name}. If you were happy with the job, would you mind leaving us a quick Google review? '
+  'It takes a minute and really helps a small local business. Here is the link: [your Google review link]. Thank you!')
+
+
+def ensure_profile_posts(conn,owner,on=None):
+    """Draft this month's two Google posts and the review-request message for each Profile Care client. Returns how many were drafted."""
+    on=on or today();month=on.isoformat()[:7];season=SEASONS[on.month];made=0
+    for client in conn.execute('SELECT * FROM plan_clients WHERE owner_id=? AND profile_care=1',(owner,)).fetchall():
+        if state(client,on)=='Ended':continue
+        drafts=[('post',i,idea.format(name=client['client_name'],season=season)) for i,idea in enumerate(POST_IDEAS)]+[('review',0,REVIEW_REQUEST.format(name=client['client_name']))]
+        for kind,slot,text in drafts:
+            text=text[0].upper()+text[1:]
+            made+=conn.execute('INSERT OR IGNORE INTO profile_posts(owner_id,client_id,month,kind,slot,text,created_at) VALUES(?,?,?,?,?,?,?)',(owner,client['id'],month,kind,slot,text,stamp())).rowcount
+    return made
 
 
 def used_this_month(conn,client_id,on=None):
@@ -80,7 +111,9 @@ def summary(conn,owner,on=None):
     live=[c for c in clients if state(c,on)!='Ended']
     return dict(monthly_cents=sum(monthly_value(c) for c in live if state(c,on)=='Active'),clients=len(live),
       overdue=sum(1 for c in live if c['next_due_on']<iso and (not c['ends_on'] or c['next_due_on']<=c['ends_on'])),
-      requests=conn.execute("SELECT COUNT(*) FROM plan_requests WHERE owner_id=? AND status!='Done'",(owner,)).fetchone()[0])
+      requests=conn.execute("SELECT COUNT(*) FROM plan_requests WHERE owner_id=? AND status!='Done'",(owner,)).fetchone()[0],
+      profile_care=sum(1 for c in live if c['profile_care']),
+      posts=conn.execute("SELECT COUNT(*) FROM profile_posts WHERE owner_id=? AND status='New'",(owner,)).fetchone()[0])
 
 
 def client_for(conn,owner,client_id):
@@ -97,7 +130,7 @@ def register(app,get_db,login_required):
         rows=conn.execute('SELECT * FROM plan_clients WHERE owner_id=? ORDER BY client_name',(owner,)).fetchall()
         clients=[dict(c,state=state(c,on),value=monthly_value(c),used=used_this_month(conn,c['id'],on),allowance=PLANS[c['plan']]['allowance'],overdue=c['next_due_on']<on.isoformat()) for c in rows]
         requests=conn.execute("SELECT r.*,c.client_name FROM plan_requests r JOIN plan_clients c ON c.id=r.client_id WHERE r.owner_id=? ORDER BY r.status='Done',r.id DESC LIMIT 50",(owner,)).fetchall()
-        return render_template('plan_clients.html',clients=clients,requests=requests,totals=summary(conn,owner,on),plans=PLANS,sources=SOURCES,today=on.isoformat(),notice=NOTICE_DAYS)
+        return render_template('plan_clients.html',clients=clients,requests=requests,totals=summary(conn,owner,on),plans=PLANS,sources=SOURCES,today=on.isoformat(),notice=NOTICE_DAYS,profile_care_cents=PROFILE_CARE_CENTS)
 
     @app.post('/clients/add')
     @login_required
@@ -141,6 +174,29 @@ def register(app,get_db,login_required):
         log(conn,owner,client['client_name']+' gave 30 days notice; plan ends '+ends.isoformat()+'.');conn.commit()
         flash(client['client_name']+' finishes on '+ends.strftime('%-d %b %Y')+'. Offer them the A$250 site handover or take the site down then.','success');return redirect(url_for('plan_clients'))
 
+    @app.post('/clients/<int:client_id>/profile-care')
+    @login_required
+    def plan_client_profile_care(client_id):
+        conn=get_db();owner=session['user_id'];client=client_for(conn,owner,client_id)
+        on=request.form.get('on')=='1'
+        conn.execute('UPDATE plan_clients SET profile_care=? WHERE id=?',(int(on),client_id))
+        if on:ensure_profile_posts(conn,owner)
+        log(conn,owner,client['client_name']+(' added' if on else ' removed')+' Google Profile Care (A$49 a month). Nothing charged or posted.');conn.commit()
+        flash((client['client_name']+' now has Google Profile Care, A$49 a month on top of their plan. This month\'s posts are drafted for you.') if on else 'Google Profile Care removed.','success')
+        return redirect(url_for('plan_clients'))
+
+    @app.post('/clients/posts/<int:post_id>/<action>')
+    @login_required
+    def profile_post_update(post_id,action):
+        conn=get_db();owner=session['user_id']
+        row=conn.execute('SELECT * FROM profile_posts WHERE id=? AND owner_id=?',(post_id,owner)).fetchone()
+        if not row or action not in ('approve','skip'):raise WorkflowError('That post was not found.')
+        text=request.form.get('text',row['text']).strip()
+        if action=='approve' and not 10<=len(text)<=1500:raise WorkflowError('The post needs some text (Google allows up to 1,500 characters).')
+        conn.execute('UPDATE profile_posts SET status=?,text=? WHERE id=?',('Approved' if action=='approve' else 'Skipped',text,post_id));conn.commit()
+        flash('Approved. Paste it into their Google Business Profile.' if action=='approve' else 'Skipped.','success')
+        return redirect(url_for('business_home')+'#ready' if request.form.get('next')=='home' else url_for('plan_clients'))
+
     @app.post('/clients/requests')
     @login_required
     def plan_request_add():
@@ -164,6 +220,8 @@ def register(app,get_db,login_required):
             if not 1<=len(reply)<=4000:raise WorkflowError('The reply cannot be empty.')
             conn.execute("UPDATE plan_requests SET status='Approved',reply=? WHERE id=?",(reply,request_id))
             message='Reply approved. Copy it into your email and send it yourself.'
+            if request.form.get('next')=='home':
+                conn.commit();flash(message,'success');return redirect(url_for('business_home')+'#ready')
         else:
             conn.execute("UPDATE plan_requests SET status='Done',done_at=? WHERE id=?",(stamp(),request_id))
             message='Marked done.'

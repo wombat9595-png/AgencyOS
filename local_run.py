@@ -57,7 +57,7 @@ def prepare(home,source=None):
     # Inherited paid credentials cannot bypass the first-sale runtime policy.
     env=dict(os.environ,AGENCYOS_ENV='local',AGENCYOS_LOCAL_PRIVATE='1',AGENCYOS_ZERO_COST='1',AGENCYOS_DB=str(target),
       AGENCYOS_SECRET_KEY_FILE=str(home/'session.secret'),AGENCYOS_GMAIL_KEY_FILE=str(home/'gmail.secret'),
-      AGENCYOS_GMAIL_CLIENT_FILE=str(home/'google-client.secret'),AGENCYOS_BANK_ENCRYPTION_KEY_FILE=str(home/'bank.secret'),
+      AGENCYOS_GMAIL_CLIENT_FILE=str(home/'google-client.secret'),AGENCYOS_ANTHROPIC_KEY_FILE=str(home/'anthropic.secret'),AGENCYOS_BANK_ENCRYPTION_KEY_FILE=str(home/'bank.secret'),
       AGENCYOS_BACKUP_KEY_FILE=str(home/'backup.secret'),AGENCYOS_PRIVATE_DATA=str(home),AGENCYOS_STAGING_ROOT=str(home/'staging'),
       AGENCYOS_AI_PROVIDER='',AGENCYOS_OSM_POLICY_FILE='',AGENCYOS_WEBSITE_FETCH='0',AGENCYOS_GMAIL_SEND_ENABLED='0',
       AGENCYOS_PAYMENT_PROVIDER='mock',AGENCYOS_STRIPE_TEST_SECRET_KEY='')
@@ -77,6 +77,8 @@ def worker_tick(path,private_data):
         if paused(conn):return worked
         first_sale.daily_report(conn)
         last=conn.execute('SELECT MAX(created_at) FROM ops_backups WHERE verified=1').fetchone()[0]
+    import night_shift
+    worked=night_shift.worker_tick(path) or worked
     if not last or time.time()-last>86400:
         from production_security import secret
         destination=Path(private_data)/'backups'/('business-'+time.strftime('%Y%m%dT%H%M%S',time.gmtime())+'-'+secrets.token_hex(3)+'.enc')

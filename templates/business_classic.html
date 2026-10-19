@@ -17,7 +17,7 @@
     <section class="panel home-card">
       <h2>What matters now</h2>
       <ul class="todo">
-        {% if not configured %}<li><form method="post" action="{{ url_for('business_configure') }}" class="todo-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label><input type="checkbox" name="confirm" value="yes" required> Set your name (Benji Price) and the Care (A$800 + A$69/month) and Autopilot (A$1,400 + A$149/month) packages</label><button class="btn primary">Set up</button></form></li>{% endif %}
+        {% if not configured %}<li><form method="post" action="{{ url_for('business_configure') }}" class="todo-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label><input type="checkbox" name="confirm" value="yes" required> Set your name (Benji Price) and the Care (A$800 + A$69/month), Autopilot (A$1,400 + A$149/month) and Signature (A$2,400, or A$1,900 founding, + A$149/month) packages</label><button class="btn primary">Set up</button></form></li>{% endif %}
         {% for item in todo %}<li><span>{{ item.text }}</span><a class="btn secondary" href="{{ item.url }}">{{ item.label }}</a></li>{% endfor %}
         {% if configured and not todo %}<li class="todo-clear"><span>✓ Nothing needs you right now.</span></li>{% endif %}
       </ul>

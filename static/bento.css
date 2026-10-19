@@ -84,3 +84,24 @@ h1{font-weight:800;letter-spacing:-.04em}h2{font-weight:700}
 .content input:focus,.content select:focus,.content textarea:focus{border-color:var(--accent)}
 .content fieldset{border:1px solid var(--line);border-radius:16px;padding:14px 16px}
 .content label{line-height:1.5}
+
+/* Ready for you: the morning queue */
+.b-ready{gap:16px}.b-ready .tile-top h2{display:flex;align-items:center;gap:10px;font-size:22px}
+.b-ready-links a{color:var(--muted);font-size:13px;text-decoration:underline;text-underline-offset:3px}
+.b-shift{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-radius:20px;background:var(--bg);border:1px solid var(--line)}
+.b-shift>p,.b-shift>ul{margin:0}.b-shift-line{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:14px}
+.b-shift-counts{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px;color:var(--muted)}
+.b-shift-counts b{color:var(--accent);font-size:18px;margin-right:2px;font-variant-numeric:tabular-nums}
+.b-queue{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.q-card{background:var(--bg);border:1px solid var(--line);border-radius:20px;padding:16px 18px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.q-head{display:flex;flex-direction:column;gap:3px;min-width:0}.q-head strong{font-size:16px;overflow-wrap:anywhere}.q-head .muted{font-size:13px;overflow-wrap:anywhere}
+.q-kind{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--blue)}
+.q-mock{font-size:13px;color:var(--accent);text-decoration:none;align-self:flex-start}.q-mock:hover{text-decoration:underline}
+.q-form{display:flex;flex-direction:column;gap:12px;margin:0}
+.q-card details summary{cursor:pointer;font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.q-card details label{display:flex;flex-direction:column;gap:6px;margin-top:10px;font-size:13px}
+.q-card details textarea,.q-card details input{width:100%}
+.q-text{white-space:pre-line;overflow-wrap:anywhere;font-size:13px;margin-top:10px;color:var(--muted)}
+.q-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto}.q-acts form{margin:0}
+.q-empty{grid-column:1/-1;padding:18px;border-radius:20px;background:var(--bg);border:1px dashed var(--line);color:var(--muted);font-size:14px}
+@media(max-width:900px){.b-queue{grid-template-columns:1fr}}

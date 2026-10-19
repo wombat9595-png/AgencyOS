@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import { scoreHtml, cleanUrl } from '../functions/_lib/score.js';
+const good = '<html><head><meta name="viewport" content="width=device-width"><meta name="description" content="Plumbers in Penrith, open seven days, emergency call-outs"><title> Good Plumbing </title></head><body><a href="tel:0400000000">Call</a> © 2026</body></html>';
+let r = scoreHtml({ finalUrl: 'https://good.example/', status: 200, html: good, ms: 900, year: 2026 });
+assert.equal(r.score, 100); assert.equal(r.title, 'Good Plumbing');
+r = scoreHtml({ finalUrl: 'http://old.example/', status: 200, html: '<title>Old</title>&copy; 2015', ms: 4000, year: 2026 });
+assert.equal(r.score, 25); assert.ok(r.findings.find((f) => f.key === 'https' && !f.ok));
+r = scoreHtml({ finalUrl: 'https://x.example/', status: 0, html: '', ms: 0 });
+assert.equal(r.score, 0);
+assert.equal(cleanUrl('mybiz.com.au'), 'https://mybiz.com.au/');
+assert.equal(cleanUrl('http://www.mybiz.com.au/about?x=1'), 'https://www.mybiz.com.au/');
+for (const bad of ['localhost', 'http://127.0.0.1', 'http://[::1]/', 'https://a.b:8080', 'https://u:p@a.com', 'nas.local', '', 'a b.com']) assert.equal(cleanUrl(bad), null, bad);
+console.log('site-check score tests passed');
