@@ -83,15 +83,16 @@ class NightShiftTest(unittest.TestCase):
             owner=conn.execute('SELECT id FROM users').fetchone()[0]
             early=datetime(2026,10,19,1,30,tzinfo=night_shift.TZ);late=datetime(2026,10,19,2,5,tzinfo=night_shift.TZ)
             self.assertFalse(night_shift.due(conn,owner,early));self.assertTrue(night_shift.due(conn,owner,late))
+            conn.execute('INSERT INTO team_settings(owner_id,tiles_per_night) VALUES(?,0)',(owner,));conn.commit()  # map sweep off
             night_shift.run(conn,owner,on=late.date())
             self.assertFalse(night_shift.due(conn,owner,late))
             self.assertTrue(night_shift.due(conn,owner,late.replace(day=20)))
             conn.execute('UPDATE p4_control SET paused=1 WHERE id=1');conn.commit()
             self.assertFalse(night_shift.due(conn,owner,late.replace(day=20)))
-        self.assertIn('No search areas set yet',self.rows('night_shift_runs')[0]['notes'])
+        self.assertIn('No search areas set and the map sweep is off',self.rows('night_shift_runs')[0]['notes'])
 
     def test_worker_tick_runs_the_shift(self):
-        with patch('night_shift.now_local',return_value=datetime(2026,10,19,3,0,tzinfo=night_shift.TZ)):
+        with patch('night_shift.now_local',return_value=datetime(2026,10,19,3,0,tzinfo=night_shift.TZ)),patch('sweep.run',return_value=(0,0,[])):
             self.assertTrue(night_shift.worker_tick(application.DB_PATH))
             self.assertFalse(night_shift.worker_tick(application.DB_PATH))
         self.assertEqual(len(self.rows('night_shift_runs')),1)

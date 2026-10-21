@@ -1,3 +1,25 @@
+# Where we're up to: agent team and phone (branch claude/project-thread-mqtkmq)
+
+Built on top of `claude/project-thread-4zj0lw` (PR #9, VIP upgrades), which is NOT yet installed on the Mac. Benji asked (21 Oct 2026) for a real org chart that pumps out drafts, agents he can teach, a Sydney-then-Australia lead sweep, Airtasker, and phone notifications plus AgencyOS on his phone. Nothing here sends, charges or publishes.
+
+## Done
+- `team.py` + `templates/team.html` (`/team`, sidebar "Team"): CEO, Chief of Staff, Sales Manager and six workers (Scout, Inspector, SEO Checker, Writer, Call Prepper, Designer), each with a written playbook and a live scorecard. Rules-based (A$0); Haiku used only for writing and the CEO's second opinion when switched on.
+- CEO review (`team.ceo_review`, run at the end of every night shift): playbook check + Benji's "never use" words; AI drafts that fail are swapped for the rules draft; with Haiku on the CEO can ask the Writer for one rewrite. `prospects.ceo_status` = ready / held / redo; held and redo drafts stay out of the queue.
+- Teaching: lessons per agent (`team_lessons`), every yes/edit/no stored (`team_feedback`, hooked into the approve action and a new `redo` action with a reason). The same no-reason 3 times becomes a standing rule ("too long" switches the rules Writer to a short first email; "not a fit" x3 for a trade stops drafting that trade). `team.coaching` feeds lessons, learned rules and Benji-edited approved emails (business name masked) into the Haiku brief.
+- Chief of Staff (`team.plan`): squares per night (default 24), new drafts per day (default 25 minus drafts already waiting), and AI pacing (`smart_writer.paced_cents`: even share of the cap + 20% buffer). Haiku default cap raised to A$20 (approved by Benji).
+- `sweep.py`: Greater Sydney (165 squares of 0.05°), then 19 other cities/regional centres (1,054 squares total). One Overpass query per square for all trades with no website tag; 2 s between squares; stops on a busy service and carries on next night.
+- SEO Checker: `lead_engine.seo_notes` adds `seo` to the site check (no meta description, no h1, no tap-to-call, no LocalBusiness schema, thin title). Does not change scores.
+- Phone: `/m` "Yes or no" page (phone layout, Yes / No-because chips), web app manifest + icons + no-cache service worker so it can go on the home screen; `team.notify` buzzes via ntfy (`pitch.ping` now takes a click URL): max 3 a day, 7 am to 9 pm, only when the pile grows, never includes business names. Private Tailscale address (`*.ts.net` only) saved on /team is added to TRUSTED_HOSTS (file `phone_host` in the private data dir).
+- Airtasker: no scraping (their guidelines restrict "harvesting member information" and "lead generation related activities"). Quote helper on /team drafts a quote with no contact details.
+- `tests/test_team.py`: 13 tests.
+
+## Waiting on Benji
+- Install (brings in PR #8 and #9 too) when he types the permission in the thread.
+- ntfy app + "Turn on phone pings" on /studio. Optional: Tailscale account (his call) and `tailscale serve` for the phone address.
+- Next idea: rename the Office robots to match the team.
+
+---
+
 # Where we're up to: VIP upgrades (branch claude/project-thread-4zj0lw)
 
 Built on top of `claude/project-thread-mdpkej` (PR #8, commit c6f1b94, which is NOT yet installed on the Mac). Benji said "yes to everything" on the 18-item menu in the "Road to Client One" artifact (21 Oct 2026). Nothing here sends, charges or publishes.

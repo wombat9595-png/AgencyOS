@@ -18,12 +18,12 @@ MODEL='claude-haiku-5-5'
 # Claude Haiku 5.5: US$0.10 per million input tokens, US$0.50 per million output tokens.
 USD_PER_MTOK_IN,USD_PER_MTOK_OUT=0.10,0.50
 AUD_PER_USD=1.60  # deliberately on the high side so the cap is conservative
-DEFAULT_CAP_CENTS=500  # A$5 a month
+DEFAULT_CAP_CENTS=2000  # A$20 a month, approved by the owner on 2026-10-21
 
 
 def migrate(conn):
     conn.executescript('''
-    CREATE TABLE IF NOT EXISTS writer_settings (owner_id INTEGER PRIMARY KEY, ai_enabled INTEGER NOT NULL DEFAULT 0, cap_cents INTEGER NOT NULL DEFAULT 500);
+    CREATE TABLE IF NOT EXISTS writer_settings (owner_id INTEGER PRIMARY KEY, ai_enabled INTEGER NOT NULL DEFAULT 0, cap_cents INTEGER NOT NULL DEFAULT 2000);
     CREATE TABLE IF NOT EXISTS writer_usage (owner_id INTEGER NOT NULL, month TEXT NOT NULL, calls INTEGER NOT NULL DEFAULT 0,
       input_tokens INTEGER NOT NULL DEFAULT 0, output_tokens INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(owner_id,month));
     ''')
@@ -74,6 +74,18 @@ def spent_cents(conn,owner,on_month=None):
     return usd*AUD_PER_USD*100
 
 
+def paced_cents(cap,on=None):
+    """What may be spent by today: an even share of the month's cap, plus a fifth of it as a buffer."""
+    import calendar
+    on=on or datetime.now(ZoneInfo('Australia/Sydney')).date()
+    days=calendar.monthrange(on.year,on.month)[1]
+    return min(cap,cap*on.day/days+cap*0.2)
+
+
+def record_usage(conn,owner,tokens_in,tokens_out):
+    _record(conn,owner,tokens_in,tokens_out)
+
+
 def ai_status(conn,owner):
     """Why the AI Writer is or is not running, in plain words."""
     s=settings(conn,owner);spent=spent_cents(conn,owner)
@@ -82,6 +94,7 @@ def ai_status(conn,owner):
     elif os.environ.get('AGENCYOS_ZERO_COST')=='1' and not saved_key():status['reason']='Switched on, but no Anthropic API key is saved yet, so drafts use the rules (free).'
     elif not api_key():status['reason']='Switched on, but no Anthropic API key is set yet, so drafts use the rules.'
     elif spent>=s['cap_cents']:status['reason']='This month\'s A$'+format(s['cap_cents']/100,'.2f')+' cap is used up, so drafts use the rules until next month.'
+    elif spent>=paced_cents(s['cap_cents']):status['reason']='Ahead of budget for this point in the month, so drafts use the rules until the budget catches up.'
     else:
         try:import anthropic  # noqa: F401
         except ImportError:status['reason']='Switched on, but the Anthropic library is not installed yet, so drafts use the rules.'
@@ -117,14 +130,15 @@ def current_kind(p):
     return ('first','followup1','followup2')[min(p['touches'],2)]
 
 
-def write(conn,owner,p,s,ask=None):
-    """Draft the next message for this business and store it on the record. Returns the source ('ai' or 'rules')."""
+def write(conn,owner,p,s,ask=None,coaching='',short=False):
+    """Draft the next message for this business and store it on the record. Returns the source ('ai' or 'rules').
+    coaching: lessons and approved examples for the AI. short: the owner keeps saying drafts are too long."""
     kind=current_kind(p)
-    subject,body=lead_engine.draft(p,s,kind)
+    subject,body=lead_engine.draft(p,s,kind,short=short)
     source='rules'
     if kind!='call' and ai_status(conn,owner)['ready']:
         try:
-            text,tokens_in,tokens_out=(ask or _ask_haiku)(playbook.brief(p,s,kind))
+            text,tokens_in,tokens_out=(ask or _ask_haiku)(playbook.brief(p,s,kind,coaching))
             _record(conn,owner,tokens_in,tokens_out)
             parsed=_parse(text)
             if parsed:
@@ -133,7 +147,7 @@ def write(conn,owner,p,s,ask=None):
                 if not playbook.review(ai_subject,ai_body,p,s,kind):subject,body,source=ai_subject,ai_body,'ai'
         except Exception:  # Network, key or provider trouble: fall back to the free rules, never block the shift.
             pass
-    conn.execute('UPDATE prospects SET draft_subject=?,draft_body=?,draft_kind=?,draft_source=? WHERE id=?',(subject,body,kind,source,p['id']))
+    conn.execute("UPDATE prospects SET draft_subject=?,draft_body=?,draft_kind=?,draft_source=?,ceo_status='',ceo_note='' WHERE id=?",(subject,body,kind,source,p['id']))
     return source
 
 
@@ -152,7 +166,7 @@ def register(app,get_db,login_required):
     def writer_settings():
         conn=get_db();owner=session['user_id']
         enabled=request.form.get('ai_enabled')=='1'
-        try:cap=round(float(request.form.get('cap','5'))*100)
+        try:cap=round(float(request.form.get('cap','20'))*100)
         except ValueError:cap=-1
         if not 0<=cap<=2000:raise WorkflowError('Pick a monthly cap between A$0 and A$20.')
         if enabled and request.form.get('confirm')!='yes':raise WorkflowError('Tick to confirm you are happy to spend up to the cap each month.')

@@ -42,6 +42,7 @@
           <span class="q-kind">{% if p.stage=='Interested' %}Interested{% elif p.channel=='call' %}Call script{% elif p.stage=='Approved' %}Approved, waiting to send{% elif p.followup %}{{ p.step }}{% else %}New email{% endif %}{% if p.ai %} · Haiku{% endif %}</span>
           <strong>{{ p.name }}</strong>
           <span class="muted">{{ p.trade }}{% if p.suburb %} · {{ p.suburb }}{% endif %} · {{ p.why }}</span>
+          {% if p.ceo_note %}<span class="tiny muted">CEO: {{ p.ceo_note }}</span>{% endif %}
           <a class="q-mock" href="{{ p.mockup_url }}" target="_blank" rel="noopener">{% if p.story %}{{ p.story }} mock-up{% else %}Free mock-up{% endif %} ↗</a>
         </div>
         {% if p.stage=='Interested' %}
@@ -63,6 +64,9 @@
             <div class="q-acts"><button class="b-btn b-btn-yellow">Approve</button>
             <button class="b-btn b-btn-ghost" formaction="{{ url_for('prospects_action',prospect_id=p.id,action='skip' if p.stage=='New' else 'not_interested') }}">{{ 'Skip' if p.stage=='New' else 'Stop chasing' }}</button></div>
           </form>
+          {% if p.stage=='New' %}<details class="tiny"><summary>No, because… (teaches the Writer)</summary>
+            <form method="post" action="{{ url_for('prospects_action',prospect_id=p.id,action='redo') }}" class="q-acts"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="next" value="home">
+            {% for k,label in (('too_long','Too long'),('too_salesy','Too salesy'),('wrong','Got a fact wrong'),('not_me','Not like me'),('bad_fit','Not a fit')) %}<button class="b-btn b-btn-ghost" name="reason" value="{{ k }}">{{ label }}</button>{% endfor %}</form></details>{% endif %}
         {% endif %}
       </li>
     {% endfor %}

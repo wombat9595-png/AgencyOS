@@ -3,6 +3,8 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}AgencyOS{% endblock %}</title>
+  <link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#111111"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AgencyOS">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/apple-touch-icon.png') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   {% if request.cookies.get('look')!='classic' %}<link rel="stylesheet" href="{{ url_for('static', filename='bento.css') }}">{% endif %}
 </head>
@@ -14,6 +16,7 @@
     <nav>
       <a href="{{ url_for('business_home') }}">◎ <span>Home</span></a>
       <a href="{{ url_for('office') }}">◉ <span>Office</span></a>
+      <a href="{{ url_for('team_home') }}">♟ <span>Team</span></a>
       <a href="{{ url_for('prospects_home') }}">⌕ <span>Find customers</span></a>
       <a href="{{ url_for('calls_home') }}">☎ <span>Calls</span></a>
       <a href="{{ url_for('sales_home') }}">↗ <span>Customers</span></a>

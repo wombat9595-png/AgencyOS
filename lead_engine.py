@@ -70,6 +70,10 @@ def migrate(conn):
     CREATE INDEX IF NOT EXISTS prospects_stage_idx ON prospects(owner_id,stage);
     ''')
     columns={r[1] for r in conn.execute('PRAGMA table_info(prospects)')}
+    if 'ceo_status' not in columns:
+        # The CEO's verdict on the current draft: '' not reviewed, ready, held (failed the rules), redo (owner sent it back).
+        conn.execute("ALTER TABLE prospects ADD COLUMN ceo_status TEXT NOT NULL DEFAULT ''")
+        conn.execute("ALTER TABLE prospects ADD COLUMN ceo_note TEXT NOT NULL DEFAULT ''")
     if 'gmail_draft_id' not in columns:
         conn.execute("ALTER TABLE prospects ADD COLUMN gmail_draft_id TEXT NOT NULL DEFAULT ''")
         conn.execute('ALTER TABLE prospects ADD COLUMN approved_epoch INTEGER NOT NULL DEFAULT 0')
@@ -172,22 +176,27 @@ def find(conn,owner,trade,town,radius_km):
     lat,lon,label=geocode(conn,town,contact)
     found=http_json(OVERPASS,parse.urlencode({'data':overpass_query(trade,lat,lon,radius_km)}).encode(),contact)
     if not isinstance(found,dict) or not isinstance(found.get('elements'),list):raise WorkflowError('The map service sent back something unexpected. Nothing was added.')
-    existing={(norm(r['name']),norm(r['suburb'])) for r in conn.execute('SELECT name,suburb FROM prospects WHERE owner_id=?',(owner,))}
-    known={r[0] for r in conn.execute('SELECT source_id FROM prospects WHERE owner_id=?',(owner,))}
-    added=[];already=0
-    for element in found['elements']:
-        row=from_osm(element,trade)
-        if not row:continue
-        if row['source_id'] in known or (norm(row['name']),norm(row['suburb'])) in existing:already+=1;continue
-        known.add(row['source_id']);existing.add((norm(row['name']),norm(row['suburb'])))
-        row['suburb']=row['suburb'] or town
-        reason='facebook' if row['facebook'] and not row['website'] else 'none' if not row['website'] else 'unchecked'
-        cur=conn.execute('INSERT INTO prospects(owner_id,source_id,name,trade,suburb,address,phone,email,website,facebook,reason,score,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)',
-          (owner,row['source_id'],row['name'],trade,row['suburb'],row['address'],row['phone'],row['email'],row['website'],row['facebook'],reason,0,stamp()))
-        rescore(conn,cur.lastrowid);added.append(cur.lastrowid)
+    added,already=add_rows(conn,owner,[from_osm(e,trade) for e in found['elements']],town)
     log(conn,owner,'Found '+str(len(added))+' new '+trade.lower()+' near '+town+' on OpenStreetMap. Nothing was sent.')
     conn.commit()
     return dict(added=added,already=already,label=label)
+
+
+def add_rows(conn,owner,rows,fallback_suburb):
+    """Save new businesses, skipping any already in the list (same map id, or same name in the same suburb)."""
+    existing={(norm(r['name']),norm(r['suburb'])) for r in conn.execute('SELECT name,suburb FROM prospects WHERE owner_id=?',(owner,))}
+    known={r[0] for r in conn.execute('SELECT source_id FROM prospects WHERE owner_id=?',(owner,))}
+    added=[];already=0
+    for row in rows:
+        if not row:continue
+        if row['source_id'] in known or (norm(row['name']),norm(row['suburb'])) in existing:already+=1;continue
+        known.add(row['source_id']);existing.add((norm(row['name']),norm(row['suburb'])))
+        row['suburb']=row['suburb'] or fallback_suburb
+        reason='facebook' if row['facebook'] and not row['website'] else 'none' if not row['website'] else 'unchecked'
+        cur=conn.execute('INSERT INTO prospects(owner_id,source_id,name,trade,suburb,address,phone,email,website,facebook,reason,score,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)',
+          (owner,row['source_id'],row['name'],row['trade'],row['suburb'],row['address'],row['phone'],row['email'],row['website'],row['facebook'],reason,0,stamp()))
+        rescore(conn,cur.lastrowid);added.append(cur.lastrowid)
+    return added,already
 
 
 def add_manual(conn,owner,form):
@@ -261,11 +270,33 @@ def check_site(url,get=None):
     result['title']=' '.join(title.group(1).split())[:150] if title else ''
     years=[int(y) for y in re.findall(r'(?:©|&copy;|copyright)\s*(?:\d{4}\s*(?:-|–|&ndash;)\s*)?((?:19|20)\d\d)',lower)]
     result['year']=max(years) if years else 0
+    result['seo']=seo_notes(html,lower)
     if not result['https']:result['findings'].append('not_secure')
     if not result['mobile']:result['findings'].append('not_mobile')
     if result['year'] and result['year']<=today().year-4:result['findings'].append('old')
     if not result['findings']:result['findings']=['ok']
     return result
+
+
+SEO_NOTES={
+ 'no_description':'no Google description (meta description), so Google makes one up',
+ 'no_h1':'no main heading on the homepage',
+ 'no_tap_to_call':'no tap-to-call phone link',
+ 'no_local_schema':'no "local business" details for Google (schema)',
+ 'thin_title':'the page title does not say what they do or where',
+}
+
+
+def seo_notes(html,lower):
+    """The SEO Checker: simple things Google and phone visitors look for. Keys of SEO_NOTES."""
+    notes=[]
+    if not re.search(r'<meta[^>]+name=["\']?description["\']?[^>]+content=["\'][^"\']{20,}',lower):notes.append('no_description')
+    if '<h1' not in lower:notes.append('no_h1')
+    if 'href="tel:' not in lower and "href='tel:" not in lower:notes.append('no_tap_to_call')
+    if 'localbusiness' not in lower and '"@type":' not in lower.replace(' ',''):notes.append('no_local_schema')
+    title=re.search(r'<title[^>]*>(.*?)</title>',html,re.I|re.S)
+    if not title or len(title.group(1).split())<3:notes.append('thin_title')
+    return notes
 
 
 def rescore(conn,prospect_id):
@@ -329,8 +360,8 @@ def variant_of(subject,name):
     return 'Your own subject'
 
 
-def draft(p,s,kind=None):
-    """Return (subject, body). kind: first, followup1, followup2, call."""
+def draft(p,s,kind=None,short=False):
+    """Return (subject, body). kind: first, followup1, followup2, call. short: the owner taught the Writer to keep it brief."""
     kind=kind or ('call' if not p['email'] and p['phone'] else ('first','followup1','followup2')[min(p['touches'],2)])
     me=s['name'].split()[0];area=' based in '+s['area'] if s['area'] else ' here in Australia'
     sign='\n\nCheers,\n'+s['name']+'\n'+s['business']+'\n'+s['email']+('\n'+s['phone'] if s['phone'] else '')
@@ -344,6 +375,10 @@ def draft(p,s,kind=None):
           'If they ask the price: websites start at A$800, then A$69 a month for hosting, security and small changes, month to month with no lock-in.\n'
           'If yes: get the best email to send the mock-up to, and a good time to call back.\n'
           'If no: thank them, and mark them Not interested.')
+    if kind=='first' and short:
+        return (subject_for(p,s),
+          hello+'\n\nI am '+me+', a web designer'+area+'. '+problem_line(p)+'\n\n'
+          'Can I make '+p['name']+' a free one-page mock-up? No cost, no obligation. Just reply "yes".'+sign+optout)
     if kind=='first':
         booking=('\n\nOr if a quick chat is easier, grab a 15 minute slot here: '+s['booking_url']) if s.get('booking_url') else ''
         return (subject_for(p,s),
@@ -424,7 +459,7 @@ def queue(conn,owner,on=None,limit=12):
     """Today's work, most urgent first: follow-ups due, approved drafts to send, then the best new leads."""
     iso=(on or today()).isoformat()
     return conn.execute("""SELECT * FROM prospects WHERE owner_id=? AND (
-        (stage='Contacted' AND next_on!='' AND next_on<=?) OR stage IN ('Approved','Interested') OR (stage='New' AND score>=50 AND (email!='' OR phone!='')))
+        (stage='Contacted' AND next_on!='' AND next_on<=?) OR stage IN ('Approved','Interested') OR (stage='New' AND score>=50 AND (email!='' OR phone!='') AND ceo_status NOT IN ('held','redo')))
       ORDER BY CASE WHEN stage='Interested' THEN 0 WHEN stage='Contacted' THEN 1 WHEN stage='Approved' THEN 2 ELSE 3 END, score DESC, id LIMIT ?""",(owner,iso,limit)).fetchall()
 
 
@@ -555,6 +590,8 @@ def register(app,get_db,login_required,insert_lead):
             subject=' '.join(request.form.get('subject','').split());body=request.form.get('body','').strip()
             if not 1<=len(subject)<=200 or not 20<=len(body)<=5000:raise WorkflowError('The message needs a subject and some text.')
             if p['email'] and 'no thanks' not in body.casefold():raise WorkflowError('Keep the "no thanks" opt-out line. The Spam Act requires a way to unsubscribe.')
+            import smart_writer,team
+            team.feedback(conn,owner,p,'yes',smart_writer.stored(p) or draft(p,settings(conn,owner)),(subject,body))
             conn.execute("UPDATE prospects SET stage='Approved',subject=?,message=?,gmail_draft_id='',approved_epoch=? WHERE id=?",(subject,body,int(time.time()),p['id']));record(conn,owner,p,'approved')
             if p['touches']==0:conn.execute('UPDATE prospects SET variant=? WHERE id=?',(variant_of(subject,p['name']),p['id']))
             conn.commit();message='Approved. Tap "Open in my email", press send, then tap "I sent it".'
@@ -591,9 +628,13 @@ def register(app,get_db,login_required,insert_lead):
             conn.execute("UPDATE prospects SET stage='Customer',lead_id=?,next_on='' WHERE id=?",(lead_id,p['id']));record(conn,owner,p,'customer')
             log(conn,owner,p['name']+' moved from Find customers to Customers.')
             conn.commit();flash(p['name']+' is now in Customers. Start their quote there.','success');return redirect(url_for('sales_home'))
+        elif action=='redo':
+            import team
+            message=team.send_back(conn,owner,p,request.form.get('reason',''))
         elif action=='reopen':
             conn.execute("UPDATE prospects SET stage='New',next_on='' WHERE id=? AND stage IN ('Skipped','No reply')",(p['id'],));message='Back in the list.'
         else:raise WorkflowError('Unknown action.')
         conn.commit();flash(message,'success')
         if request.form.get('next')=='home':return redirect(url_for('business_home')+'#ready')
+        if request.form.get('next')=='phone':return redirect(url_for('phone_queue'))
         return redirect(url_for('prospects_home')+'#p'+str(p['id']))

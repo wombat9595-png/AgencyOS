@@ -114,11 +114,14 @@ def video_script(p,s):
     ]
 
 
-def ping(conn,owner,title,message):
-    """Buzz the owner's phone through the free ntfy app. Only to his own private topic; returns False if it is off or fails."""
+def ping(conn,owner,title,message,click=''):
+    """Buzz the owner's phone through the free ntfy app. Only to his own private topic; returns False if it is off or fails.
+    click: the private phone address of AgencyOS to open when the notification is tapped."""
     s=lead_engine.settings(conn,owner);topic=s.get('ntfy_topic')
     if not topic:return False
-    req=urlrequest.Request(NTFY+topic,data=message[:300].encode(),headers={'Title':title[:80].encode('ascii','ignore').decode(),'Tags':'telephone_receiver'},method='POST')
+    headers={'Title':title[:80].encode('ascii','ignore').decode(),'Tags':'telephone_receiver'}
+    if click:headers['Click']=click
+    req=urlrequest.Request(NTFY+topic,data=message[:300].encode(),headers=headers,method='POST')
     try:
         with urlrequest.urlopen(req,timeout=8):return True
     except (urlerror.URLError,OSError,ValueError):

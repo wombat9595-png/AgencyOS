@@ -84,23 +84,37 @@ def run(conn,owner,source='night',on=None):
             except WorkflowError as exc:conn.rollback();notes.append(beat['trade']+' near '+beat['town']+': '+str(exc))
         conn.execute('INSERT INTO night_shift_settings(owner_id,enabled,next_beat) VALUES(?,?,?) ON CONFLICT(owner_id) DO UPDATE SET next_beat=excluded.next_beat',
           (owner,s['enabled'],(start+BEATS_PER_NIGHT)%len(all_beats)))
-    else:notes.append('No search areas set yet, so Scout had nothing to search.')
+    import team,sweep
+    the_plan=team.plan(conn,owner);conn.commit()
+    # Scout's big job: sweep the map square by square for businesses with no website (Sydney first).
+    if the_plan['tiles']:
+        try:swept,squares,sweep_notes=sweep.run(conn,owner,the_plan['tiles'],the_plan['all_australia'])
+        except Exception:conn.rollback();swept,squares,sweep_notes=0,0,['The map sweep stopped early; it carries on next night.']
+        counts['swept']=swept;counts['squares']=squares;notes+=sweep_notes
+    elif not all_beats:notes.append('No search areas set and the map sweep is off, so Scout had nothing to search.')
     # Inspector: check websites found by the Scout (and any left over from manual searches).
     counts['checked']=lead_engine.check_websites(conn,owner,limit=CHECKS_PER_NIGHT)
     # Chaser: retire leads that never replied, then count follow-ups due today.
     lead_engine.expire(conn,owner,local)
     counts['follow_ups']=conn.execute("SELECT COUNT(*) FROM prospects WHERE owner_id=? AND stage='Contacted' AND next_on!='' AND next_on<=?",(owner,local.isoformat())).fetchone()[0]
     # Writer and Designer: draft the next message for the best leads; each gets the mock-up that suits it.
-    ls=lead_engine.settings(conn,owner)
-    for p in _due_drafts(conn,owner,local)[:DRAFTS_PER_NIGHT]:
-        how=smart_writer.write(conn,owner,p,ls)
-        counts['drafts']+=1;counts['ai_drafts']+=how=='ai'
+    ls=lead_engine.settings(conn,owner);short=team.learned(conn,owner)['short'];drafted=[]
+    bad=set(team.learned(conn,owner)['bad_trades'])
+    due=[p for p in _due_drafts(conn,owner,local) if not (p['stage']=='New' and p['trade'] in bad)]
+    # Follow-ups always; new businesses only up to the Chief of Staff's daily limit.
+    follow=[p for p in due if p['stage']!='New'];fresh=[p for p in due if p['stage']=='New'][:the_plan['drafts']]
+    for p in (follow+fresh)[:DRAFTS_PER_NIGHT+the_plan['drafts']]:
+        how=smart_writer.write(conn,owner,p,ls,coaching=team.coaching(conn,owner,p['trade']) if smart_writer.ai_status(conn,owner)['ready'] else '',short=short)
+        counts['drafts']+=1;counts['ai_drafts']+=how=='ai';drafted.append(p['id'])
         if p['stage']=='New':counts['mockups']+=1
+    # CEO: check every draft before it reaches the owner.
+    review=team.ceo_review(conn,owner,drafted)
+    counts['ceo_ready']=review['ready'];counts['ceo_held']=review['held']
     counts['weak']=conn.execute("SELECT COUNT(*) FROM prospects WHERE owner_id=? AND stage='New' AND score>=50",(owner,)).fetchone()[0]
     # Caretaker: this month's Google posts and review requests for Profile Care clients.
     counts['posts']=client_plans.ensure_profile_posts(conn,owner,local)
     conn.execute('UPDATE night_shift_runs SET finished_at=?,counts_json=?,notes=? WHERE id=?',(stamp(),json.dumps(counts),' '.join(notes)[:1000],run_id))
-    log(conn,owner,'Night shift: found '+str(counts['found'])+', checked '+str(counts['checked'])+', drafted '+str(counts['drafts'])+'. Nothing was sent.')
+    log(conn,owner,'Night shift: found '+str(counts['found']+counts.get('swept',0))+', checked '+str(counts['checked'])+', drafted '+str(counts['drafts'])+', CEO passed '+str(counts['ceo_ready'])+'. Nothing was sent.')
     conn.commit()
     return counts
 
@@ -121,6 +135,9 @@ def worker_tick(path):
         if owner:
             import pitch
             try:pitch.detect_replies(conn,owner[0])  # a lead wrote back: stop chasing them and buzz the owner's phone
+            except Exception:conn.rollback()
+            import team
+            try:team.notify(conn,owner[0])  # drafts ready: buzz the owner's phone (7 am to 9 pm, at most 3 a day)
             except Exception:conn.rollback()
         if not owner or not due(conn,owner[0]):return False
         awake=_stay_awake()

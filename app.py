@@ -41,6 +41,7 @@ import phone
 import getpaid
 import pitch
 import grow
+import team
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = runtime_status.database_path(os.environ.get("AGENCYOS_DB"))
@@ -129,6 +130,7 @@ def init_db():
     pitch.migrate(conn)
     getpaid.migrate(conn)
     grow.migrate(conn)
+    team.migrate(conn)
     conn.commit()
     conn.close()
 
@@ -548,6 +550,7 @@ phone.register(app,db,login_required)
 getpaid.register(app,db,login_required)
 pitch.register(app,db,login_required)
 grow.register(app,db,login_required)
+team.register(app,db,login_required)
 register_phase3(app, db, login_required, insert_lead)
 register_phase4(app, db, login_required, insert_lead)
 register_sales(app, db, login_required)
