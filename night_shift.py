@@ -118,6 +118,10 @@ def worker_tick(path):
     from phase3_store import connect
     with closing(connect(path)) as conn:
         owner=conn.execute('SELECT id FROM users ORDER BY id LIMIT 1').fetchone()
+        if owner:
+            import pitch
+            try:pitch.detect_replies(conn,owner[0])  # a lead wrote back: stop chasing them and buzz the owner's phone
+            except Exception:conn.rollback()
         if not owner or not due(conn,owner[0]):return False
         awake=_stay_awake()
         try:run(conn,owner[0])

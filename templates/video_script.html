@@ -1,0 +1,16 @@
+{% extends "base.html" %}{% block title %}Video script · AgencyOS{% endblock %}{% block page_heading %}60 second video{% endblock %}
+{% block content %}
+<div class="page-intro"><div><span class="eyebrow">VIDEO AUDIT</span><h1>60 second video for {{ p.name }}</h1><p class="muted">A short screen recording about their own website gets opened and remembered. Read this while you scroll their site, then their mock-up.</p></div></div>
+<section class="panel"><div class="panel-heading"><div><span class="eyebrow">HOW TO RECORD (FREE)</span><h2>On your Mac</h2></div></div>
+<ol><li>Open their site{% if p.website %} (<a href="{{ p.website }}" target="_blank" rel="noopener">here</a>){% endif %} and <a href="{{ mockup }}" target="_blank" rel="noopener">their free mock-up</a> in two tabs.</li>
+<li>Press <strong>Shift + Command + 5</strong>, choose "Record selected portion", and pick your built-in camera under Options if you want your face in it.</li>
+<li>Record once, no retakes needed. Under 70 seconds is perfect.</li>
+<li>Upload it to Google Drive or YouTube as "Unlisted", and paste the link in your email{% if preview %} next to their preview link: <code>{{ preview }}</code>{% endif %}.</li></ol>
+</section>
+<section class="panel"><div class="panel-heading"><div><span class="eyebrow">SCRIPT</span><h2>Say this</h2></div></div>
+<div class="table-wrap"><table><thead><tr><th>TIME</th><th>ON SCREEN</th><th>SAY</th></tr></thead><tbody>
+{% for at,screen,say in lines %}<tr><td><strong>{{ at }}</strong></td><td><small>{{ screen }}</small></td><td>{{ say }}</td></tr>{% endfor %}
+</tbody></table></div>
+<p><a class="btn secondary" href="{{ url_for('calls_home') }}">Back to Calls</a> <a class="btn secondary" href="{{ url_for('prospects_home') }}#p{{ p.id }}">Back to Find customers</a></p>
+</section>
+{% endblock %}

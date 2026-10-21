@@ -1,0 +1,67 @@
+{% extends "base.html" %}{% block title %}Studio · AgencyOS{% endblock %}{% block page_heading %}Studio{% endblock %}
+{% block content %}
+<div class="page-intro"><div><span class="eyebrow">YOUR BRAND</span><h1>Studio</h1><p class="muted">Your own homepage, niche pages, private preview links for leads, client pages, reviews and referrals. All made on this Mac. Nothing goes online until you upload the publish pack yourself.</p></div></div>
+
+<section class="panel"><div class="panel-heading"><div><span class="eyebrow">YOUR WEBSITE</span><h2>Homepage and niche pages</h2></div></div>
+<p>Your studio homepage shows the three story demos, your packages, how it works{% if grow.cards %}, testimonials{% endif %} and a booking button. Each night-shift search area gets its own page, like "Websites for builders in Mona Vale", so Google can send people to you.</p>
+<p><a class="btn primary" href="{{ url_for('studio_site') }}" target="_blank" rel="noopener">Preview my homepage</a></p>
+{% if niches %}<p class="tiny">{% for n in niches %}<a href="{{ url_for('studio_niche',slug=n.slug) }}" target="_blank" rel="noopener">{{ n.short|capitalize }} in {{ n.town }}</a>{{ ' · ' if not loop.last }}{% endfor %}</p>{% else %}<p class="muted tiny">Add search areas on the <a href="{{ url_for('night_shift_home') }}">Night shift</a> page and a niche page appears for each.</p>{% endif %}
+</section>
+
+<section class="panel"><div class="panel-heading"><div><span class="eyebrow">LINKS</span><h2>Booking link and online address</h2></div></div>
+<form method="post" action="{{ url_for('studio_settings') }}" class="stack"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<label class="wide">Booking link<input name="booking_url" maxlength="300" value="{{ s.booking_url }}" placeholder="https://calendar.app.google/..."></label>
+<p class="wide tiny muted">Free: Google Calendar → Create → Appointment schedule, 15 minutes, then copy the booking page link. It's added to first emails, proposals and your homepage.</p>
+<label class="wide">Online address (after your first upload)<input name="site_url" maxlength="140" value="{{ s.site_url }}" placeholder="https://benji-web.pages.dev"></label>
+<div class="wide"><button class="btn primary">Save</button></div></form>
+</section>
+
+<section class="panel" id="pack"><div class="panel-heading"><div><span class="eyebrow">GO ONLINE (WHEN YOU SAY SO)</span><h2>Publish pack</h2></div></div>
+<p>One zip with your homepage, niche pages, the demos, a private preview + proposal for your {{ ready }} best leads, and a private page for each monthly client. Preview and client pages sit at long random addresses and are hidden from Google.</p>
+<ol><li>Download the pack.</li><li>Cloudflare (free): Workers &amp; Pages → Create → Pages → Upload assets, and drop the unzipped folder in. Use the same project every time.</li><li>Paste the address Cloudflare gives you into "Online address" above. Preview links then appear on Calls and Find customers.</li></ol>
+<p><a class="btn secondary" href="{{ url_for('studio_pack') }}">Download publish pack</a> <small class="muted">{% if last %}{{ packed }} preview and client pages in the last pack ({{ last[:10] }}).{% else %}Not made yet.{% endif %} Make a fresh pack after new leads or client updates.</small></p>
+</section>
+
+<section class="panel" id="pings"><div class="panel-heading"><div><span class="eyebrow">SPEED TO LEAD</span><h2>Phone ping when someone replies</h2></div></div>
+<p class="muted">When a lead replies in Gmail, AgencyOS stops their follow-ups, puts them top of your list and buzzes your phone, so you call back within the hour. Free with the ntfy app (iPhone or Android). The ping only says who replied.</p>
+{% if s.ntfy_topic %}<p>On. In the ntfy app, subscribe to <code>{{ s.ntfy_topic }}</code></p>
+<form method="post" action="{{ url_for('studio_ping') }}" style="display:inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn secondary" name="action" value="test">Send a test ping</button></form>
+<form method="post" action="{{ url_for('studio_ping') }}" style="display:inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn secondary" name="action" value="off">Turn off</button></form>
+{% else %}<ol><li>Install "ntfy" from the App Store on your phone.</li><li>Press the button below, then subscribe to the private topic it shows.</li></ol>
+<form method="post" action="{{ url_for('studio_ping') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn primary" name="action" value="on">Turn on phone pings</button></form>{% endif %}
+</section>
+
+<section class="panel" id="reviews"><div class="panel-heading"><div><span class="eyebrow">KEEP THEM</span><h2>Reviews, testimonials and client pages</h2></div></div>
+<form method="post" action="{{ url_for('grow_review_link') }}" class="stack"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<label class="wide">Your Google review link<input name="review_url" maxlength="300" value="{{ grow.review_url }}" placeholder="https://g.page/r/..."></label>
+<p class="wide tiny muted">Make a free Google Business Profile for {{ s.business }} (business.google.com), then "Ask for reviews" gives you this link.</p>
+<div class="wide"><button class="btn secondary">Save</button></div></form>
+{% if not grow.cards %}<div class="empty"><strong>No monthly clients yet</strong><p>When you add your first client on <a href="{{ url_for('plan_clients') }}">Monthly clients</a>, their review request, testimonial ask, referral offer and private page show up here.</p></div>{% endif %}
+{% for k in grow.cards %}<article class="panel stack section-gap" id="k{{ k.client.id }}">
+<p><strong>{{ k.client.client_name }}</strong> · {{ k.client.plan }} <span class="pill">Site: {{ k.g.site_stage }}</span>{% for d in k.due %} <span class="pill">Time to ask for a {{ d }}</span>{% endfor %}{% if k.free_owed %} <span class="pill">{{ k.free_owed }} free month{{ 's' if k.free_owed>1 }} owed</span>{% endif %}</p>
+<form method="post" action="{{ url_for('grow_action',client_id=k.client.id,action='stage') }}" class="stack"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<label>Where their site is up to<select name="site_stage">{% for st in grow.stages %}<option {% if st==k.g.site_stage %}selected{% endif %}>{{ st }}</option>{% endfor %}</select></label>
+<label>Their live site<input name="site_url" maxlength="300" value="{{ k.g.site_url }}" placeholder="https://..."></label><button class="btn secondary">Update</button></form>
+{% if k.portal %}<p class="tiny">Their private page: <code>{{ k.portal }}</code></p>{% endif %}
+<details {% if 'review' in k.due %}open{% endif %}><summary>Review request (send on launch day)</summary><div style="white-space:pre-line">{{ k.msg.review }}</div>
+<form method="post" action="{{ url_for('grow_action',client_id=k.client.id,action='review') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn secondary">I sent it</button></form></details>
+<details {% if 'testimonial' in k.due %}open{% endif %}><summary>Testimonial ask (a month after launch)</summary><div style="white-space:pre-line">{{ k.msg.testimonial }}</div>
+<form method="post" action="{{ url_for('grow_action',client_id=k.client.id,action='testimonial') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn secondary">I sent it</button></form>
+<form method="post" action="{{ url_for('grow_action',client_id=k.client.id,action='quote') }}" class="stack"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<label class="wide">What they said<textarea name="testimonial" rows="3" maxlength="600">{{ k.g.testimonial }}</textarea></label>
+<label class="wide"><input type="checkbox" name="ok" value="yes" {% if k.g.testimonial_ok %}checked{% endif %}> They said I can show it on my website with their business name</label>
+<button class="btn secondary">Save testimonial</button></form></details>
+<details><summary>Referral offer</summary><div style="white-space:pre-line">{{ k.msg.referral }}</div>
+{% if k.free_owed %}<form method="post" action="{{ url_for('grow_action',client_id=k.client.id,action='free_month') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn primary">I gave them their free month</button></form>{% endif %}</details>
+</article>{% endfor %}
+</section>
+
+<section class="panel" id="referrals"><div class="panel-heading"><div><span class="eyebrow">REFERRALS</span><h2>Who sent you who</h2></div></div>
+<p class="muted">The offer: "{{ grow.offer }}" When a referred lead becomes a customer, the free month shows on the client above.</p>
+{% if grow.cards and grow.leads %}<form method="post" action="{{ url_for('grow_referral') }}" class="stack"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<label>Referred by<select name="client_id">{% for k in grow.cards %}<option value="{{ k.client.id }}">{{ k.client.client_name }}</option>{% endfor %}</select></label>
+<label>The lead<select name="prospect_id">{% for l in grow.leads %}<option value="{{ l.id }}">{{ l.name }}</option>{% endfor %}</select></label>
+<button class="btn secondary">Save referral</button></form>{% else %}<p class="tiny muted">Add the referred business on Find customers ("Add one yourself"), then link it here.</p>{% endif %}
+{% if grow.referrals %}<div class="table-wrap"><table><thead><tr><th>LEAD</th><th>REFERRED BY</th><th>STAGE</th></tr></thead><tbody>{% for r in grow.referrals %}<tr><td>{{ r.name }}</td><td>{{ r.client_name }}</td><td>{{ r.stage }}</td></tr>{% endfor %}</tbody></table></div>{% endif %}
+</section>
+{% endblock %}

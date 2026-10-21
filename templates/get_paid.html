@@ -1,0 +1,62 @@
+{% extends "base.html" %}{% block title %}Get paid · AgencyOS{% endblock %}{% block page_heading %}Get paid{% endblock %}
+{% block content %}
+<div class="page-intro"><div><span class="eyebrow">MONEY</span><h1>Get paid</h1><p class="muted">Make a real invoice in one tap: the 50% deposit to start, the balance on launch, or the monthly plan. It comes out as a PDF with your ABN and bank details for you to attach. Nothing is emailed or charged from here.</p></div></div>
+<div class="stat-grid">
+<div class="stat-card"><div class="stat-top"><span>PAID THIS MONTH</span></div><strong>{{ money(paid_month) }}</strong><small>Invoices you marked paid after checking your bank</small></div>
+<div class="stat-card"><div class="stat-top"><span>WAITING ON</span></div><strong>{{ money(bills|selectattr('status','equalto','Ready')|sum(attribute='total_cents')) }}</strong><small>{{ bills|selectattr('status','equalto','Ready')|list|length }} unpaid · {{ bills|selectattr('overdue')|list|length }} overdue</small></div>
+</div>
+
+{% if missing %}<section class="panel"><p><strong>Before your first invoice, add {{ missing|join(', ') }} below.</strong> {% if not control.business_abn %}Get an ABN first if you don't have one (free at abr.gov.au): a business client can hold back 47% of your invoice if it has no ABN.{% endif %}</p></section>{% endif %}
+
+<section class="panel" id="new"><div class="panel-heading"><div><span class="eyebrow">NEW</span><h2>Make an invoice</h2></div></div>
+<form method="post" action="{{ url_for('get_paid_new') }}" class="stack"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<label>Client or business name<input name="client_name" maxlength="160" required list="clientlist"></label>
+<datalist id="clientlist">{% for c in clients %}<option value="{{ c }}">{% endfor %}</datalist>
+<label>Their email (optional)<input name="client_email" type="email" maxlength="254"></label>
+<label>Package<select name="package">{% for name,p in packages.items() %}<option value="{{ name }}">{{ name }}: {{ money(p.setup) }} + {{ money(p.monthly) }} a month</option>{% endfor %}</select></label>
+<label>What is it for<select name="kind">{% for key,label in kinds.items() %}<option value="{{ key }}">{{ label }}</option>{% endfor %}</select></label>
+<label><input type="checkbox" name="profile_care" value="yes"> Add Google Profile Care (A$49 a month, monthly invoices only)</label>
+<label>Amount for "Other" (A$)<input name="amount" inputmode="decimal" placeholder="Only for Other"></label>
+<label class="wide">Description for "Other"<input name="note" maxlength="200" placeholder="Extra page and photo shoot"></label>
+<div class="wide"><button class="btn primary">Make invoice</button> <small class="muted">{% if control.gst_mode=='registered_10' %}10% GST is added on top.{% else %}No GST added (not registered).{% endif %}</small></div></form>
+</section>
+
+<section class="panel" id="bills"><div class="panel-heading"><div><span class="eyebrow">INVOICES</span><h2>Your invoices <span class="count">{{ bills|length }}</span></h2></div></div>
+{% if bills %}<div class="table-wrap"><table><thead><tr><th>INVOICE</th><th>FOR</th><th>TOTAL</th><th>DUE</th><th>STATUS</th><th></th></tr></thead><tbody>
+{% for b in bills %}<tr><td><strong>{{ b.number }}</strong><small>{{ b.client_name }}</small></td><td><small>{{ b.description }}</small></td><td>{{ money(b.total_cents) }}</td><td>{{ b.due_on }}</td>
+<td>{% if b.overdue %}<span class="pill">Overdue</span>{% else %}{{ 'Unpaid' if b.status=='Ready' else b.status }}{% endif %}</td>
+<td><div class="stack"><a class="btn secondary" href="{{ url_for('get_paid_pdf',bill_id=b.id) }}">Download PDF</a>
+{% if b.status=='Ready' %}<form method="post" action="{{ url_for('get_paid_action',bill_id=b.id,action='paid') }}" class="stack"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label class="tiny"><input type="checkbox" name="confirm" value="yes"> The money is in my bank</label><button class="btn primary">Mark paid</button></form>
+{% if b.overdue %}<details><summary>Friendly reminder to send</summary><div style="white-space:pre-line">{{ reminder(b) }}</div></details>{% endif %}
+<form method="post" action="{{ url_for('get_paid_action',bill_id=b.id,action='cancel') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn secondary">Cancel</button></form>
+{% elif b.status=='Paid' %}<form method="post" action="{{ url_for('get_paid_action',bill_id=b.id,action='unpaid') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn secondary">Undo paid</button></form>{% endif %}</div></td></tr>{% endfor %}
+</tbody></table></div>{% else %}<div class="empty"><strong>No invoices yet</strong><p>When a client says yes, make the 50% deposit invoice above and attach the PDF to your email.</p></div>{% endif %}
+</section>
+
+<section class="panel" id="details"><div class="panel-heading"><div><span class="eyebrow">YOUR DETAILS</span><h2>What goes on every invoice</h2></div></div>
+<form method="post" action="{{ url_for('get_paid_details') }}" class="stack"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<label>Business name<input name="business_name" maxlength="160" value="{{ control.business_name or 'Benji Price Web Design' }}"></label>
+<label>ABN<input name="business_abn" maxlength="20" inputmode="numeric" value="{{ control.business_abn }}" placeholder="11 digits"></label>
+<label>Business email<input name="business_email" type="email" maxlength="254" value="{{ control.business_email or 'benji.price.webdesign@gmail.com' }}"></label>
+<label>GST<select name="gst_mode"><option value="" {% if not control.gst_mode %}selected{% endif %}>Pick one</option><option value="not_registered" {% if control.gst_mode=='not_registered' %}selected{% endif %}>Not registered for GST (most new businesses)</option><option value="registered_10" {% if control.gst_mode=='registered_10' %}selected{% endif %}>Registered for GST (add 10%)</option></select></label>
+<label class="wide">Address (optional)<textarea name="business_address" maxlength="500">{{ control.business_address }}</textarea></label>
+<label class="wide">Payment terms<input name="terms" maxlength="500" value="{{ control.terms if control.terms and 'Payment due' in control.terms else 'Payment due within 7 days' }}"></label>
+<fieldset class="wide"><legend>Bank details {% if bank_saved %}<span class="pill">Saved and encrypted</span>{% endif %}</legend>
+<p class="muted">Type these here on your Mac only. Never in chat, email or GitHub. They're locked with a private key on this Mac and only printed on your invoice PDFs. {% if bank_saved %}Leave empty to keep the saved ones.{% endif %}{% if not can_encrypt %} <strong>Open AgencyOS from the Desktop icon first, so the private key exists.</strong>{% endif %}</p>
+<label>Account name<input name="account_name" autocomplete="off" maxlength="160"></label>
+<label>BSB<input name="bsb" autocomplete="off" inputmode="numeric" maxlength="8" placeholder="000-000"></label>
+<label>Account number<input name="account_number" autocomplete="off" inputmode="numeric" maxlength="12"></label>
+{% if bank_saved %}<label class="wide"><input type="checkbox" name="forget_bank" value="yes"> Remove my saved bank details</label>{% endif %}
+</fieldset>
+<div class="wide"><button class="btn primary">Save my details</button></div></form>
+</section>
+
+<section class="panel" id="links"><div class="panel-heading"><div><span class="eyebrow">OPTIONAL</span><h2>Card payments and autopay</h2></div></div>
+<p class="muted">Bank transfer is free and stays the main way to pay. If you want a card option, make a free Stripe account, create a Payment Link there and paste it here; it is printed on your invoices. Stripe takes about 1.7% + 30c per Australian card payment and has no monthly fee. For monthly plans, a Stripe subscription link with BECS Direct Debit costs about 1% + 30c, capped at A$3.50. AgencyOS never holds a Stripe key.</p>
+<form method="post" action="{{ url_for('get_paid_links') }}" class="stack"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<label class="wide">Card payment link<input name="card_link" maxlength="300" value="{{ links.card_link }}" placeholder="https://buy.stripe.com/..."></label>
+<label class="wide">Monthly autopay link (shown on monthly invoices)<input name="debit_link" maxlength="300" value="{{ links.debit_link }}" placeholder="https://buy.stripe.com/..."></label>
+<div class="wide"><button class="btn secondary">Save links</button></div></form>
+</section>
+<p class="tiny muted">The older test-invoice workspace is still at <a href="{{ url_for('invoices') }}">Test invoices</a>.</p>
+{% endblock %}

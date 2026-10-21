@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{ s.business }} · Websites for local businesses{% if s.area %} in {{ s.area }}{% endif %}</title>
+<meta name="description" content="Fast, good-looking websites for tradies and local businesses{% if s.area %} in {{ s.area }}{% endif %}. Free mock-up first, month to month, no lock-in.">
+{% include "studio/_style.html" %}
+</head><body>
+<nav class="top"><div class="wrap"><a class="mark" href="{{ home or './' }}">{{ s.business }}<b>.</b></a>{% if booking %}<a class="btn" href="{{ booking }}">Book a chat</a>{% else %}<a class="btn" href="mailto:{{ s.email }}">Get in touch</a>{% endif %}</div></nav>
+<header class="hero"><div class="wrap">
+<span class="kicker">Web design for local businesses{% if s.area %} · {{ s.area }}{% endif %}</span>
+<h1>Websites that <em>tell your story</em>.</h1>
+<p>I build fast, good-looking websites for tradies, salons and local businesses. You see a free mock-up of your new site before you pay a cent, and there's no lock-in.</p>
+<div class="row">{% if booking %}<a class="btn" href="{{ booking }}">Book a 15 minute chat</a>{% endif %}<a class="btn {{ 'ghost' if booking }}" href="mailto:{{ s.email }}?subject=Free%20mock-up">Ask for a free mock-up</a>{% if s.phone %}<a class="btn ghost" href="tel:{{ s.phone|replace(' ','') }}">{{ s.phone }}</a>{% endif %}</div>
+</div></header>
+
+<section><div class="wrap">
+<span class="kicker dark-k">See it move</span><h2>Sites that tell the story of the job</h2>
+<p style="max-width:60ch;color:var(--muted)">Scroll through these on your phone. They're demo businesses, but the idea is yours: your best work, told as a story.</p>
+<div class="demos">{% for d in demos %}<a class="demo" href="{{ d.href }}"><div><span class="kicker">Signature demo</span><h3>{{ d.title }}</h3></div><span class="go">Scroll the story →</span></a>{% endfor %}</div>
+</div></section>
+
+<section style="background:var(--card)"><div class="wrap">
+<span class="kicker dark-k">Simple pricing</span><h2>Three ways to go</h2>
+<div class="offers">{% for o in offers %}<div class="offer {{ 'featured' if o.featured }}"><h3>{{ o.name }}</h3><div class="price">{{ o.price }}<small>then {{ o.monthly }}</small></div><p style="margin:0">{{ o.line }}</p><ul>{% for x in o.points %}<li>{{ x }}</li>{% endfor %}</ul></div>{% endfor %}</div>
+<div class="promise"><span>Month to month, 30 days notice</span><span>No lock-in contracts</span><span>You own your domain and content</span><span>Australian dollars</span></div>
+</div></section>
+
+<section><div class="wrap">
+<span class="kicker dark-k">How it works</span><h2>Live in about two weeks</h2>
+<div class="steps"><div><h3>Free mock-up</h3><p>I make a preview of your new site first. No cost, no obligation.</p></div><div><h3>Say yes</h3><p>Pick a package. A 50% deposit gets us started.</p></div><div><h3>Check it</h3><p>See it on your phone and ask for changes. I write the words for you.</p></div><div><h3>Go live</h3><p>Then I look after hosting, security and changes every month.</p></div></div>
+</div></section>
+
+{% if testimonials %}<section style="background:var(--card)"><div class="wrap"><span class="kicker dark-k">Clients</span><h2>What people say</h2>
+<div class="quotes">{% for t in testimonials %}<blockquote>“{{ t.testimonial }}”<cite>{{ t.client_name }}</cite></blockquote>{% endfor %}</div></div></section>{% endif %}
+
+{% if niches %}<section><div class="wrap"><span class="kicker dark-k">Who I work with</span><h2>Local websites for</h2>
+<div class="chips">{% for n in niches %}<a href="{{ (home ~ '/' ~ n.slug) if home else (n.slug ~ '/') }}">{{ n.short|capitalize }} in {{ n.town }}</a>{% endfor %}</div></div></section>{% endif %}
+
+<section class="cta"><div class="wrap"><span class="kicker">Free, no obligation</span><h2 style="color:#fff">Want to see your new site first?</h2><p>Tell me your business name and I'll make you a free mock-up.</p>
+<div class="row">{% if booking %}<a class="btn" href="{{ booking }}">Book a 15 minute chat</a>{% endif %}<a class="btn {{ 'ghost' if booking }}" href="mailto:{{ s.email }}?subject=Free%20mock-up">{{ s.email }}</a>{% if s.phone %}<a class="btn ghost" href="tel:{{ s.phone|replace(' ','') }}">{{ s.phone }}</a>{% endif %}</div></div></section>
+<footer><div class="wrap">{{ s.business }} · {{ s.name }} · © {{ year }}</div></footer>
+</body></html>

@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Websites for {{ page.short }} in {{ page.town }} · {{ s.business }}</title>
+<meta name="description" content="Websites for {{ page.short }} in {{ page.town }}: fast on phones, tap to call, free mock-up first, no lock-in.">
+{% include "studio/_style.html" %}
+</head><body>
+<nav class="top"><div class="wrap"><a class="mark" href="{{ home or '../' }}">{{ s.business }}<b>.</b></a>{% if booking %}<a class="btn" href="{{ booking }}">Book a chat</a>{% else %}<a class="btn" href="mailto:{{ s.email }}">Get in touch</a>{% endif %}</div></nav>
+<header class="hero"><div class="wrap">
+<span class="kicker">{{ page.trade }} · {{ page.town }}</span>
+<h1>Websites for {{ page.short }} in <em>{{ page.town }}</em>.</h1>
+<p>For {{ page.short }}, {{ page.angle }}. I build sites that do exactly that, and you see a free mock-up before you pay anything.</p>
+<div class="row"><a class="btn" href="mailto:{{ s.email }}?subject=Free%20mock-up%20for%20my%20{{ page.short|urlencode }}%20business">Get my free mock-up</a>{% if s.phone %}<a class="btn ghost" href="tel:{{ s.phone|replace(' ','') }}">{{ s.phone }}</a>{% endif %}</div>
+</div></header>
+{% if page.story %}{% set d = demos|selectattr('demo','equalto',page.story.demo)|first %}<section><div class="wrap"><span class="kicker dark-k">Made for {{ page.short }}</span><h2>{{ page.story.title }}</h2>
+<a class="demo" href="{{ d.href }}" style="max-width:520px"><div><span class="kicker">Signature demo</span><h3>Scroll through a {{ page.short }} site that tells the story of a job</h3></div><span class="go">Open the demo →</span></a></div></section>{% endif %}
+<section style="background:var(--card)"><div class="wrap"><span class="kicker dark-k">What you get</span><h2>Everything a {{ page.trade.lower().rstrip('s') }} site needs</h2>
+<div class="steps"><div><h3>Tap to call</h3><p>A big button on every page, so phone visitors become calls.</p></div><div><h3>Your best work</h3><p>Photos of real jobs up front, because that is what wins work.</p></div><div><h3>Found locally</h3><p>Set up so people searching in {{ page.town }} can find you.</p></div><div><h3>Looked after</h3><p>Hosting, security and changes every month. No lock-in.</p></div></div></div></section>
+<section><div class="wrap"><span class="kicker dark-k">Pricing</span><h2>Three ways to go</h2>
+<div class="offers">{% for o in offers %}<div class="offer {{ 'featured' if o.featured }}"><h3>{{ o.name }}</h3><div class="price">{{ o.price }}<small>then {{ o.monthly }}</small></div><p style="margin:0">{{ o.line }}</p></div>{% endfor %}</div></div></section>
+<section class="cta"><div class="wrap"><h2 style="color:#fff">See your new site first</h2><p>Free mock-up, no obligation, month to month after that.</p><div class="row">{% if booking %}<a class="btn" href="{{ booking }}">Book a 15 minute chat</a>{% endif %}<a class="btn {{ 'ghost' if booking }}" href="mailto:{{ s.email }}">{{ s.email }}</a></div></div></section>
+<footer><div class="wrap"><a href="{{ home or '../' }}">{{ s.business }}</a> · © {{ year }}</div></footer>
+</body></html>
