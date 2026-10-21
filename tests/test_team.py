@@ -47,6 +47,31 @@ class TeamTest(unittest.TestCase):
     def prospect(self,name):
         return next(r for r in self.rows('prospects') if r['name']==name)
 
+    def test_a_lead_who_replied_gets_no_more_follow_ups_and_shows_first(self):
+        self.shift();p=self.prospect('Fictional Builds')
+        with self.conn() as conn:
+            conn.execute("UPDATE prospects SET stage='Contacted',touches=3,next_on=?,replied_at='2026-10-20T01:00:00+00:00',draft_body='',draft_subject='' WHERE id=?",(TODAY.isoformat(),p['id']));conn.commit()
+            self.assertNotIn(p['id'],[r['id'] for r in night_shift._due_drafts(conn,self.owner(conn),TODAY)])
+            lead_engine.expire(conn,self.owner(conn),TODAY);conn.commit()
+            queue=lead_engine.queue(conn,self.owner(conn),TODAY)
+        self.assertEqual(self.prospect('Fictional Builds')['stage'],'Contacted')  # not "No reply"
+        self.assertEqual(queue[0]['id'],p['id'])
+        with patch('lead_engine.today',return_value=TODAY):
+            home=self.client.get('/business').get_data(as_text=True)
+        self.assertIn('They wrote back',home)
+
+    def test_one_daily_number_warms_up_and_the_sweep_has_a_time_limit(self):
+        with self.conn() as conn:
+            owner=self.owner(conn)
+            self.assertEqual(team.safe_daily(conn,owner,TODAY),20)
+            conn.execute("INSERT INTO prospects(owner_id,source_id,name,created_at) VALUES(?,'t1','T','x')",(owner,));conn.execute("INSERT INTO prospect_log(owner_id,prospect_id,on_date,action,detail,created_at) VALUES(?,last_insert_rowid(),?,'sent','','x')",(owner,'2026-10-01'))
+            self.assertEqual(team.safe_daily(conn,owner,TODAY),25)  # 40 after 2 weeks, capped at the 25 limit
+            self.assertEqual(lead_engine.counts(conn,owner,TODAY)['target'],25)
+            ticks=iter([0,500,500,500,500])
+            with patch('lead_engine.http_json',return_value={'elements':[]}):
+                found,searched,_=sweep.run(conn,owner,5,pause=0,sleep=lambda s:None,budget=180,clock=lambda:next(ticks))
+        self.assertEqual(searched,1)  # stopped after the time budget; carries on next shift
+
     def test_team_page_shows_nine_agents_and_their_playbooks(self):
         page=self.client.get('/team').get_data(as_text=True)
         for name in ('CEO','Chief of Staff','Growth Manager','Sales Manager','Delivery Manager','Scout','Inspector','SEO Checker','Writer','Deliverability Guard','Designer',

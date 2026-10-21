@@ -136,7 +136,7 @@ def detect_replies(conn,owner,send=ping):
     for p in rows:
         conn.execute("UPDATE prospects SET replied_at=?,next_on=? WHERE id=?",(p['received_at'],lead_engine.today().isoformat(),p['id']))
         lead_engine.record(conn,owner,p,'replied')
-        send(conn,owner,p['name']+' replied','Open AgencyOS Inbox: the Reply Handler has an answer ready. Replying within the hour wins jobs.')
+        send(conn,owner,'A lead replied','Open AgencyOS and reply by email. Replying within the hour wins jobs.')
     conn.commit()
     return len(rows)
 

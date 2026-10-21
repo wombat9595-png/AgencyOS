@@ -1,4 +1,4 @@
-"""The night shift: every night the agents run the whole Find customers chain on their own.
+"""Shifts: around the clock, every 2 hours, the agents run the whole Find customers chain on their own.
 
 Scout finds businesses on the owner's chosen beats (trade + suburb), Inspector checks their
 websites, Designer matches each lead to a story mock-up, Writer drafts the next message,
@@ -24,7 +24,6 @@ SHIFTS_A_DAY=12  # around the clock: a shift every 2 hours while the Mac is awak
 SHIFT_GAP=timedelta(hours=24/SHIFTS_A_DAY)
 BEATS_PER_NIGHT=2
 CHECKS_PER_NIGHT=40
-DRAFTS_PER_NIGHT=15
 AGENTS=(
  ('scout','Scout','Finds businesses'),('inspector','Inspector','Checks websites'),('designer','Designer','Matches story mock-ups'),
  ('writer','Writer','Drafts messages'),('chaser','Chaser','Lines up follow-ups'),('caretaker','Caretaker','Looks after monthly clients'),
@@ -65,7 +64,7 @@ def last_run(conn,owner):
 def _due_drafts(conn,owner,on):
     """Businesses whose next message the Writer should draft now: good new leads and follow-ups due."""
     rows=conn.execute("""SELECT * FROM prospects WHERE owner_id=? AND (
-        (stage='New' AND score>=50 AND email!='') OR (stage='Contacted' AND next_on!='' AND next_on<=? AND email!=''))
+        (stage='New' AND score>=50 AND email!='') OR (stage='Contacted' AND next_on!='' AND next_on<=? AND email!='' AND replied_at=''))
       ORDER BY stage='Contacted' DESC, score DESC, id""",(owner,on.isoformat())).fetchall()
     return [p for p in rows if not smart_writer.stored(p)]
 
@@ -104,8 +103,8 @@ def run(conn,owner,source='night',on=None):
     bad=set(team.learned(conn,owner)['bad_trades'])
     due=[p for p in _due_drafts(conn,owner,local) if not (p['stage']=='New' and p['trade'] in bad)]
     # Follow-ups always; new businesses only up to the Chief of Staff's daily limit.
-    follow=[p for p in due if p['stage']!='New'];fresh=[p for p in due if p['stage']=='New'][:the_plan['drafts']]
-    for p in (follow+fresh)[:DRAFTS_PER_NIGHT+the_plan['drafts']]:
+    follow=[p for p in due if p['stage']!='New'];fresh=sorted((p for p in due if p['stage']=='New'),key=lambda p:not playbook.story_for(p['trade']))[:the_plan['drafts']]  # builders, landscapers and salons first: the story demos are our edge
+    for p in follow[:the_plan['safe']]+fresh:  # one daily number: the Deliverability Guard's
         how=smart_writer.write(conn,owner,p,ls,coaching=team.coaching(conn,owner,p['trade']) if smart_writer.ai_status(conn,owner)['ready'] else '',short=short)
         counts['drafts']+=1;counts['ai_drafts']+=how=='ai';drafted.append(p['id'])
         if p['stage']=='New':counts['mockups']+=1
@@ -153,6 +152,8 @@ def worker_tick(path):
             try:pitch.detect_replies(conn,owner[0])  # a lead wrote back: stop chasing them and buzz the owner's phone
             except Exception:conn.rollback()
             import team
+            try:lead_engine.sync_gmail(conn,owner[0])  # approved drafts that Benji sent: schedule their follow-ups
+            except Exception:conn.rollback()
             try:team.notify(conn,owner[0])  # drafts ready: buzz the owner's phone (7 am to 9 pm, at most 3 a day)
             except Exception:conn.rollback()
             try:
@@ -232,7 +233,7 @@ def register(app,get_db,login_required):
     def night_shift_toggle():
         conn=get_db();owner=session['user_id'];on=request.form.get('enabled')=='1'
         conn.execute('INSERT INTO night_shift_settings(owner_id,enabled) VALUES(?,?) ON CONFLICT(owner_id) DO UPDATE SET enabled=excluded.enabled',(owner,int(on)));conn.commit()
-        flash('The night shift is on. It runs after 2 am while AgencyOS is open.' if on else 'The night shift is off. Nothing runs overnight.','success')
+        flash('Shifts are on. The team works every 2 hours, day and night, while AgencyOS is open.' if on else 'Shifts are off. The team is not working.','success')
         return redirect(url_for('night_shift_home'))
 
     @app.post('/night-shift/run')

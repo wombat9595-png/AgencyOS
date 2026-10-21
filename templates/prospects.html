@@ -42,6 +42,9 @@
 {{ p.body }}</div>
 {% if p.gmail_draft_id %}<p>It is in your Gmail Drafts. Check it there and press Send. This card moves on by itself once Gmail shows it sent.</p><p><a class="btn primary" href="https://mail.google.com/mail/u/0/#drafts" target="_blank" rel="noopener">Open Gmail Drafts</a></p>{% else %}<p><a class="btn primary" href="{{ p.mailto }}">Open in my email</a></p>{% endif %}
 <form method="post" action="{{ url_for('prospects_action',prospect_id=p.id,action='sent') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn secondary">I sent it</button></form>
+{% elif p.channel=='replied' %}
+<p><strong>They wrote back.</strong> Read it in Gmail and answer by email. Their follow-ups have stopped. Then mark them below.</p>
+<form method="post" action="{{ url_for('prospects_action',prospect_id=p.id,action='interested') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn primary">They're interested</button></form>
 {% elif p.channel=='email' %}
 <form method="post" action="{{ url_for('prospects_action',prospect_id=p.id,action='approve') }}" class="stack"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 <label class="wide">Subject<input name="subject" maxlength="200" value="{{ p.subject }}"></label>
@@ -74,6 +77,6 @@
 <label>Email people reply to<input name="email" type="email" maxlength="160" value="{{ settings.email }}" required></label>
 <label>Phone (optional)<input name="phone" maxlength="60" value="{{ settings.phone }}"></label>
 <label>Where you are based (optional)<input name="area" maxlength="100" value="{{ settings.area }}" placeholder="Penrith NSW"></label>
-<label>Daily target<input name="daily_target" type="number" min="1" max="50" value="{{ settings.daily_target }}"></label>
+<input type="hidden" name="daily_target" value="{{ settings.daily_target }}"><p class="tiny muted wide">How many emails a day is set by the Deliverability Guard on the Team page (it warms your inbox up slowly).</p>
 <div class="wide"><button class="btn primary">Save</button></div></form></details></section>
 {% endblock %}

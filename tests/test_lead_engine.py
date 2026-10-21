@@ -129,7 +129,7 @@ class LeadEngineTest(unittest.TestCase):
         self.post('/find-customers/settings',dict(name='Benji Price',business='Price Web Co',email='benji@example.com',phone='0400 111 222',area='Penrith NSW',daily_target='15'))
         self.search()
         page=self.page()
-        self.assertIn('Price Web Co',page);self.assertIn('based in Penrith NSW',page);self.assertIn('0 of 15',page)
+        self.assertIn('Price Web Co',page);self.assertIn('based in Penrith NSW',page);self.assertIn('0 of 20',page)  # the Deliverability Guard's week-one number wins
 
     def test_approved_email_goes_to_gmail_drafts_and_is_noticed_when_sent(self):
         import os,time,sqlite3,base64

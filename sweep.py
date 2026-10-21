@@ -155,10 +155,11 @@ def next_tiles(conn,owner,count,all_australia=True):
     return out
 
 
-def run(conn,owner,count,all_australia=True,pause=2.0,sleep=time.sleep):
+def run(conn,owner,count,all_australia=True,pause=2.0,sleep=time.sleep,budget=180,clock=time.monotonic):
     """Search the next few squares. Returns (found, squares searched, notes). Stops early if the map service is busy."""
-    contact=lead_engine.settings(conn,owner)['email'];found=0;searched=0;notes=[]
+    contact=lead_engine.settings(conn,owner)['email'];found=0;searched=0;notes=[];start=clock()
     for region,i,(kind,job) in next_tiles(conn,owner,count,all_australia):
+        if searched and clock()-start>budget:break  # never hold up reply checks for long; the rest waits for the next shift
         if searched:sleep(pause)
         query=tile_query(job) if kind=='box' else state_query(region[2],job)
         try:data=lead_engine.http_json(lead_engine.OVERPASS,parse.urlencode({'data':query}).encode(),contact)

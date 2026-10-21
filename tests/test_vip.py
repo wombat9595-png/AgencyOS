@@ -54,7 +54,7 @@ class VipTest(unittest.TestCase):
                 queue=lead_engine.queue(conn,1,TODAY,limit=50)
                 b=email_score.scoreboard(conn,1,TODAY)
         self.assertTrue(queue);self.assertTrue(all(p['email'] for p in queue if p['stage']=='New'))
-        self.assertEqual((b['sent'],b['email_target']),(0,10))
+        self.assertEqual((b['sent'],b['email_target']),(0,20))  # the Deliverability Guard's week-one number
 
     def test_inspector_finds_the_email_on_their_site(self):
         html='<a href="mailto:Info@OldSitePlumbing.com.au?subject=Hi">Email us</a> logo@2x.png bob@gmail.com'
@@ -145,7 +145,7 @@ class VipTest(unittest.TestCase):
                 self.assertEqual(pitch.detect_replies(conn,1,send=lambda c,o,t,m:sent.append(t)),1)
                 self.assertEqual(pitch.detect_replies(conn,1,send=lambda c,o,t,m:sent.append(t)),0)
         row=[r for r in self.rows('prospects') if r['id']==p['id']][0]
-        self.assertTrue(row['replied_at']);self.assertEqual(row['next_on'],TODAY.isoformat());self.assertEqual(sent,['Fictional Pipes replied'])
+        self.assertTrue(row['replied_at']);self.assertEqual(row['next_on'],TODAY.isoformat());self.assertEqual(sent,['A lead replied'])  # ntfy is public: no names
         with patch('pitch.urlrequest.urlopen') as opened:
             with self.conn() as conn:self.assertFalse(pitch.ping(conn,1,'t','m'))
             opened.assert_not_called()

@@ -26,7 +26,7 @@ def scoreboard(conn,owner,on=None):
     on=on or lead_engine.today();iso=on.isoformat()
     def sent_on(d):
         return conn.execute("SELECT COUNT(*) FROM prospect_log WHERE owner_id=? AND on_date=? AND action='sent'",(owner,d)).fetchone()[0]
-    sent=sent_on(iso);target=lead_engine.settings(conn,owner)['daily_target']
+    sent=sent_on(iso);target=lead_engine.daily_target(conn,owner)
     streak=0;d=on if sent>=target else on-timedelta(days=1)
     for _ in range(120):
         if d.weekday()>=5:d-=timedelta(days=1);continue

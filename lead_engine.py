@@ -448,7 +448,16 @@ def record(conn,owner,p,action,detail=''):
 def expire(conn,owner,on=None):
     """After the second follow-up has had a week, stop chasing."""
     on=(on or today()).isoformat()
-    conn.execute("UPDATE prospects SET stage='No reply',next_on='' WHERE owner_id=? AND stage='Contacted' AND touches>=3 AND next_on!='' AND next_on<=?",(owner,on))
+    conn.execute("UPDATE prospects SET stage='No reply',next_on='' WHERE owner_id=? AND stage='Contacted' AND replied_at='' AND touches>=3 AND next_on!='' AND next_on<=?",(owner,on))
+
+
+def daily_target(conn,owner):
+    """One daily email number for the whole app: the Deliverability Guard's safe number (warm-up included)."""
+    try:
+        import team
+        return team.safe_daily(conn,owner)
+    except Exception:
+        return settings(conn,owner)['daily_target']
 
 
 def counts(conn,owner,on=None):
@@ -457,19 +466,19 @@ def counts(conn,owner,on=None):
     return dict(total=n('1'),
       to_review=n("stage='New' AND score>=50 AND email!=''"),
       ready=n("stage='Approved'"),
-      follow_ups=n("stage='Contacted' AND next_on!='' AND next_on<=?",(iso,)),
+      follow_ups=n("stage='Contacted' AND replied_at='' AND next_on!='' AND next_on<=?",(iso,)),
       contacted_today=conn.execute("SELECT COUNT(DISTINCT prospect_id) FROM prospect_log WHERE owner_id=? AND on_date=? AND action='sent'",(owner,iso)).fetchone()[0],
       contacted=n("touches>0"),interested=n("stage='Interested'"),customers=n("stage='Customer'"),
       waiting=n("stage='Contacted' AND (next_on='' OR next_on>?)",(iso,)),
-      target=settings(conn,owner)['daily_target'])
+      target=daily_target(conn,owner))
 
 
 def queue(conn,owner,on=None,limit=12):
     """Today's work, most urgent first: follow-ups due, approved drafts to send, then the best new leads."""
     iso=(on or today()).isoformat()
     return conn.execute("""SELECT * FROM prospects WHERE owner_id=? AND (
-        (stage='Contacted' AND next_on!='' AND next_on<=? AND email!='') OR stage IN ('Approved','Interested') OR (stage='New' AND score>=50 AND email!='' AND ceo_status NOT IN ('held','redo')))
-      ORDER BY CASE WHEN stage='Interested' THEN 0 WHEN stage='Contacted' THEN 1 WHEN stage='Approved' THEN 2 ELSE 3 END, score DESC, id LIMIT ?""",(owner,iso,limit)).fetchall()
+        (stage='Contacted' AND replied_at!='') OR (stage='Contacted' AND next_on!='' AND next_on<=? AND email!='' AND replied_at='') OR stage IN ('Approved','Interested') OR (stage='New' AND score>=50 AND email!='' AND ceo_status NOT IN ('held','redo')))
+      ORDER BY CASE WHEN stage='Interested' OR replied_at!='' THEN 0 WHEN stage='Contacted' THEN 1 WHEN stage='Approved' THEN 2 ELSE 3 END, score DESC, id LIMIT ?""",(owner,iso,limit)).fetchall()
 
 
 def mark_sent(conn,owner,p,on):
@@ -500,7 +509,7 @@ def card(p,s):
     import smart_writer,playbook
     subject,body=(p['subject'],p['message']) if p['stage']=='Approved' and p['message'] else (smart_writer.stored(p) or draft(p,s))
     story=playbook.story_for(p['trade'])
-    channel='email' if p['email'] else 'none'
+    channel='replied' if p['stage']=='Contacted' and p['replied_at'] else 'email' if p['email'] else 'none'
     return dict(p,why=REASONS[p['reason']][1],subject=subject,body=body,channel=channel,
       mailto=mailto(p,subject,body) if p['email'] else '',
       google='https://www.google.com/search?q='+quote(p['name']+' '+p['suburb']),

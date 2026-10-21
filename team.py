@@ -328,7 +328,7 @@ def brief(conn,owner,on=None):
         k=last['counts']
         lines.append('Last shift ('+last['local_date']+'): the team found '+str(k.get('found',0)+k.get('swept',0))+' businesses, checked '+str(k.get('checked',0))+
           ' websites and wrote '+str(k.get('drafts',0))+' drafts. I passed '+str(k.get('ceo_ready',0))+(' and held back '+str(k['ceo_held']) if k.get('ceo_held') else '')+'.')
-    else:lines.append('No shift has run yet. The first one runs after 2 am while AgencyOS is open, or press "Run a shift now".')
+    else:lines.append('No shift has run yet. One runs every 2 hours while AgencyOS is open, or press "Run a shift now".')
     n=ready_count(conn,owner)
     lines.append(str(n)+' waiting for your yes or no.' if n else 'Nothing is waiting for you right now.')
     if c['interested']:lines.append(str(c['interested'])+' interested: send their mock-up today, that is where the money is.')
