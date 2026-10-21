@@ -49,9 +49,11 @@ class TeamTest(unittest.TestCase):
 
     def test_team_page_shows_nine_agents_and_their_playbooks(self):
         page=self.client.get('/team').get_data(as_text=True)
-        for name in ('CEO','Chief of Staff','Sales Manager','Scout','Inspector','SEO Checker','Writer','Call Prepper','Designer'):self.assertIn(name,page)
-        self.assertIn('Teach',page);self.assertIn('Quote helper',page);self.assertIn('Sydney',page)
-        self.assertEqual(len(team.AGENTS),9);self.assertEqual(len(team.WORKERS),6)
+        for name in ('CEO','Chief of Staff','Growth Manager','Sales Manager','Delivery Manager','Scout','Inspector','SEO Checker','Writer','Call Prepper','Designer',
+                     'Chaser','Reply Handler','Closer','Site Builder','Client Care','Bookkeeper'):self.assertIn(name,page)
+        self.assertIn('Teach',page);self.assertIn('Quote helper',page);self.assertIn('Sydney (first)',page);self.assertIn('every business with no website in Australia',page)
+        self.assertEqual(len(team.AGENTS),17);self.assertEqual(len(team.WORKERS),12)
+        self.assertEqual({a[3] for a in team.AGENTS if a[0] in team.WORKERS},{'growth','sales','delivery'})
         self.assertIn('href="/team"',self.client.get('/business').get_data(as_text=True))
 
     def test_ceo_passes_rule_drafts_and_holds_what_you_taught_it_to_block(self):
@@ -148,7 +150,10 @@ class TeamTest(unittest.TestCase):
             found,searched,notes=sweep.run(conn,owner,2,sleep=sleeps.append)
             self.assertEqual((found,searched,notes),(2,2,[]));self.assertEqual(sleeps,[2.0])
             prog=sweep.progress(conn,owner)
-            self.assertEqual((prog[0]['done'],prog[0]['found']),(2,2));self.assertEqual(len(prog),len(sweep.REGIONS))
+            self.assertEqual((prog[0]['done'],prog[0]['found']),(2,2));self.assertEqual(len(prog),len(sweep.REGIONS)+len(sweep.CATCH_ALL))
+            states=sweep.by_state(conn,owner)
+            self.assertEqual([r['name'] for r in states],['Sydney (first)']+list(sweep.STATES))
+            self.assertEqual(states[0]['found'],2)
             self.assertEqual(sweep.next_tiles(conn,owner,1)[0][1],2)
         sparky=self.prospect('No Site Sparkies')
         self.assertEqual((sparky['trade'],sparky['suburb'],sparky['reason']),('Electricians','Manly','none'))
@@ -156,6 +161,25 @@ class TeamTest(unittest.TestCase):
         self.assertFalse([r for r in self.rows('prospects') if r['name']=='Mystery Shop'])
         with self.conn() as conn,patch('lead_engine.http_json',side_effect=[TILE]):
             self.assertEqual(sweep.run(conn,self.owner(conn),1,sleep=sleeps.append)[0],0)  # never added twice
+
+    def test_the_sweep_covers_every_state_and_territory_after_sydney(self):
+        self.assertEqual(sweep.REGIONS[0][0],'sydney')
+        self.assertEqual({r[2] for r in sweep.REGIONS},set(sweep.STATES))
+        self.assertEqual([c[2] for c in sweep.CATCH_ALL],list(sweep.STATES))
+        self.assertEqual(len(sweep.jobs(sweep.CATCH_ALL[0])),len(lead_engine.TRADES))
+        q=sweep.state_query('WA','Plumbers')
+        self.assertIn('area["ISO3166-2"="AU-WA"]',q);self.assertIn('"craft"="plumber"',q);self.assertIn('[!"website"]',q)
+        self.assertEqual(sum(len(sweep.jobs(r)) for r in sweep.plan()),1863)
+        self.assertEqual(sweep.plan(False),sweep.REGIONS[:1])
+        with self.conn() as conn:
+            owner=self.owner(conn)
+            for r in sweep.plan():
+                for i in range(len(sweep.jobs(r))):conn.execute("INSERT INTO sweep_tiles VALUES(?,?,?,'x',0)",(owner,r[0],i))
+            conn.execute("DELETE FROM sweep_tiles WHERE region='state-nt' AND idx=0");conn.commit()
+            self.assertEqual(sweep.next_tiles(conn,owner,5),[(sweep.CATCH_ALL[-1],0,('trade','Plumbers'))])
+            with patch('lead_engine.http_json',side_effect=lead_engine.WorkflowError('The map service sent back too much data. Try a smaller radius.')):
+                found,searched,notes=sweep.run(conn,owner,1)
+            self.assertEqual(searched,1);self.assertIn('too big for one search',notes[0])  # a huge state search never blocks the sweep
 
     def test_sweep_stops_politely_when_the_map_is_busy(self):
         with self.conn() as conn,patch('lead_engine.http_json',side_effect=lead_engine.WorkflowError('busy')):

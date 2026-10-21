@@ -1,10 +1,13 @@
 """The agent team: a real org chart that turns the night shift into checked drafts for the owner's yes or no.
 
+17 roles: CEO, Chief of Staff, three division managers (Growth, Sales, Delivery) and twelve workers.
+
 CEO           reviews every finished draft against the playbook and the owner's lessons, holds back bad ones,
               writes the morning brief and buzzes the owner's phone when drafts are ready.
 Chief of Staff plans each night: how many map squares to sweep, how many drafts to write, and paces the AI budget.
-Sales Manager runs the Growth team of six workers and keeps their scorecards.
-Workers       Scout, Inspector, SEO Checker, Writer, Call Prepper and Designer.
+Growth        Scout, Inspector, SEO Checker, Writer, Call Prepper and Designer find and draft.
+Sales         Chaser, Reply Handler and Closer turn replies into yeses.
+Delivery      Site Builder, Client Care and Bookkeeper keep clients happy and paying.
 
 "Teaching" is real but simple: each agent has a written playbook, the owner can add lessons (plain-English rules
 and words never to use), and every yes, edit and no is stored. The rules-only team obeys the lessons and the
@@ -39,39 +42,69 @@ AGENTS=(
    'Only write as many new drafts as Benji can send: his daily draft limit minus what is already waiting.',
    'Spread the AI budget evenly over the month. If we are ahead of budget, the team uses the free rules until it catches up.',
    'Follow-ups that are due always come before new businesses.')),
- ('sales','Sales Manager','Runs the Growth team','chief',
-  'Hands work to the six workers and tracks who is getting yeses.',
+ ('growth','Growth Manager','Runs the Growth team','chief',
+  'Hands lead work to the six Growth workers and tracks who is getting yeses.',
   ('Best leads first: no website or a broken one, with a phone or email.',
    'Phone-only businesses go to the Call Prepper, email ones to the Writer.',
    'Track yes rates by trade and by channel, and push more of whatever is working.')),
- ('scout','Scout','Finds businesses','sales',
-  'Sweeps the map for local businesses with no website listed, plus your saved search areas.',
-  ('Use free OpenStreetMap data only. Search slowly so the free service is never overloaded.',
+ ('sales','Sales Manager','Turns replies into sales','chief',
+  'Makes sure every follow-up goes out, every reply gets answered fast and every "yes" gets a proposal.',
+  ('A lead who replies is the most valuable thing in the business: answer within the hour.',
+   'Interested means: mock-up, proposal and price in front of them within a day.',
+   'Stop chasing anyone who says no or asks to stop. Never contact "Do not contact".')),
+ ('delivery','Delivery Manager','Keeps clients happy and paying','chief',
+  'Runs the websites you are building, the monthly clients and the money coming in.',
+  ('Every paying client hears from us at least once a month.',
+   'Change requests get a drafted reply the same day.',
+   'Chase overdue money politely, and only after checking the bank.')),
+ ('scout','Scout','Finds businesses','growth',
+  'Sweeps all of Australia for local businesses with no website listed, Sydney first, plus your saved search areas.',
+  ('Sydney first, then every capital and big city, then regional towns in every state, then the rest of each state.',
+   'Use free OpenStreetMap data only. Search slowly so the free service is never overloaded.',
    'Skip any business already in the list, and never re-add one marked "Do not contact".',
    '"No website listed" is not proof. Benji does a ten-second Google check before he sends.')),
- ('inspector','Inspector','Checks websites','sales',
+ ('inspector','Inspector','Checks websites','growth',
   'Opens each business\'s homepage once and notes if it is down, not secure, not phone-friendly or out of date.',
   ('One look at the public homepage, like a visitor. No logging in, no forms, no hammering.',
    'Only report what was actually seen. Never guess.')),
- ('seo','SEO Checker','Checks how Google sees them','sales',
+ ('seo','SEO Checker','Checks how Google sees them','growth',
   'Looks for the simple Google and phone basics: a description, a main heading, tap-to-call, local business details.',
   ('SEO means "how easily Google finds and shows a business". Check the basics only.',
    'Give the Writer one plain-English line it can use, never jargon.')),
- ('writer','Writer','Drafts emails','sales',
+ ('writer','Writer','Drafts emails','growth',
   'Writes the first email and two follow-ups for each business, from the playbook and your lessons.',
   (playbook.VOICE,'Offer: '+playbook.OFFER+'.','Never mention prices in an email. Always keep the "no thanks" line.',
    'First email up to '+str(playbook.MAX_WORDS['first'])+' words; follow-ups shorter.')),
- ('caller','Call Prepper','Gets your calls ready','sales',
+ ('caller','Call Prepper','Gets your calls ready','growth',
   'Builds the call sheet for businesses with only a phone number: opener, likely objections, best time to ring.',
   ('Calls only in legal hours: weekdays 9 am to 8 pm, Saturday 9 to 5, never Sunday or national holidays.',
    'Every call opens with who Benji is and why he is calling, in one breath.')),
- ('designer','Designer','Matches mock-ups','sales',
+ ('designer','Designer','Matches mock-ups','growth',
   'Picks the free mock-up for each business: the animated story for builders, landscapers and salons.',
   ('Builders get the blueprint-to-house story, landscapers the yard makeover, salons the cut-and-colour story.',
    'Everyone else gets the clean one-page mock-up with a big tap-to-call button.')),
+ ('chaser','Chaser','Follows up','sales',
+  'Drafts follow-up 1 and 2 on the right day, and stops when they reply or after the last one.',
+  ('Follow up after 4 days, then 6 more, then stop. Short and friendly every time.',)),
+ ('replier','Reply Handler','Answers replies','sales',
+  'Spots when a lead writes back, stops their follow-ups, buzzes your phone and drafts your reply in Gmail.',
+  ('Reply drafts only. Benji presses Send.','A reply means call them back within the hour.')),
+ ('closer','Closer','Gets the yes','sales',
+  'For every interested business: the mock-up, a proposal page and the right package, ready to send.',
+  ('Lead with the mock-up, then one clear package and price. No pressure, no fake deadlines.',)),
+ ('builder','Site Builder','Builds the websites','delivery',
+  'Tracks every website you are building, from plan to live.',
+  ('A client site is never published without Benji\'s OK and the client\'s OK.',)),
+ ('carer','Client Care','Looks after monthly clients','delivery',
+  'Drafts the monthly Google posts, review requests and replies to change requests.',
+  ('Every monthly client gets their Google posts and a check-in every month.',)),
+ ('bookkeeper','Bookkeeper','Gets you paid','delivery',
+  'Makes invoices, watches what is due and drafts polite reminders for overdue ones.',
+  ('Only mark something paid after Benji checks the bank.',)),
 )
+DIVISIONS=(('growth',('scout','inspector','seo','writer','caller','designer')),('sales',('chaser','replier','closer')),('delivery',('builder','carer','bookkeeper')))
 NAMES={a[0]:a[1] for a in AGENTS}
-WORKERS=('scout','inspector','seo','writer','caller','designer')
+WORKERS=tuple(k for _,keys in DIVISIONS for k in keys)
 NO_REASONS={'too_long':'Too long','too_salesy':'Too salesy','wrong':'Got a fact wrong','not_me':'Does not sound like me','bad_fit':'Not a good business for us'}
 LEARN_AFTER=3  # the same reason this many times in the last 20 no's becomes a standing rule
 
@@ -80,7 +113,7 @@ def migrate(conn):
     conn.executescript('''
     CREATE TABLE IF NOT EXISTS team_settings (
       owner_id INTEGER PRIMARY KEY, pings INTEGER NOT NULL DEFAULT 1, phone_url TEXT NOT NULL DEFAULT '',
-      tiles_per_night INTEGER NOT NULL DEFAULT 24, all_australia INTEGER NOT NULL DEFAULT 1, daily_drafts INTEGER NOT NULL DEFAULT 25,
+      tiles_per_night INTEGER NOT NULL DEFAULT 60, all_australia INTEGER NOT NULL DEFAULT 1, daily_drafts INTEGER NOT NULL DEFAULT 25,
       ping_day TEXT NOT NULL DEFAULT '', pings_today INTEGER NOT NULL DEFAULT 0, last_ping_at TEXT NOT NULL DEFAULT '', last_ping_count INTEGER NOT NULL DEFAULT 0);
     CREATE TABLE IF NOT EXISTS team_lessons (
       id INTEGER PRIMARY KEY, owner_id INTEGER NOT NULL, agent TEXT NOT NULL, lesson TEXT NOT NULL, avoid TEXT NOT NULL DEFAULT '',
@@ -98,7 +131,7 @@ def now_local():
     return datetime.now(TZ)
 
 
-DEFAULTS=dict(pings=1,phone_url='',tiles_per_night=24,all_australia=1,daily_drafts=25,ping_day='',pings_today=0,last_ping_at='',last_ping_count=0)
+DEFAULTS=dict(pings=1,phone_url='',tiles_per_night=60,all_australia=1,daily_drafts=25,ping_day='',pings_today=0,last_ping_at='',last_ping_count=0)
 
 
 def settings(conn,owner):
@@ -242,7 +275,7 @@ def plan(conn,owner):
     t=settings(conn,owner)
     waiting=conn.execute("SELECT COUNT(*) FROM prospects WHERE owner_id=? AND stage='New' AND draft_body!='' AND ceo_status='ready'",(owner,)).fetchone()[0]
     nxt=sweep.next_tiles(conn,owner,1,bool(t['all_australia']))
-    return dict(tiles=max(0,min(60,t['tiles_per_night'])),drafts=max(0,min(60,t['daily_drafts']-waiting)),waiting=waiting,
+    return dict(tiles=max(0,min(200,t['tiles_per_night'])),drafts=max(0,min(60,t['daily_drafts']-waiting)),waiting=waiting,
       region=nxt[0][0][1] if nxt else '',writer=smart_writer.ai_status(conn,owner),all_australia=bool(t['all_australia']))
 
 
@@ -317,12 +350,26 @@ def scorecards(conn,owner):
         except ValueError:pass
     stories=tuple(t for t in lead_engine.TRADES if playbook.story_for(t))
     t=settings(conn,owner);prog=sweep.progress(conn,owner,bool(t['all_australia']))
+    total=sum(r['total'] for r in prog);done=sum(r['done'] for r in prog)
+    import client_plans
+    plans=client_plans.summary(conn,owner)
+    projects=conn.execute("SELECT COUNT(*) FROM projects WHERE status IN ('Planning','In progress','Review')").fetchone()[0]
+    gmail_drafts=n("SELECT COUNT(*) FROM gmail_drafts WHERE owner_id=? AND status='Needs review'")
+    overdue=n("SELECT COUNT(*) FROM bills WHERE owner_id=? AND status NOT IN ('Paid','Cancelled','Void') AND due_on<?",(lead_engine.today().isoformat(),))
     return dict(
       ceo=dict(big=n("SELECT COUNT(*) FROM prospects WHERE owner_id=? AND ceo_status='ready' AND stage='New'"),label='drafts passed, waiting for you',
                small=str(n("SELECT COUNT(*) FROM prospects WHERE owner_id=? AND ceo_status='held'"))+' held back · '+str(n("SELECT COUNT(*) FROM prospects WHERE owner_id=? AND ceo_status='redo'"))+' sent back by you'),
-      chief=dict(big=t['daily_drafts'],label='drafts a day, max',small=str(t['tiles_per_night'])+' map squares a night'),
-      sales=dict(big=c['contacted_today'],label='contacted today',small='target '+str(c['target'])+' · '+str(c['interested'])+' interested'),
-      scout=dict(big=n('SELECT COUNT(*) FROM prospects WHERE owner_id=?'),label='businesses found',small=prog[0]['name']+' '+str(prog[0]['pct'])+'% swept'),
+      chief=dict(big=t['daily_drafts'],label='drafts a day, max',small=str(t['tiles_per_night'])+' map searches a night'),
+      growth=dict(big=c['contacted_today'],label='contacted today',small='target '+str(c['target'])+' a day'),
+      sales=dict(big=c['interested'],label='interested right now',small=str(c['customers'])+' became customers'),
+      delivery=dict(big=plans['clients'],label='monthly clients',small='A$'+format(plans['monthly_cents']/100,',.0f')+' a month'),
+      scout=dict(big=n('SELECT COUNT(*) FROM prospects WHERE owner_id=?'),label='businesses found',small=str(done)+' of '+str(total)+' map searches across Australia'),
+      chaser=dict(big=c['follow_ups'],label='follow-ups due today',small=str(c['waiting'])+' waiting for a reply'),
+      replier=dict(big=n("SELECT COUNT(*) FROM prospects WHERE owner_id=? AND replied_at!=''"),label='leads who replied',small=str(gmail_drafts)+' reply drafts in Gmail to check'),
+      closer=dict(big=c['interested'],label='proposals to send',small='mock-up + proposal + package'),
+      builder=dict(big=projects,label='websites in progress',small='nothing goes live without your OK'),
+      carer=dict(big=plans['requests']+plans['posts'],label='client jobs drafted',small=str(plans['requests'])+' change requests · '+str(plans['posts'])+' Google posts'),
+      bookkeeper=dict(big=overdue,label='invoices overdue',small=str(plans['overdue'])+' monthly payments overdue'),
       inspector=dict(big=n("SELECT COUNT(*) FROM prospects WHERE owner_id=? AND checked_at!=''"),label='websites checked',small=str(n("SELECT COUNT(*) FROM prospects WHERE owner_id=? AND website='' AND facebook=''"))+' with no website listed'),
       seo=dict(big=seo,label='sites with Google gaps',small='used in the Writer\'s notes'),
       writer=dict(big=l['rate'] if l['total'] else '–',label='% of drafts you said yes to',small=str(l['yes'])+' yes · '+str(l['no'])+' no · '+str(l['edited'])+' edited'),
@@ -336,7 +383,11 @@ def org(conn,owner):
     taught={}
     for r in lessons(conn,owner):taught.setdefault(r['agent'],[]).append(r)
     people=[dict(key=k,name=name,title=title,boss=boss,job=job,playbook=rules,card=cards[k],lessons=taught.get(k,[])) for k,name,title,boss,job,rules in AGENTS]
-    return dict(people={p['key']:p for p in people},workers=[p for p in people if p['key'] in WORKERS],progress=prog,general=taught.get('all',[]))
+    by={p['key']:p for p in people}
+    divisions=[dict(manager=by[m],workers=[by[k] for k in keys]) for m,keys in DIVISIONS]
+    t=settings(conn,owner)
+    return dict(people=by,workers=[p for p in people if p['key'] in WORKERS],divisions=divisions,progress=prog,
+      states=sweep.by_state(conn,owner,bool(t['all_australia'])),general=taught.get('all',[]))
 
 
 # ---------- Phone ----------
@@ -397,7 +448,7 @@ def register(app,get_db,login_required):
     def team_settings():
         conn=get_db();owner=session['user_id'];f=request.form
         tiles=f.get('tiles_per_night',type=int);drafts=f.get('daily_drafts',type=int)
-        if tiles is None or not 0<=tiles<=60 or drafts is None or not 0<=drafts<=60:raise WorkflowError('Map squares: 0 to 60 a night. Drafts: 0 to 60 a day.')
+        if tiles is None or not 0<=tiles<=200 or drafts is None or not 0<=drafts<=60:raise WorkflowError('Map squares: 0 to 200 a night. Drafts: 0 to 60 a day.')
         url=clean_phone_url(f.get('phone_url',''))
         _save(conn,owner,tiles_per_night=tiles,daily_drafts=drafts,all_australia=int(f.get('all_australia')=='1'),pings=int(f.get('pings')=='1'),phone_url=url)
         conn.commit()
