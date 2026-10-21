@@ -45,7 +45,7 @@
 
 <section class="panel"><div class="panel-heading"><div><span class="eyebrow">HISTORY</span><h2>Recent shifts</h2></div></div>
 {% if runs %}<div class="table-wrap"><table><thead><tr><th>DATE</th><th>FOUND</th><th>CHECKED</th><th>DRAFTED</th><th>FOLLOW-UPS</th><th>NOTES</th></tr></thead><tbody>
-{% for r in runs %}<tr><td>{{ r.local_date }}<small>{{ 'Run by you' if r.source=='manual' else 'Overnight' }}{% if not r.finished_at %} · did not finish{% endif %}</small></td><td>{{ r.counts.found|default(0) }}</td><td>{{ r.counts.checked|default(0) }}</td><td>{{ r.counts.drafts|default(0) }}{% if r.counts.ai_drafts %}<small>{{ r.counts.ai_drafts }} by Haiku</small>{% endif %}</td><td>{{ r.counts.follow_ups|default(0) }}</td><td><small>{{ r.notes }}</small></td></tr>{% endfor %}
+{% for r in runs %}<tr><td>{{ r.local_date }}<small>{{ 'Run by you' if r.source=='manual' else 'Automatic shift' }}{% if not r.finished_at %} · did not finish{% endif %}</small></td><td>{{ r.counts.found|default(0) }}</td><td>{{ r.counts.checked|default(0) }}</td><td>{{ r.counts.drafts|default(0) }}{% if r.counts.ai_drafts %}<small>{{ r.counts.ai_drafts }} by Haiku</small>{% endif %}</td><td>{{ r.counts.follow_ups|default(0) }}</td><td><small>{{ r.notes }}</small></td></tr>{% endfor %}
 </tbody></table></div>{% else %}<div class="empty"><strong>No shifts yet</strong><p>Add a search area above. The first shift runs after {{ start_hour }} am, or press "Run a shift now" on Home.</p></div>{% endif %}
 </section>
 {% endblock %}
