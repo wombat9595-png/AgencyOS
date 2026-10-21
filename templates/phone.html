@@ -32,15 +32,12 @@ button,.btn{display:block;text-align:center;font:inherit;font-weight:700;border:
 <ul class="brief">{% for line in brief %}<li>{{ line }}</li>{% endfor %}</ul>
 {% for p in cards %}
 <div class="card">
-  <div class="kind">{% if p.stage=='Interested' %}Interested{% elif p.channel=='call' %}Call{% elif p.stage=='Approved' %}Approved, waiting to send{% elif p.followup %}{{ p.step }}{% else %}New email{% endif %}{% if p.ai %} · Haiku{% endif %}</div>
+  <div class="kind">{% if p.stage=='Interested' %}Interested{% elif p.stage=='Approved' %}Approved, waiting to send{% elif p.followup %}{{ p.step }}{% else %}New email{% endif %}{% if p.ai %} · Haiku{% endif %}</div>
   <div class="name">{{ p.name }}</div>
   <div class="sub">{{ p.trade }}{% if p.suburb %} · {{ p.suburb }}{% endif %} · {{ p.why }} · <a href="{{ p.google }}" target="_blank" rel="noopener">Google them</a></div>
   {% if p.ceo_note %}<div class="ceo">CEO: {{ p.ceo_note }}</div>{% endif %}
   {% if p.stage=='Interested' %}
     <div class="row"><a class="btn yes" href="{{ p.mockup_url }}">Open their mock-up</a></div>
-  {% elif p.channel=='call' %}
-    <details><summary>Call script</summary><div style="white-space:pre-wrap">{{ p.body }}</div></details>
-    <div class="row">{% if p.phone %}<a class="btn yes" href="tel:{{ p.phone|replace(' ','') }}">Call {{ p.phone }}</a>{% endif %}<a class="btn no" href="{{ url_for('calls_home') }}">Log it</a></div>
   {% elif p.stage=='Approved' %}
     <div class="row">{% if p.gmail_draft_id %}<a class="btn yes" href="https://mail.google.com/mail/u/0/#drafts">Open Gmail Drafts</a>{% else %}<a class="btn yes" href="{{ p.mailto }}">Open in my email</a>{% endif %}
     <form method="post" action="{{ url_for('prospects_action',prospect_id=p.id,action='sent') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="next" value="phone"><button class="no">I sent it</button></form></div>

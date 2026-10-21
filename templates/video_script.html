@@ -11,6 +11,6 @@
 <div class="table-wrap"><table><thead><tr><th>TIME</th><th>ON SCREEN</th><th>SAY</th></tr></thead><tbody>
 {% for at,screen,say in lines %}<tr><td><strong>{{ at }}</strong></td><td><small>{{ screen }}</small></td><td>{{ say }}</td></tr>{% endfor %}
 </tbody></table></div>
-<p><a class="btn secondary" href="{{ url_for('calls_home') }}">Back to Calls</a> <a class="btn secondary" href="{{ url_for('prospects_home') }}#p{{ p.id }}">Back to Find customers</a></p>
+<p><a class="btn secondary" href="{{ url_for('prospects_home') }}#p{{ p.id }}">Back to Find customers</a></p>
 </section>
 {% endblock %}

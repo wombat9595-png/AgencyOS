@@ -2,7 +2,7 @@
 
 Free sources only: OpenStreetMap (Nominatim + Overpass) and a one-page check of each
 business's own homepage. Nothing is ever sent from here: the owner approves each
-draft and sends it from their own email or phone.
+draft and sends it from their own email. Email only: AgencyOS never makes or plans cold calls.
 """
 import http.client
 import ipaddress
@@ -14,7 +14,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date,datetime,timedelta
 from urllib import parse,request as urlrequest,error as urlerror
-from urllib.parse import urlsplit,urljoin,quote
+from urllib.parse import urlsplit,urljoin,quote,unquote
 from zoneinfo import ZoneInfo
 from flask import Response,flash,redirect,render_template,request,session,url_for
 from phase3_store import WorkflowError,stamp
@@ -271,11 +271,27 @@ def check_site(url,get=None):
     years=[int(y) for y in re.findall(r'(?:©|&copy;|copyright)\s*(?:\d{4}\s*(?:-|–|&ndash;)\s*)?((?:19|20)\d\d)',lower)]
     result['year']=max(years) if years else 0
     result['seo']=seo_notes(html,lower)
+    result['email']=find_email(html,host)
     if not result['https']:result['findings'].append('not_secure')
     if not result['mobile']:result['findings'].append('not_mobile')
     if result['year'] and result['year']<=today().year-4:result['findings'].append('old')
     if not result['findings']:result['findings']=['ok']
     return result
+
+
+EMAIL_IN_PAGE=re.compile(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+')
+JUNK_EMAIL=('example.','sentry','wixpress','godaddy','domain.com','yourdomain','email.com','@2x','.png','.jpg','.jpeg','.gif','.webp','.svg')
+
+
+def find_email(html,host=''):
+    """The business's own email from its homepage: a mailto link first, then plain text. Prefers an address on their own domain."""
+    found=[unquote(m).split('?')[0] for m in re.findall(r'mailto:([^"\'\s>]+)',html,re.I)]+EMAIL_IN_PAGE.findall(html)
+    good=[]
+    for e in found:
+        e=clean_email(e.strip().strip('.').casefold())
+        if e and not any(j in e for j in JUNK_EMAIL) and e not in good:good.append(e)
+    own=(host or '').casefold().removeprefix('www.')
+    return next((e for e in good if own and e.endswith('@'+own)),good[0] if good else '')
 
 
 SEO_NOTES={
@@ -310,11 +326,13 @@ def rescore(conn,prospect_id):
 
 
 def check_websites(conn,owner,limit=15,get=None):
-    rows=conn.execute("SELECT id,website FROM prospects WHERE owner_id=? AND website!='' AND checked_at='' AND stage='New' ORDER BY id LIMIT ?",(owner,limit)).fetchall()
+    rows=conn.execute("SELECT id,website,email FROM prospects WHERE owner_id=? AND website!='' AND checked_at='' AND stage='New' ORDER BY id LIMIT ?",(owner,limit)).fetchall()
     with ThreadPoolExecutor(max_workers=5) as pool:
         results=list(pool.map(lambda r:check_site(r['website'],get),rows))
     for row,result in zip(rows,results):
-        conn.execute('UPDATE prospects SET site_check=?,checked_at=? WHERE id=?',(json.dumps(result),stamp(),row['id']));rescore(conn,row['id'])
+        conn.execute('UPDATE prospects SET site_check=?,checked_at=? WHERE id=?',(json.dumps(result),stamp(),row['id']))
+        if not row['email'] and result.get('email'):conn.execute('UPDATE prospects SET email=? WHERE id=?',(result['email'],row['id']))  # the Inspector found their email on their own site
+        rescore(conn,row['id'])
     conn.commit()
     return len(rows)
 
@@ -361,30 +379,21 @@ def variant_of(subject,name):
 
 
 def draft(p,s,kind=None,short=False):
-    """Return (subject, body). kind: first, followup1, followup2, call. short: the owner taught the Writer to keep it brief."""
-    kind=kind or ('call' if not p['email'] and p['phone'] else ('first','followup1','followup2')[min(p['touches'],2)])
+    """Return (subject, body). kind: first, followup1, followup2. short: the owner taught the Writer to keep it brief."""
+    kind=kind or ('first','followup1','followup2')[min(p['touches'],2)]
     me=s['name'].split()[0];area=' based in '+s['area'] if s['area'] else ' here in Australia'
     sign='\n\nCheers,\n'+s['name']+'\n'+s['business']+'\n'+s['email']+('\n'+s['phone'] if s['phone'] else '')
     optout='\n\nIf you would rather not hear from me, just reply "no thanks" and I will not contact you again.'
     hello='Hi '+p['name']+' team,'
-    if kind=='call':
-        return ('Call script for '+p['name'],
-          'Hi, is that '+p['name']+'? My name is '+me+', I am a local web designer'+area+'.\n\n'
-          +problem_line(p)+' '+why_it_matters(p)+'\n\n'
-          'I would like to make you a free one-page mock-up so you can see what it could look like. No cost and no obligation. Would that be useful?\n\n'
-          'If they ask the price: websites start at A$800, then A$69 a month for hosting, security and small changes, month to month with no lock-in.\n'
-          'If yes: get the best email to send the mock-up to, and a good time to call back.\n'
-          'If no: thank them, and mark them Not interested.')
     if kind=='first' and short:
         return (subject_for(p,s),
           hello+'\n\nI am '+me+', a web designer'+area+'. '+problem_line(p)+'\n\n'
           'Can I make '+p['name']+' a free one-page mock-up? No cost, no obligation. Just reply "yes".'+sign+optout)
     if kind=='first':
-        booking=('\n\nOr if a quick chat is easier, grab a 15 minute slot here: '+s['booking_url']) if s.get('booking_url') else ''
         return (subject_for(p,s),
           hello+'\n\nI am '+me+', a web designer'+area+'. '+problem_line(p)+'\n\n'+why_it_matters(p)+'\n\n'
           'I would be happy to put together a free one-page mock-up for '+p['name']+' so you can see what it would look like. No cost and no obligation.\n\n'
-          'Worth a look? Just reply "yes" and I will send it over this week.'+booking+sign+optout)
+          'Worth a look? Just reply "yes" and I will send it over this week.'+sign+optout)
     if kind=='followup1':
         return ('Re: Website for '+p['name']+'?',
           hello+'\n\nJust following up on my note from last week. The offer of a free one-page mock-up for '+p['name']+' still stands, and it only takes me a couple of days.\n\n'
@@ -446,10 +455,10 @@ def counts(conn,owner,on=None):
     on=on or today();iso=on.isoformat();expire(conn,owner,on)
     def n(where,args=()):return conn.execute('SELECT COUNT(*) FROM prospects WHERE owner_id=? AND '+where,(owner,)+args).fetchone()[0]
     return dict(total=n('1'),
-      to_review=n("stage='New' AND score>=50 AND (email!='' OR phone!='')"),
+      to_review=n("stage='New' AND score>=50 AND email!=''"),
       ready=n("stage='Approved'"),
       follow_ups=n("stage='Contacted' AND next_on!='' AND next_on<=?",(iso,)),
-      contacted_today=conn.execute("SELECT COUNT(DISTINCT prospect_id) FROM prospect_log WHERE owner_id=? AND on_date=? AND action IN ('sent','called')",(owner,iso)).fetchone()[0],
+      contacted_today=conn.execute("SELECT COUNT(DISTINCT prospect_id) FROM prospect_log WHERE owner_id=? AND on_date=? AND action='sent'",(owner,iso)).fetchone()[0],
       contacted=n("touches>0"),interested=n("stage='Interested'"),customers=n("stage='Customer'"),
       waiting=n("stage='Contacted' AND (next_on='' OR next_on>?)",(iso,)),
       target=settings(conn,owner)['daily_target'])
@@ -459,7 +468,7 @@ def queue(conn,owner,on=None,limit=12):
     """Today's work, most urgent first: follow-ups due, approved drafts to send, then the best new leads."""
     iso=(on or today()).isoformat()
     return conn.execute("""SELECT * FROM prospects WHERE owner_id=? AND (
-        (stage='Contacted' AND next_on!='' AND next_on<=?) OR stage IN ('Approved','Interested') OR (stage='New' AND score>=50 AND (email!='' OR phone!='') AND ceo_status NOT IN ('held','redo')))
+        (stage='Contacted' AND next_on!='' AND next_on<=? AND email!='') OR stage IN ('Approved','Interested') OR (stage='New' AND score>=50 AND email!='' AND ceo_status NOT IN ('held','redo')))
       ORDER BY CASE WHEN stage='Interested' THEN 0 WHEN stage='Contacted' THEN 1 WHEN stage='Approved' THEN 2 ELSE 3 END, score DESC, id LIMIT ?""",(owner,iso,limit)).fetchall()
 
 
@@ -491,8 +500,7 @@ def card(p,s):
     import smart_writer,playbook
     subject,body=(p['subject'],p['message']) if p['stage']=='Approved' and p['message'] else (smart_writer.stored(p) or draft(p,s))
     story=playbook.story_for(p['trade'])
-    channel='email' if p['email'] else 'call' if p['phone'] else 'none'
-    if p['stage']=='Contacted' and p['email']:channel='email'
+    channel='email' if p['email'] else 'none'
     return dict(p,why=REASONS[p['reason']][1],subject=subject,body=body,channel=channel,
       mailto=mailto(p,subject,body) if p['email'] else '',
       google='https://www.google.com/search?q='+quote(p['name']+' '+p['suburb']),
@@ -502,8 +510,8 @@ def card(p,s):
 
 
 def _grade(p):
-    import phone
-    return phone.grade(p)
+    import email_score
+    return email_score.grade(p)
 
 
 def _preview(p):
@@ -605,15 +613,6 @@ def register(app,get_db,login_required,insert_lead):
         elif action=='sent':
             if p['stage'] not in ('Approved','Contacted'):raise WorkflowError('Approve the message first.')
             message=mark_sent(conn,owner,p,on)
-        elif action=='call':
-            outcome=request.form.get('outcome','')
-            if outcome not in ('no_answer','message','interested','not_interested','do_not_contact'):raise WorkflowError('Pick how the call went.')
-            if outcome in ('no_answer','message'):
-                touches=p['touches']+1;stage='Contacted' if touches<4 else 'No reply'
-                conn.execute('UPDATE prospects SET stage=?,touches=?,last_contact_on=?,next_on=? WHERE id=?',(stage,touches,on.isoformat(),(on+timedelta(days=2 if outcome=='no_answer' else 4)).isoformat() if stage=='Contacted' else '',p['id']))
-            else:
-                conn.execute('UPDATE prospects SET stage=?,touches=touches+1,last_contact_on=?,next_on=? WHERE id=?',({'interested':'Interested','not_interested':'Not interested','do_not_contact':'Do not contact'}[outcome],on.isoformat(),'',p['id']))
-            record(conn,owner,p,'called',outcome);message='Call logged.'
         elif action in ('interested','not_interested','do_not_contact','skip'):
             stage={'interested':'Interested','not_interested':'Not interested','do_not_contact':'Do not contact','skip':'Skipped'}[action]
             conn.execute("UPDATE prospects SET stage=?,next_on='' WHERE id=?",(stage,p['id']));record(conn,owner,p,action)

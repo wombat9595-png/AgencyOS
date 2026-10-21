@@ -7,7 +7,7 @@ Chaser lines up follow-ups and Caretaker drafts monthly-client work. It runs onc
 Everything lands in the morning queue for the owner's tap. Nothing is ever sent or published.
 """
 import json
-from datetime import datetime,timedelta
+from datetime import datetime,timedelta,timezone
 from zoneinfo import ZoneInfo
 from flask import flash,redirect,render_template,request,session,url_for
 from phase3_store import WorkflowError,stamp
@@ -20,6 +20,8 @@ import smart_writer
 
 TZ=ZoneInfo('Australia/Sydney')
 START_HOUR=2
+SHIFTS_A_DAY=12  # around the clock: a shift every 2 hours while the Mac is awake
+SHIFT_GAP=timedelta(hours=24/SHIFTS_A_DAY)
 BEATS_PER_NIGHT=2
 CHECKS_PER_NIGHT=40
 DRAFTS_PER_NIGHT=15
@@ -63,7 +65,7 @@ def last_run(conn,owner):
 def _due_drafts(conn,owner,on):
     """Businesses whose next message the Writer should draft now: good new leads and follow-ups due."""
     rows=conn.execute("""SELECT * FROM prospects WHERE owner_id=? AND (
-        (stage='New' AND score>=50 AND (email!='' OR phone!='')) OR (stage='Contacted' AND next_on!='' AND next_on<=?))
+        (stage='New' AND score>=50 AND email!='') OR (stage='Contacted' AND next_on!='' AND next_on<=? AND email!=''))
       ORDER BY stage='Contacted' DESC, score DESC, id""",(owner,on.isoformat())).fetchall()
     return [p for p in rows if not smart_writer.stored(p)]
 
@@ -76,7 +78,7 @@ def run(conn,owner,source='night',on=None):
     counts=dict(found=0,checked=0,weak=0,mockups=0,drafts=0,ai_drafts=0,follow_ups=0,posts=0)
     # Scout: a couple of beats a night, rotating, so the free map service is never hammered.
     all_beats=beats(conn,owner);s=settings(conn,owner)
-    if all_beats:
+    if all_beats and not conn.execute('SELECT 1 FROM night_shift_runs WHERE owner_id=? AND local_date=? AND id!=?',(owner,local.isoformat(),run_id)).fetchone():
         start=s['next_beat']%len(all_beats)
         for i in range(min(BEATS_PER_NIGHT,len(all_beats))):
             beat=all_beats[(start+i)%len(all_beats)]
@@ -89,7 +91,7 @@ def run(conn,owner,source='night',on=None):
     # Scout's big job: sweep the map square by square for businesses with no website (Sydney first).
     if the_plan['tiles']:
         try:swept,squares,sweep_notes=sweep.run(conn,owner,the_plan['tiles'],the_plan['all_australia'])
-        except Exception:conn.rollback();swept,squares,sweep_notes=0,0,['The map sweep stopped early; it carries on next night.']
+        except Exception:conn.rollback();swept,squares,sweep_notes=0,0,['The map sweep stopped early; it carries on next shift.']
         counts['swept']=swept;counts['squares']=squares;notes+=sweep_notes
     elif not all_beats:notes.append('No search areas set and the map sweep is off, so Scout had nothing to search.')
     # Inspector: check websites found by the Scout (and any left over from manual searches).
@@ -114,20 +116,34 @@ def run(conn,owner,source='night',on=None):
     # Caretaker: this month's Google posts and review requests for Profile Care clients.
     counts['posts']=client_plans.ensure_profile_posts(conn,owner,local)
     conn.execute('UPDATE night_shift_runs SET finished_at=?,counts_json=?,notes=? WHERE id=?',(stamp(),json.dumps(counts),' '.join(notes)[:1000],run_id))
-    log(conn,owner,'Night shift: found '+str(counts['found']+counts.get('swept',0))+', checked '+str(counts['checked'])+', drafted '+str(counts['drafts'])+', CEO passed '+str(counts['ceo_ready'])+'. Nothing was sent.')
+    log(conn,owner,'Shift: found '+str(counts['found']+counts.get('swept',0))+', checked '+str(counts['checked'])+', drafted '+str(counts['drafts'])+', CEO passed '+str(counts['ceo_ready'])+'. Nothing was sent.')
     conn.commit()
     return counts
 
 
 def due(conn,owner,at=None):
-    """True once a day after 2 am Sydney time, if switched on and the agency is not paused."""
+    """True every 2 hours, day and night, if switched on and the agency is not paused."""
     at=at or now_local()
-    if at.hour<START_HOUR or paused(conn) or not settings(conn,owner)['enabled']:return False
-    return not conn.execute('SELECT 1 FROM night_shift_runs WHERE owner_id=? AND local_date=?',(owner,at.date().isoformat())).fetchone()
+    if paused(conn) or not settings(conn,owner)['enabled']:return False
+    last=conn.execute('SELECT started_at FROM night_shift_runs WHERE owner_id=? ORDER BY id DESC LIMIT 1',(owner,)).fetchone()
+    if not last:return True
+    try:started=datetime.fromisoformat(last['started_at'])
+    except ValueError:return True
+    if started.tzinfo is None:started=started.replace(tzinfo=timezone.utc)
+    return at-started>=SHIFT_GAP-timedelta(minutes=5)
+
+
+def drafted_today(conn,owner,on=None):
+    """New-business drafts written by today's shifts, so the day's limit holds across all 12."""
+    total=0
+    for r in conn.execute('SELECT counts_json FROM night_shift_runs WHERE owner_id=? AND local_date=?',(owner,(on or now_local().date()).isoformat())):
+        try:total+=json.loads(r['counts_json'] or '{}').get('mockups',0)
+        except ValueError:pass
+    return total
 
 
 def worker_tick(path):
-    """Called by the AgencyOS worker loop. Runs at most one shift per day for the one owner."""
+    """Called by the AgencyOS worker loop. Runs a shift every 2 hours, day and night, for the one owner."""
     from contextlib import closing
     from phase3_store import connect
     with closing(connect(path)) as conn:
@@ -139,12 +155,30 @@ def worker_tick(path):
             import team
             try:team.notify(conn,owner[0])  # drafts ready: buzz the owner's phone (7 am to 9 pm, at most 3 a day)
             except Exception:conn.rollback()
+            try:
+                if team.settings(conn,owner[0])['keep_awake']:keep_awake()
+            except Exception:pass
         if not owner or not due(conn,owner[0]):return False
         awake=_stay_awake()
         try:run(conn,owner[0])
         finally:
             if awake:awake.terminate()
         return True
+
+
+_AWAKE=None
+
+
+def keep_awake():
+    """While AgencyOS is open on a plugged-in Mac, stop it going to sleep (caffeinate -s only works on power). Free.
+    Renewed every few minutes by the worker loop, so it stops by itself soon after AgencyOS closes."""
+    global _AWAKE
+    import shutil,subprocess,sys
+    if sys.platform!='darwin' or not shutil.which('caffeinate'):return None
+    if _AWAKE is not None and _AWAKE.poll() is None:return _AWAKE
+    try:_AWAKE=subprocess.Popen(['caffeinate','-s','-i','-t','900'])
+    except OSError:_AWAKE=None
+    return _AWAKE
 
 
 def _stay_awake():

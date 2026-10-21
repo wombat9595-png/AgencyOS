@@ -1,11 +1,13 @@
-"""The agent team: a real org chart that turns the night shift into checked drafts for the owner's yes or no.
+"""The agent team: a real org chart that works around the clock (a shift every 2 hours while the Mac is awake) and turns it into checked drafts for the owner's yes or no.
 
 17 roles: CEO, Chief of Staff, three division managers (Growth, Sales, Delivery) and twelve workers.
 
 CEO           reviews every finished draft against the playbook and the owner's lessons, holds back bad ones,
               writes the morning brief and buzzes the owner's phone when drafts are ready.
-Chief of Staff plans each night: how many map squares to sweep, how many drafts to write, and paces the AI budget.
-Growth        Scout, Inspector, SEO Checker, Writer, Call Prepper and Designer find and draft.
+Chief of Staff plans each day: how many map squares to sweep, how many drafts to write, and paces the AI budget.
+Growth        Scout, Inspector, SEO Checker, Writer, Deliverability Guard and Designer find and draft.
+
+Email only: AgencyOS never makes or plans cold calls. A phone number is just lead data.
 Sales         Chaser, Reply Handler and Closer turn replies into yeses.
 Delivery      Site Builder, Client Care and Bookkeeper keep clients happy and paying.
 
@@ -16,7 +18,7 @@ lessons and the emails the owner approved. Nothing here sends anything to a cust
 """
 import json
 import re
-from datetime import datetime,timedelta
+from datetime import date,datetime,timedelta
 from zoneinfo import ZoneInfo
 from flask import abort,flash,redirect,render_template,request,session,url_for,Response
 from phase3_store import WorkflowError,stamp
@@ -36,17 +38,17 @@ AGENTS=(
    'If an AI draft fails, swap in the safe rules draft. If that fails too, hold it back and say why.',
    'Buzz Benji\'s phone when drafts are ready: at most three times a day, never before 7 am or after 9 pm.',
    'Every morning, write a short brief: what the team did, what needs Benji, and what is working.')),
- ('chief','Chief of Staff','Plans every night','ceo',
+ ('chief','Chief of Staff','Plans every shift','ceo',
   'Decides how many map squares to sweep and drafts to write, and keeps the AI spend on budget.',
-  ('Sweep Sydney first, square by square, then the other cities. Never more than the nightly limit.',
+  ('Sweep Sydney first, square by square, then the other cities. Spread the daily limit over the day, a shift every 2 hours.',
    'Only write as many new drafts as Benji can send: his daily draft limit minus what is already waiting.',
    'Spread the AI budget evenly over the month. If we are ahead of budget, the team uses the free rules until it catches up.',
    'Follow-ups that are due always come before new businesses.')),
  ('growth','Growth Manager','Runs the Growth team','chief',
   'Hands lead work to the six Growth workers and tracks who is getting yeses.',
-  ('Best leads first: no website or a broken one, with a phone or email.',
-   'Phone-only businesses go to the Call Prepper, email ones to the Writer.',
-   'Track yes rates by trade and by channel, and push more of whatever is working.')),
+  ('Email only. We never cold call.',
+   'Best leads first: no website or a broken one, with an email address we can write to.',
+   'Track yes rates by trade and by subject line, and push more of whatever is working.')),
  ('sales','Sales Manager','Turns replies into sales','chief',
   'Makes sure every follow-up goes out, every reply gets answered fast and every "yes" gets a proposal.',
   ('A lead who replies is the most valuable thing in the business: answer within the hour.',
@@ -64,8 +66,9 @@ AGENTS=(
    'Skip any business already in the list, and never re-add one marked "Do not contact".',
    '"No website listed" is not proof. Benji does a ten-second Google check before he sends.')),
  ('inspector','Inspector','Checks websites','growth',
-  'Opens each business\'s homepage once and notes if it is down, not secure, not phone-friendly or out of date.',
+  'Opens each business\'s homepage once, notes if it is down, not secure, not phone-friendly or out of date, and picks up the email address they publish.',
   ('One look at the public homepage, like a visitor. No logging in, no forms, no hammering.',
+   'Only use an email address the business publishes itself.',
    'Only report what was actually seen. Never guess.')),
  ('seo','SEO Checker','Checks how Google sees them','growth',
   'Looks for the simple Google and phone basics: a description, a main heading, tap-to-call, local business details.',
@@ -75,10 +78,12 @@ AGENTS=(
   'Writes the first email and two follow-ups for each business, from the playbook and your lessons.',
   (playbook.VOICE,'Offer: '+playbook.OFFER+'.','Never mention prices in an email. Always keep the "no thanks" line.',
    'First email up to '+str(playbook.MAX_WORDS['first'])+' words; follow-ups shorter.')),
- ('caller','Call Prepper','Gets your calls ready','growth',
-  'Builds the call sheet for businesses with only a phone number: opener, likely objections, best time to ring.',
-  ('Calls only in legal hours: weekdays 9 am to 8 pm, Saturday 9 to 5, never Sunday or national holidays.',
-   'Every call opens with who Benji is and why he is calling, in one breath.')),
+ ('guard','Deliverability Guard','Keeps emails out of spam','growth',
+  'Warms up the inbox, sets the safe daily email limit and checks every address before the Writer drafts.',
+  ('Start at 20 emails a day and add 10 a week, up to the limit Benji sets. Never jump.',
+   'Every address must look real. Skip anything that looks like a placeholder or image file.',
+   'Never email anyone who said "no thanks" or is marked "Do not contact".',
+   'Every email says who Benji is and has the "no thanks" line, as the Spam Act requires.')),
  ('designer','Designer','Matches mock-ups','growth',
   'Picks the free mock-up for each business: the animated story for builders, landscapers and salons.',
   ('Builders get the blueprint-to-house story, landscapers the yard makeover, salons the cut-and-colour story.',
@@ -88,7 +93,7 @@ AGENTS=(
   ('Follow up after 4 days, then 6 more, then stop. Short and friendly every time.',)),
  ('replier','Reply Handler','Answers replies','sales',
   'Spots when a lead writes back, stops their follow-ups, buzzes your phone and drafts your reply in Gmail.',
-  ('Reply drafts only. Benji presses Send.','A reply means call them back within the hour.')),
+  ('Reply drafts only. Benji presses Send.','A reply means answer by email within the hour.')),
  ('closer','Closer','Gets the yes','sales',
   'For every interested business: the mock-up, a proposal page and the right package, ready to send.',
   ('Lead with the mock-up, then one clear package and price. No pressure, no fake deadlines.',)),
@@ -102,10 +107,12 @@ AGENTS=(
   'Makes invoices, watches what is due and drafts polite reminders for overdue ones.',
   ('Only mark something paid after Benji checks the bank.',)),
 )
-DIVISIONS=(('growth',('scout','inspector','seo','writer','caller','designer')),('sales',('chaser','replier','closer')),('delivery',('builder','carer','bookkeeper')))
+DIVISIONS=(('growth',('scout','inspector','seo','writer','guard','designer')),('sales',('chaser','replier','closer')),('delivery',('builder','carer','bookkeeper')))
 NAMES={a[0]:a[1] for a in AGENTS}
 WORKERS=tuple(k for _,keys in DIVISIONS for k in keys)
 NO_REASONS={'too_long':'Too long','too_salesy':'Too salesy','wrong':'Got a fact wrong','not_me':'Does not sound like me','bad_fit':'Not a good business for us'}
+MAX_SEARCHES=480  # map searches a day; 2 s apart, a few minutes of the free service's time each shift
+WARM_START,WARM_STEP=20,10  # emails a day in week one, and how many more each week
 LEARN_AFTER=3  # the same reason this many times in the last 20 no's becomes a standing rule
 
 
@@ -113,8 +120,8 @@ def migrate(conn):
     conn.executescript('''
     CREATE TABLE IF NOT EXISTS team_settings (
       owner_id INTEGER PRIMARY KEY, pings INTEGER NOT NULL DEFAULT 1, phone_url TEXT NOT NULL DEFAULT '',
-      tiles_per_night INTEGER NOT NULL DEFAULT 60, all_australia INTEGER NOT NULL DEFAULT 1, daily_drafts INTEGER NOT NULL DEFAULT 25,
-      ping_day TEXT NOT NULL DEFAULT '', pings_today INTEGER NOT NULL DEFAULT 0, last_ping_at TEXT NOT NULL DEFAULT '', last_ping_count INTEGER NOT NULL DEFAULT 0);
+      tiles_per_night INTEGER NOT NULL DEFAULT 120, all_australia INTEGER NOT NULL DEFAULT 1, daily_drafts INTEGER NOT NULL DEFAULT 25,
+      ping_day TEXT NOT NULL DEFAULT '', pings_today INTEGER NOT NULL DEFAULT 0, last_ping_at TEXT NOT NULL DEFAULT '', last_ping_count INTEGER NOT NULL DEFAULT 0, keep_awake INTEGER NOT NULL DEFAULT 1);
     CREATE TABLE IF NOT EXISTS team_lessons (
       id INTEGER PRIMARY KEY, owner_id INTEGER NOT NULL, agent TEXT NOT NULL, lesson TEXT NOT NULL, avoid TEXT NOT NULL DEFAULT '',
       created_at TEXT NOT NULL);
@@ -124,6 +131,8 @@ def migrate(conn):
       original TEXT NOT NULL DEFAULT '', final TEXT NOT NULL DEFAULT '', edited INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL);
     CREATE INDEX IF NOT EXISTS team_feedback_idx ON team_feedback(owner_id,agent,id);
     ''')
+    if 'keep_awake' not in {r[1] for r in conn.execute('PRAGMA table_info(team_settings)')}:
+        conn.execute('ALTER TABLE team_settings ADD COLUMN keep_awake INTEGER NOT NULL DEFAULT 1')
     sweep.migrate(conn)
 
 
@@ -131,7 +140,7 @@ def now_local():
     return datetime.now(TZ)
 
 
-DEFAULTS=dict(pings=1,phone_url='',tiles_per_night=60,all_australia=1,daily_drafts=25,ping_day='',pings_today=0,last_ping_at='',last_ping_count=0)
+DEFAULTS=dict(pings=1,phone_url='',keep_awake=1,tiles_per_night=120,all_australia=1,daily_drafts=25,ping_day='',pings_today=0,last_ping_at='',last_ping_count=0)
 
 
 def settings(conn,owner):
@@ -174,11 +183,11 @@ def feedback(conn,owner,p,verdict,original,final=None,reason=''):
     orig=_text(original) if original else '';fin=_text(final) if final else ''
     edited=int(bool(final) and ' '.join(orig.split())!=' '.join(fin.split()))
     conn.execute('INSERT INTO team_feedback(owner_id,agent,prospect_id,trade,kind,verdict,reason,source,original,final,edited,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)',
-      (owner,'caller' if kind=='call' else 'writer',p['id'],p['trade'],kind,verdict,reason,p['draft_source'] or 'rules',orig[:6000],fin[:6000],edited,stamp()))
+      (owner,'writer',p['id'],p['trade'],kind,verdict,reason,p['draft_source'] or 'rules',orig[:6000],fin[:6000],edited,stamp()))
 
 
 def send_back(conn,owner,p,reason):
-    """The owner said no to a draft. Bad fit: drop the business. Otherwise the Writer redoes it tonight."""
+    """The owner said no to a draft. Bad fit: drop the business. Otherwise the Writer redoes it next shift."""
     if reason not in NO_REASONS:raise WorkflowError('Pick why it is a no.')
     feedback(conn,owner,p,'no',smart_writer.stored(p) or lead_engine.draft(p,lead_engine.settings(conn,owner)),reason=reason)
     if reason=='bad_fit':
@@ -242,8 +251,6 @@ def ceo_review(conn,owner,ids,ask=None,write_ask=None):
         p=conn.execute('SELECT * FROM prospects WHERE id=? AND owner_id=?',(pid,owner)).fetchone()
         if not p or not p['draft_body']:continue
         kind=p['draft_kind'] or smart_writer.current_kind(p)
-        if kind=='call':
-            conn.execute("UPDATE prospects SET ceo_status='ready',ceo_note='Call script checked' WHERE id=?",(pid,));out['ready']+=1;continue
         problems=playbook.review(p['draft_subject'],p['draft_body'],p,s,kind)+playbook.review_words(p['draft_subject'],p['draft_body'],words)
         note=''
         if not problems and p['draft_source']=='ai' and smart_writer.ai_status(conn,owner)['ready']:
@@ -271,12 +278,23 @@ def ceo_review(conn,owner,ids,ask=None,write_ask=None):
 
 
 def plan(conn,owner):
-    """The Chief of Staff's plan for tonight."""
-    t=settings(conn,owner)
+    """The Chief of Staff's plan for the next shift. The day's map searches are split over SHIFTS_A_DAY shifts;
+    new drafts stop at the Deliverability Guard's safe daily number, counting what is already waiting and what was drafted today."""
+    import night_shift
+    t=settings(conn,owner);safe=safe_daily(conn,owner)
     waiting=conn.execute("SELECT COUNT(*) FROM prospects WHERE owner_id=? AND stage='New' AND draft_body!='' AND ceo_status='ready'",(owner,)).fetchone()[0]
+    today=night_shift.drafted_today(conn,owner)
     nxt=sweep.next_tiles(conn,owner,1,bool(t['all_australia']))
-    return dict(tiles=max(0,min(200,t['tiles_per_night'])),drafts=max(0,min(60,t['daily_drafts']-waiting)),waiting=waiting,
+    per_day=max(0,min(MAX_SEARCHES,t['tiles_per_night']))
+    return dict(tiles=-(-per_day//night_shift.SHIFTS_A_DAY),per_day=per_day,drafts=max(0,min(60,safe-waiting,safe-today)),waiting=waiting,safe=safe,
       region=nxt[0][0][1] if nxt else '',writer=smart_writer.ai_status(conn,owner),all_australia=bool(t['all_australia']))
+
+
+def safe_daily(conn,owner,on=None):
+    """Deliverability Guard: emails a day this inbox can safely send. 20 in the first week of sending, then 10 more a week, up to Benji's limit."""
+    first=conn.execute("SELECT MIN(on_date) FROM prospect_log WHERE owner_id=? AND action='sent'",(owner,)).fetchone()[0]
+    weeks=((on or lead_engine.today())-date.fromisoformat(first)).days//7 if first else 0
+    return min(settings(conn,owner)['daily_drafts'],WARM_START+WARM_STEP*max(0,weeks))
 
 
 def ready_count(conn,owner):
@@ -359,7 +377,7 @@ def scorecards(conn,owner):
     return dict(
       ceo=dict(big=n("SELECT COUNT(*) FROM prospects WHERE owner_id=? AND ceo_status='ready' AND stage='New'"),label='drafts passed, waiting for you',
                small=str(n("SELECT COUNT(*) FROM prospects WHERE owner_id=? AND ceo_status='held'"))+' held back · '+str(n("SELECT COUNT(*) FROM prospects WHERE owner_id=? AND ceo_status='redo'"))+' sent back by you'),
-      chief=dict(big=t['daily_drafts'],label='drafts a day, max',small=str(t['tiles_per_night'])+' map searches a night'),
+      chief=dict(big=safe_daily(conn,owner),label='new drafts a day',small=str(t['tiles_per_night'])+' map searches a day, a shift every 2 hours'),
       growth=dict(big=c['contacted_today'],label='contacted today',small='target '+str(c['target'])+' a day'),
       sales=dict(big=c['interested'],label='interested right now',small=str(c['customers'])+' became customers'),
       delivery=dict(big=plans['clients'],label='monthly clients',small='A$'+format(plans['monthly_cents']/100,',.0f')+' a month'),
@@ -373,7 +391,7 @@ def scorecards(conn,owner):
       inspector=dict(big=n("SELECT COUNT(*) FROM prospects WHERE owner_id=? AND checked_at!=''"),label='websites checked',small=str(n("SELECT COUNT(*) FROM prospects WHERE owner_id=? AND website='' AND facebook=''"))+' with no website listed'),
       seo=dict(big=seo,label='sites with Google gaps',small='used in the Writer\'s notes'),
       writer=dict(big=l['rate'] if l['total'] else '–',label='% of drafts you said yes to',small=str(l['yes'])+' yes · '+str(l['no'])+' no · '+str(l['edited'])+' edited'),
-      caller=dict(big=n("SELECT COUNT(*) FROM prospects WHERE owner_id=? AND stage='New' AND email='' AND phone!='' AND score>=50"),label='phone-only leads ready',small='on the Calls page'),
+      guard=dict(big=safe_daily(conn,owner),label='safe emails a day right now',small='rises 10 a week · '+str(n("SELECT COUNT(*) FROM prospects WHERE owner_id=? AND email!=''"))+' leads with an email'),
       designer=dict(big=n('SELECT COUNT(*) FROM prospects WHERE owner_id=? AND trade IN ('+','.join('?'*len(stories))+')',stories) if stories else 0,label='get an animated story mock-up',small='others get the one-page mock-up'),
     ),prog
 
@@ -422,7 +440,7 @@ def register(app,get_db,login_required):
         conn=get_db();owner=session['user_id']
         return render_template('team.html',org=org(conn,owner),plan=plan(conn,owner),brief=brief(conn,owner),learned=learned(conn,owner),
           settings=settings(conn,owner),names=NAMES,reasons=NO_REASONS,ntfy=bool(lead_engine.settings(conn,owner).get('ntfy_topic')),
-          quote=quote,task=task)
+          quote=quote,task=task,working=__import__('email_score').learn(conn,owner))
 
     @app.get('/team',strict_slashes=False)
     @login_required
@@ -448,9 +466,9 @@ def register(app,get_db,login_required):
     def team_settings():
         conn=get_db();owner=session['user_id'];f=request.form
         tiles=f.get('tiles_per_night',type=int);drafts=f.get('daily_drafts',type=int)
-        if tiles is None or not 0<=tiles<=200 or drafts is None or not 0<=drafts<=60:raise WorkflowError('Map squares: 0 to 200 a night. Drafts: 0 to 60 a day.')
+        if tiles is None or not 0<=tiles<=MAX_SEARCHES or drafts is None or not 0<=drafts<=60:raise WorkflowError('Map searches: 0 to '+str(MAX_SEARCHES)+' a day. Drafts: 0 to 60 a day.')
         url=clean_phone_url(f.get('phone_url',''))
-        _save(conn,owner,tiles_per_night=tiles,daily_drafts=drafts,all_australia=int(f.get('all_australia')=='1'),pings=int(f.get('pings')=='1'),phone_url=url)
+        _save(conn,owner,tiles_per_night=tiles,daily_drafts=drafts,all_australia=int(f.get('all_australia')=='1'),pings=int(f.get('pings')=='1'),keep_awake=int(f.get('keep_awake')=='1'),phone_url=url)
         conn.commit()
         path=phone_host_file()
         if path and url:

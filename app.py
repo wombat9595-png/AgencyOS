@@ -37,7 +37,7 @@ import office
 import smart_writer
 import night_shift
 import story_mockups
-import phone
+import email_score
 import getpaid
 import pitch
 import grow
@@ -126,7 +126,7 @@ def init_db():
     lead_engine.migrate(conn)
     smart_writer.migrate(conn)
     night_shift.migrate(conn)
-    phone.migrate(conn)
+    email_score.migrate(conn)
     pitch.migrate(conn)
     getpaid.migrate(conn)
     grow.migrate(conn)
@@ -546,7 +546,7 @@ office.register(app,db,login_required)
 smart_writer.register(app,db,login_required)
 night_shift.register(app,db,login_required)
 story_mockups.register(app,db,login_required)
-phone.register(app,db,login_required)
+email_score.register(app,db,login_required)
 getpaid.register(app,db,login_required)
 pitch.register(app,db,login_required)
 grow.register(app,db,login_required)

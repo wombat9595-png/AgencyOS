@@ -49,7 +49,7 @@ class TeamTest(unittest.TestCase):
 
     def test_team_page_shows_nine_agents_and_their_playbooks(self):
         page=self.client.get('/team').get_data(as_text=True)
-        for name in ('CEO','Chief of Staff','Growth Manager','Sales Manager','Delivery Manager','Scout','Inspector','SEO Checker','Writer','Call Prepper','Designer',
+        for name in ('CEO','Chief of Staff','Growth Manager','Sales Manager','Delivery Manager','Scout','Inspector','SEO Checker','Writer','Deliverability Guard','Designer',
                      'Chaser','Reply Handler','Closer','Site Builder','Client Care','Bookkeeper'):self.assertIn(name,page)
         self.assertIn('Teach',page);self.assertIn('Quote helper',page);self.assertIn('Sydney (first)',page);self.assertIn('every business with no website in Australia',page)
         self.assertEqual(len(team.AGENTS),17);self.assertEqual(len(team.WORKERS),12)
@@ -61,7 +61,8 @@ class TeamTest(unittest.TestCase):
         p=self.prospect('Fictional Builds')
         self.assertEqual(p['ceo_status'],'ready');self.assertEqual(p['ceo_note'],'Checked by the CEO')
         run=json.loads(self.rows('night_shift_runs')[0]['counts_json'])
-        self.assertEqual(run['ceo_ready'],2);self.assertEqual(run['ceo_held'],0)
+        self.assertEqual(run['ceo_ready'],1);  # phone-only leads get no draft: email only
+        self.assertEqual(run['ceo_held'],0)
         # Teach the Writer a banned word that the template uses: the CEO now holds that draft back.
         self.post('/team/teach',dict(agent='writer',lesson='Never call the mock-up free',avoid='free one-page'))
         with self.conn() as conn:
