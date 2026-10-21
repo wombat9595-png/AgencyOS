@@ -105,3 +105,9 @@ h1{font-weight:800;letter-spacing:-.04em}h2{font-weight:700}
 .q-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto}.q-acts form{margin:0}
 .q-empty{grid-column:1/-1;padding:18px;border-radius:20px;background:var(--bg);border:1px dashed var(--line);color:var(--muted);font-size:14px}
 @media(max-width:900px){.b-queue{grid-template-columns:1fr}}
+
+.b-score{gap:12px}
+.b-score-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px}
+.b-score-row>*{display:flex;flex-direction:column;gap:2px;text-decoration:none;color:inherit;background:rgba(255,255,255,.06);border-radius:12px;padding:10px 12px}
+.b-score-row strong{font-size:24px;line-height:1.1}
+.b-score-row span span,.b-score-row a span{font-size:13px;opacity:.75}

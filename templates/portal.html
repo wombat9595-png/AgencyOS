@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
+<title>{{ client.client_name }} · your website with {{ s.business }}</title>
+{% include "studio/_style.html" %}
+<style>
+.track{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:24px}
+.track div{border-top:4px solid rgba(255,255,255,.2);padding-top:10px;color:#9aa1b4;font-size:15px}
+.track div.on{border-color:var(--gold2);color:#fff;font-weight:700}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px}
+table{width:100%;border-collapse:collapse;font-size:15px}td{padding:8px 0;border-bottom:1px solid var(--line);vertical-align:top}
+.st{font:600 12px ui-monospace,Menlo,monospace;text-transform:uppercase;letter-spacing:.06em;color:var(--gold)}
+</style></head><body>
+<nav class="top"><div class="wrap"><span class="mark">{{ s.business }}<b>.</b></span><a class="btn" href="{{ ask }}">Ask for a change</a></div></nav>
+<header class="hero"><div class="wrap">
+<span class="kicker">Your private page</span>
+<h1 style="font-size:clamp(32px,6vw,56px)">{{ client.client_name }}</h1>
+<p>Where your website is up to, your plan and your requests, in one place. This page is private: only people with the link can see it.</p>
+<div class="track">{% for st in stages %}<div class="{{ 'on' if loop.index0<=step }}">{{ st }}</div>{% endfor %}</div>
+{% if g.site_url %}<div class="row"><a class="btn" href="{{ g.site_url }}">Open your website</a></div>{% endif %}
+</div></header>
+<section><div class="wrap grid2">
+<div class="box"><span class="st">Your plan</span><h2 style="font-size:26px">{{ client.plan }}{% if client.profile_care %} + Google Profile Care{% endif %}</h2>
+<p>{{ monthly }} a month, month to month. Stop any time with 30 days notice.</p>
+<p>{% if allowance %}{{ allowance }} small changes a month included{% else %}Unlimited small changes{% endif %}, usually done within {{ turnaround }} business day{{ 's' if turnaround>1 }}.</p>
+<p><a class="btn" href="{{ ask }}">Ask for a change</a></p></div>
+<div class="box"><span class="st">Your requests</span>{% if requests %}<table>{% for r in requests %}<tr><td>{{ r.request }}</td><td style="text-align:right;white-space:nowrap">{{ 'Done' if r.status=='Done' else 'In progress' }}</td></tr>{% endfor %}</table>{% else %}<p>No requests yet. Ask for anything: new photos, prices, opening hours.</p>{% endif %}</div>
+<div class="box"><span class="st">Invoices</span>{% if bills %}<table>{% for b in bills %}<tr><td>{{ b.number }}<br><small style="color:var(--muted)">{{ b.description }}</small></td><td style="text-align:right;white-space:nowrap">{{ money(b.total_cents) }}<br><small>{{ 'Paid, thank you' if b.status=='Paid' else 'Due '+b.due_on }}</small></td></tr>{% endfor %}</table><p style="font-size:14px;color:var(--muted)">Payment details are on each invoice.</p>{% else %}<p>No invoices yet.</p>{% endif %}</div>
+</div></section>
+<footer><div class="wrap">{{ s.business }} · {{ s.email }}{% if s.phone %} · {{ s.phone }}{% endif %} · © {{ year }}</div></footer>
+</body></html>

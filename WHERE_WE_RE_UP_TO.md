@@ -1,3 +1,24 @@
+# Where we're up to: VIP upgrades (branch claude/project-thread-4zj0lw)
+
+Built on top of `claude/project-thread-mdpkej` (PR #8, commit c6f1b94, which is NOT yet installed on the Mac). Benji said "yes to everything" on the 18-item menu in the "Road to Client One" artifact (21 Oct 2026). Nothing here sends, charges or publishes.
+
+## Done
+- `phone.py` + `templates/calls.html` (`/calls`, sidebar "Calls"): daily call sheet (call-backs, interested, then grade A/B leads with a phone), 30 second opener from the real site problem, 8 objection answers, one-tap call logging (incl. call back on a date + note), the one-two after a missed call (voicemail script, text with STOP opt-out, "just tried you" email through the normal approve flow), Australian telemarketing hours banner, daily scoreboard + streak (also a Home tile), "What's working" by trade / phone vs email / subject line.
+- Lead grades A/B/C (`phone.grade`) shown on Find customers and Call Mode.
+- Subject-line testing: 3 first-email subjects rotate; `prospects.variant` is stored on approve; `lead_engine.best_subject` picks a winner once each has 15+ tries and most new leads get it.
+- `getpaid.py` + `templates/get_paid.html` (`/get-paid`, sidebar "Get paid"): real invoices INV-0001…, 50% deposit / balance / monthly / other, GST on top only if registered, PDF (reportlab) with ABN, bank details (encrypted with the launcher's bank.secret via phase7_billing._fernet) and optional Stripe Payment Links (card, autopay). Mark paid after checking the bank; paid invoices count in Money in. No Stripe key is ever held.
+- `pitch.py`: proposal page per lead (`/pitch/<id>/proposal`), 60 second video audit script (`/pitch/<id>/video`), booking link (added to first emails, proposals, homepage), reply detection (incoming Gmail from a lead stops follow-ups and pings the owner's phone via ntfy if he turned it on), Studio page (`/studio`), studio homepage + one niche page per night-shift search area, and the publish pack zip (homepage, niche pages, demos, `/p/<random>/` preview + proposal per good lead, `/c/<random>/` client pages; robots + noindex headers).
+- `grow.py`: review request, testimonial ask (30 days after start), referral offer + referral tracking with free months owed, testimonials (only with the client's OK) shown on the homepage, private client page data.
+- `tests/test_vip.py`: 10 tests.
+
+## Waiting on Benji
+- Install this on the Mac (after PR #8's update) when he says so.
+- Type ABN, GST choice and bank details on /get-paid on the Mac (never in chat).
+- Booking link, Google review link, ntfy topic, Stripe links: optional, all on /studio and /get-paid.
+- "Put it online": upload the publish pack to Cloudflare Pages, then paste the address on /studio. Until then preview links don't show.
+
+---
+
 # Where we're up to: Night Shift upgrade (branch claude/project-thread-mdpkej)
 
 Built on top of `claude/office-agents-nayzje` (PR #7). Benji voted YES on all six upgrades in the "AgencyOS Night Shift" preview. Nothing here sends, spends or publishes. INSTALLED on Benji's Mac on 19 Oct 2026 (commit 521a72a; backup ~/AgencyOS-Backups/before-night-shift-20261019-104242). Runs at http://127.0.0.1:5050 in a Terminal window titled "AgencyOS".

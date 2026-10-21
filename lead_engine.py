@@ -75,11 +75,24 @@ def migrate(conn):
         conn.execute('ALTER TABLE prospects ADD COLUMN approved_epoch INTEGER NOT NULL DEFAULT 0')
 
 
+def best_subject(conn,owner,minimum=15):
+    """The first-email subject line that gets the most yeses, once every line has had a fair go."""
+    try:
+        rows=conn.execute("SELECT variant,COUNT(*) n,SUM(stage IN ('Interested','Customer')) yes FROM prospects WHERE owner_id=? AND variant!='' GROUP BY variant",(owner,)).fetchall()
+    except Exception:
+        return ''
+    stats={r['variant']:(r['yes'] or 0)/r['n'] for r in rows if r['variant'] in SUBJECTS and r['n']>=minimum}
+    if len(stats)<len(SUBJECTS):return ''
+    ranked=sorted(stats.items(),key=lambda kv:-kv[1])
+    return ranked[0][0] if ranked[0][1]>ranked[1][1] else ''
+
+
 def settings(conn,owner):
     row=conn.execute('SELECT * FROM prospect_settings WHERE owner_id=?',(owner,)).fetchone()
-    if row:return dict(row)
+    if row:return dict(row,best_subject=best_subject(conn,owner))
     import gmail_agent
-    return dict(owner_id=owner,name='Benji Price',business='Benji Price Web Design',email=gmail_agent.ACCOUNT,phone='',area='',daily_target=10)
+    return dict(best_subject=best_subject(conn,owner),owner_id=owner,name='Benji Price',business='Benji Price Web Design',email=gmail_agent.ACCOUNT,phone='',area='',daily_target=10,
+      call_target=5,booking_url='',site_url='',ntfy_topic='',card_link='',debit_link='')
 
 
 # ---------- Finding businesses (OpenStreetMap, free) ----------
@@ -298,6 +311,24 @@ def why_it_matters(p):
     return 'Most of your visitors are on their phone, so a site that loads fast, looks sharp and has a tap-to-call button usually turns more of them into calls.'
 
 
+# First-email subject lines. Each lead gets one in turn; once one clearly wins (see phone.learn),
+# most new leads get the winner and the rest keep testing.
+SUBJECTS=('Website for {name}?','Quick idea for {name}','Made {name} a free website preview')
+
+
+def subject_for(p,s):
+    pid=p['id'] if 'id' in p.keys() else 0
+    best=s.get('best_subject')
+    pick=best if best in SUBJECTS and pid%5 else SUBJECTS[pid%len(SUBJECTS)]
+    return pick.format(name=p['name'])
+
+
+def variant_of(subject,name):
+    for pattern in SUBJECTS:
+        if subject==pattern.format(name=name):return pattern
+    return 'Your own subject'
+
+
 def draft(p,s,kind=None):
     """Return (subject, body). kind: first, followup1, followup2, call."""
     kind=kind or ('call' if not p['email'] and p['phone'] else ('first','followup1','followup2')[min(p['touches'],2)])
@@ -314,10 +345,11 @@ def draft(p,s,kind=None):
           'If yes: get the best email to send the mock-up to, and a good time to call back.\n'
           'If no: thank them, and mark them Not interested.')
     if kind=='first':
-        return ('Website for '+p['name']+'?',
+        booking=('\n\nOr if a quick chat is easier, grab a 15 minute slot here: '+s['booking_url']) if s.get('booking_url') else ''
+        return (subject_for(p,s),
           hello+'\n\nI am '+me+', a web designer'+area+'. '+problem_line(p)+'\n\n'+why_it_matters(p)+'\n\n'
           'I would be happy to put together a free one-page mock-up for '+p['name']+' so you can see what it would look like. No cost and no obligation.\n\n'
-          'Worth a look? Just reply "yes" and I will send it over this week.'+sign+optout)
+          'Worth a look? Just reply "yes" and I will send it over this week.'+booking+sign+optout)
     if kind=='followup1':
         return ('Re: Website for '+p['name']+'?',
           hello+'\n\nJust following up on my note from last week. The offer of a free one-page mock-up for '+p['name']+' still stands, and it only takes me a couple of days.\n\n'
@@ -431,7 +463,21 @@ def card(p,s):
       google='https://www.google.com/search?q='+quote(p['name']+' '+p['suburb']),
       followup=p['stage']=='Contacted',step=('First message','Follow-up 1','Follow-up 2')[min(p['touches'],2)],
       story=story['title'] if story else '',mockup_url=url_for('prospects_story' if story else 'prospects_mockup',prospect_id=p['id']),
-      ai=p['draft_source']=='ai' and p['stage']!='Approved')
+      ai=p['draft_source']=='ai' and p['stage']!='Approved',grade=_grade(p),preview=_preview(p))
+
+
+def _grade(p):
+    import phone
+    return phone.grade(p)
+
+
+def _preview(p):
+    from flask import g
+    import pitch
+    conn=g.get('db')
+    if conn is None:return ''
+    try:return pitch.preview_url(conn,p['owner_id'],p['id'])
+    except Exception:return ''
 
 
 def register(app,get_db,login_required,insert_lead):
@@ -486,7 +532,9 @@ def register(app,get_db,login_required,insert_lead):
         target=request.form.get('daily_target',type=int)
         if not values['name'] or not values['business'] or not clean_email(values['email']) or any(len(v)>160 for v in values.values()) or target not in range(1,51):
             raise WorkflowError('Add your name, business name, a working email and a daily target of 1 to 50. The Spam Act requires every email to say who it is from.')
-        conn.execute('INSERT OR REPLACE INTO prospect_settings VALUES(?,?,?,?,?,?,?)',(owner,values['name'],values['business'],values['email'],values['phone'],values['area'],target))
+        conn.execute('''INSERT INTO prospect_settings(owner_id,name,business,email,phone,area,daily_target) VALUES(?,?,?,?,?,?,?)
+          ON CONFLICT(owner_id) DO UPDATE SET name=excluded.name,business=excluded.business,email=excluded.email,phone=excluded.phone,area=excluded.area,daily_target=excluded.daily_target''',
+          (owner,values['name'],values['business'],values['email'],values['phone'],values['area'],target))
         conn.commit();flash('Saved. Your drafts now use these details.','success');return redirect(url_for('prospects_home'))
 
     @app.get('/find-customers/<int:prospect_id>/mockup')
@@ -508,6 +556,7 @@ def register(app,get_db,login_required,insert_lead):
             if not 1<=len(subject)<=200 or not 20<=len(body)<=5000:raise WorkflowError('The message needs a subject and some text.')
             if p['email'] and 'no thanks' not in body.casefold():raise WorkflowError('Keep the "no thanks" opt-out line. The Spam Act requires a way to unsubscribe.')
             conn.execute("UPDATE prospects SET stage='Approved',subject=?,message=?,gmail_draft_id='',approved_epoch=? WHERE id=?",(subject,body,int(time.time()),p['id']));record(conn,owner,p,'approved')
+            if p['touches']==0:conn.execute('UPDATE prospects SET variant=? WHERE id=?',(variant_of(subject,p['name']),p['id']))
             conn.commit();message='Approved. Tap "Open in my email", press send, then tap "I sent it".'
             if p['email'] and gmail_agent.can_draft(conn,owner):
                 try:

@@ -56,13 +56,17 @@ def migrate(conn):
     ''')
 
 
+def _has(conn,table):
+    return conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?",(table,)).fetchone() is not None
+
+
 def metrics(conn,owner):
     def n(sql,args=()):return conn.execute(sql,args).fetchone()[0]
     # Older billing paths cannot issue live invoices. Never promote manual labels
     # or synthetic credits into earned revenue; bank evidence requires owner action.
     received=n("SELECT COALESCE(SUM(p.amount_cents),0) FROM p7_payments p JOIN p7_invoices i ON i.id=p.invoice_id WHERE i.user_id=? AND i.synthetic=0 AND p.status='Verified'",(owner,))
     refunds=n("SELECT COALESCE(SUM(r.amount_cents),0) FROM p7_refunds r JOIN p7_invoices i ON i.id=r.invoice_id WHERE i.user_id=? AND i.synthetic=0 AND r.status IN ('verified','succeeded','complete')",(owner,))
-    bank_received=n('SELECT COALESCE(SUM(amount_cents),0) FROM first_sale_receipts WHERE owner_id=?',(owner,))+n('SELECT COALESCE(SUM(amount_cents),0) FROM plan_payments WHERE owner_id=?',(owner,))
+    bank_received=n('SELECT COALESCE(SUM(amount_cents),0) FROM first_sale_receipts WHERE owner_id=?',(owner,))+n('SELECT COALESCE(SUM(amount_cents),0) FROM plan_payments WHERE owner_id=?',(owner,))+(n("SELECT COALESCE(SUM(total_cents),0) FROM bills WHERE owner_id=? AND status='Paid'",(owner,)) if _has(conn,'bills') else 0)
     expenses=n('SELECT COALESCE(SUM(amount_cents),0) FROM prep_expenses WHERE user_id=? AND synthetic=0',(owner,))
     return dict(leads=n('SELECT COUNT(*) FROM leads'),opportunities=n('SELECT COUNT(*) FROM p5_flows WHERE user_id=? AND synthetic=0',(owner,)),
       quotes=n('SELECT COUNT(*) FROM p5_quotes q JOIN p5_flows f ON f.id=q.flow_id WHERE f.user_id=? AND f.synthetic=0',(owner,)),
@@ -88,6 +92,7 @@ def money_in(conn,owner,today=None):
     rows=conn.execute("SELECT substr(p.created_at,1,10) day,p.amount_cents FROM p7_payments p JOIN p7_invoices i ON i.id=p.invoice_id WHERE i.user_id=? AND i.synthetic=0 AND p.status='Verified'",(owner,)).fetchall()
     rows+=conn.execute('SELECT substr(received_on,1,10) day,amount_cents FROM first_sale_receipts WHERE owner_id=?',(owner,)).fetchall()
     rows+=conn.execute('SELECT received_on day,amount_cents FROM plan_payments WHERE owner_id=?',(owner,)).fetchall()
+    if _has(conn,'bills'):rows+=conn.execute("SELECT paid_on day,total_cents FROM bills WHERE owner_id=? AND status='Paid'",(owner,)).fetchall()
     keys=[]
     y,mo=today.year,today.month
     for _ in range(6):keys.insert(0,(y,mo));y,mo=(y,mo-1) if mo>1 else (y-1,12)

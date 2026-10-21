@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
+<title>A new website for {{ p.name }} · {{ s.business }}</title>
+<style>
+:root{--ink:#11141f;--ink2:#1b2030;--paper:#f6f4ef;--card:#ffffff;--muted:#5f6577;--line:#e3e0d8;--gold:#b0812a;--gold2:#e6bb5c}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:900px;margin:0 auto;padding:0 20px}
+header{background:var(--ink);color:#fff;padding:56px 0 64px}
+.kicker{font:600 12px/1 ui-monospace,Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--gold2)}
+h1{font-size:clamp(34px,6vw,58px);line-height:1.04;margin:14px 0 16px;letter-spacing:-.02em;font-weight:800}
+h1 em{font-style:normal;color:var(--gold2)}
+header p{color:#c9cdd8;max-width:56ch;margin:0}
+.meta{display:flex;flex-wrap:wrap;gap:18px;margin-top:26px;color:#9aa1b4;font-size:14px}
+section{padding:46px 0;border-bottom:1px solid var(--line)}
+h2{font-size:28px;line-height:1.15;margin:0 0 18px;letter-spacing:-.01em}
+.found{list-style:none;padding:0;margin:0;display:grid;gap:10px}
+.found li{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px 14px 46px;position:relative}
+.found li:before{content:"!";position:absolute;left:14px;top:13px;width:22px;height:22px;border-radius:50%;background:var(--ink);color:var(--gold2);font-weight:800;display:grid;place-items:center;font-size:13px}
+.angle{font-size:20px;color:var(--ink2);max-width:60ch;margin-top:18px}
+.preview{background:var(--ink);color:#fff;border-radius:18px;padding:30px;display:flex;flex-wrap:wrap;gap:20px;align-items:center;justify-content:space-between}
+.preview p{margin:0;color:#c9cdd8;max-width:46ch}
+.btn{display:inline-block;background:var(--gold2);color:var(--ink);font-weight:700;text-decoration:none;border-radius:999px;padding:14px 24px}
+.btn.ghost{background:transparent;color:inherit;border:1.5px solid currentColor}
+.offers{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.offer{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:10px}
+.offer.featured{border:2px solid var(--gold);box-shadow:0 10px 30px rgba(176,129,42,.15)}
+.offer h3{margin:0;font-size:20px}
+.price{font-size:30px;font-weight:800;letter-spacing:-.01em}
+.price small{display:block;font-size:14px;font-weight:500;color:var(--muted)}
+.offer ul{margin:0;padding-left:18px;color:var(--muted);font-size:15px}
+.tag{align-self:flex-start;font:600 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.1em;text-transform:uppercase;background:var(--ink);color:var(--gold2);padding:6px 9px;border-radius:6px}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;counter-reset:s}
+.steps div{counter-increment:s;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+.steps div:before{content:counter(s);display:block;font-size:26px;font-weight:800;color:var(--gold)}
+.promise{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+.promise span{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:15px}
+.accept{background:var(--ink);color:#fff;text-align:center;border:0}
+.accept p{color:#c9cdd8}
+.accept .row{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:20px}
+footer{padding:26px 0 40px;color:var(--muted);font-size:13px}
+@media (prefers-reduced-motion:no-preference){.offer,.found li{transition:transform .2s}.offer:hover{transform:translateY(-3px)}}
+</style></head>
+<body>
+<header><div class="wrap">
+<span class="kicker">Proposal for {{ p.name }}</span>
+<h1>A website that wins you<br>more jobs in <em>{{ place }}</em>.</h1>
+<p>Prepared for {{ p.name }} by {{ s.name }} of {{ s.business }}. No cost to look and no obligation.</p>
+<div class="meta"><span>Valid until {{ valid }}</span><span>Month to month, no lock-in</span><span>Local and one-on-one</span></div>
+</div></header>
+
+<section><div class="wrap">
+<span class="kicker" style="color:var(--gold)">What we found</span>
+<h2>Where your website is costing you calls</h2>
+<ul class="found">{% for f in findings %}<li>{{ f }}</li>{% endfor %}</ul>
+<p class="angle">For {{ trade }}, {{ angle }}.</p>
+</div></section>
+
+<section><div class="wrap">
+<div class="preview"><div><span class="kicker">Already made for you</span><h2 style="margin:10px 0 8px">Your free preview</h2>
+<p>{% if story %}It tells the story of a job from start to finish as people scroll, with your name and number on it.{% else %}Your name, your services and a big tap-to-call button, built to load fast on phones.{% endif %}</p></div>
+{% if mockup_href %}<a class="btn" href="{{ mockup_href }}">See your preview</a>{% else %}<span class="btn ghost">Preview attached to my email</span>{% endif %}</div>
+</div></section>
+
+<section><div class="wrap">
+<span class="kicker" style="color:var(--gold)">Pick what suits</span>
+<h2>Three ways to go</h2>
+<div class="offers">{% for o in offers %}<div class="offer {{ 'featured' if o.featured }}">{% if o.featured %}<span class="tag">The one people remember</span>{% endif %}
+<h3>{{ o.name }}</h3><div class="price">{{ o.price }}<small>then {{ o.monthly }}</small></div><p style="margin:0">{{ o.line }}</p>
+<ul>{% for x in o.points %}<li>{{ x }}</li>{% endfor %}</ul></div>{% endfor %}</div>
+<div class="promise"><span>No lock-in: stop any month with 30 days notice</span><span>You own your domain and content</span><span>Prices are in Australian dollars</span></div>
+</div></section>
+
+<section><div class="wrap">
+<span class="kicker" style="color:var(--gold)">How it works</span>
+<h2>Live in about two weeks</h2>
+<div class="steps"><div><strong>Say yes</strong><br>Pick a package. A 50% deposit gets us started.</div><div><strong>Your photos and info</strong><br>Send what you have. I write the words for you.</div><div><strong>You check it</strong><br>See it on your phone and ask for changes.</div><div><strong>Go live</strong><br>Pay the balance, and I look after it every month.</div></div>
+</div></section>
+
+<section class="accept"><div class="wrap">
+<span class="kicker">Ready when you are</span>
+<h2 style="color:#fff;margin-top:10px">Let's get {{ p.name }} a site to be proud of</h2>
+<p>Tap "Yes, let's go" and tell me which package. Or ask me anything first.</p>
+<div class="row"><a class="btn" href="{{ accept }}">Yes, let's go</a>{% if booking %}<a class="btn ghost" href="{{ booking }}">Book a 15 minute chat</a>{% endif %}{% if s.phone %}<a class="btn ghost" href="tel:{{ s.phone|replace(' ','') }}">Call {{ s.phone }}</a>{% endif %}</div>
+</div></section>
+<footer><div class="wrap">{{ s.business }} · {{ s.email }}{% if s.phone %} · {{ s.phone }}{% endif %} · © {{ year }}. This proposal was made for {{ p.name }} only.</div></footer>
+</body></html>
