@@ -13,12 +13,19 @@ from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from phase3_store import WorkflowError, stamp
 import sales_store as store
 from static_safety import static_errors
+import design_system
 
-THEMES = {
-    'coastal': dict(label='Coastal', ink='#17324d', accent='#197a78', paper='#f4f8f7', muted='#536b73'),
-    'earth': dict(label='Earth', ink='#302b25', accent='#a45c35', paper='#fbf7f1', muted='#6d655b'),
-    'studio': dict(label='Studio', ink='#241d32', accent='#6750a4', paper='#f8f6fb', muted='#655b74'),
+# Niche looks come from design/niches/*.md (see design/DESIGN.md). The three older
+# looks stay so saved versions still render and restore.
+_SYSTEM="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif"
+_LEGACY = {
+    'coastal': dict(label='Coastal (older look)', layout='coastal', ink='#17324d', accent='#197a78', paper='#f4f8f7', muted='#536b73'),
+    'earth': dict(label='Earth (older look)', layout='earth', ink='#302b25', accent='#a45c35', paper='#fbf7f1', muted='#6d655b'),
+    'studio': dict(label='Studio (older look)', layout='studio', ink='#241d32', accent='#6750a4', paper='#f8f6fb', muted='#655b74'),
 }
+for _theme in _LEGACY.values():
+    _theme.update(line='#dfe7e5', display=_SYSTEM, body=_SYSTEM, display_weight='750', display_case='none', card_radius='12px', button_radius='6px')
+THEMES = {**design_system.niche_themes(), **_LEGACY}
 MAX_REVISION = 1000
 
 
@@ -67,7 +74,7 @@ def _source(payload):
         for key in ('description', 'scope', 'exclusions'):
             if not isinstance(item.get(key), str) or not item[key].strip():
                 raise WorkflowError('Accepted package scope is incomplete; owner review is required.')
-    theme = payload.get('theme', 'coastal')
+    theme = payload.get('theme', 'trades')
     if theme not in THEMES:
         raise WorkflowError('Choose one of the available visual themes.')
     note = payload.get('revision_note', '').strip()
@@ -127,15 +134,21 @@ def render_site(content):
         return '?page='+slug if multi else '#'+slug
     nav=''.join('<a href="'+escape(href(item['slug']),quote=True)+'">'+escape(item['label'])+'</a>' for item in nav_items)
     services=''.join('<article class="service-card"><h3>'+escape(item['title'])+'</h3><p>'+escape(item['description'])+'</p></article>' for item in content['services'])
-    theme_css=f"--ink:{theme['ink']};--accent:{theme['accent']};--paper:{theme['paper']};--muted:{theme['muted']}"
-    style='''<style>:root{'''+theme_css+''';--max:1120px}*{box-sizing:border-box}body{margin:0;color:var(--ink);background:var(--paper);font:16px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif}a{color:var(--accent);text-underline-offset:3px}.wrap{width:min(var(--max),calc(100% - 40px));margin:0 auto}.site-header{background:#fff;border-bottom:1px solid #dfe7e5}.nav{min-height:76px;display:flex;align-items:center;justify-content:space-between;gap:24px}.brand{font-size:20px;font-weight:750;letter-spacing:-.03em;color:var(--ink);text-decoration:none}.nav-links{display:flex;gap:24px}.nav-links a{font-size:14px;font-weight:650;text-decoration:none}.hero{padding:clamp(72px,12vw,150px) 0;background:linear-gradient(115deg,#fff 0%,var(--paper) 70%)}.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);font-weight:750}.hero h1{max-width:850px;margin:10px 0 18px;font-size:clamp(42px,7vw,78px);letter-spacing:-.06em;line-height:1.02}.hero p{max-width:650px;color:var(--muted);font-size:19px}.button{display:inline-flex;margin-top:18px;padding:12px 19px;border-radius:6px;background:var(--accent);color:#fff;text-decoration:none;font-weight:700}.section{padding:80px 0}.section-soft{background:#fff}.section h2{font-size:clamp(30px,4vw,44px);letter-spacing:-.04em;line-height:1.15;margin:6px 0 24px}.section>div>p:not(.eyebrow){max-width:720px;color:var(--muted)}.service-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px}.service-card{padding:24px;background:#fff;border:1px solid #e0e8e5;border-radius:12px}.service-card h3{margin:0 0 10px;font-size:19px}.service-card p{margin:0;color:var(--muted)}.contact-form{max-width:600px;display:grid;gap:14px}.contact-form label{display:grid;gap:6px;font-size:14px;font-weight:650}.contact-form input,.contact-form textarea{width:100%;padding:12px;border:1px solid #aebfbc;border-radius:6px;background:#fff;color:var(--ink);font:inherit}.contact-form button{justify-self:start;border:0;cursor:pointer}.form-note{color:var(--muted);font-size:13px}.site-footer{padding:28px 0;background:var(--ink);color:#fff}.site-footer p{margin:0}@media(max-width:650px){.wrap{width:min(var(--max),calc(100% - 30px))}.nav{min-height:64px;align-items:flex-start;flex-direction:column;padding:15px 0;gap:10px}.nav-links{width:100%;overflow:auto;gap:20px;padding-bottom:3px}.nav-links a{white-space:nowrap}.hero{padding:72px 0}.hero p{font-size:17px}.section{padding:58px 0}.service-grid{grid-template-columns:1fr}.contact-form button{width:100%}}</style>'''
+    theme_css=(f"--ink:{theme['ink']};--accent:{theme['accent']};--paper:{theme['paper']};--muted:{theme['muted']};--line:{theme['line']};"
+               f"--display:{theme['display']};--body:{theme['body']};--dw:{theme['display_weight']};--dc:{theme['display_case']};"
+               f"--card-r:{theme['card_radius']};--btn-r:{theme['button_radius']}")
+    style='''<style>:root{'''+theme_css+''';--max:1120px}*{box-sizing:border-box}body{margin:0;color:var(--ink);background:var(--paper);font:17px/1.65 var(--body)}h1,h2,h3,.brand{font-family:var(--display);font-weight:var(--dw);text-transform:var(--dc)}a{color:var(--accent);text-underline-offset:3px}.wrap{width:min(var(--max),calc(100% - 40px));margin:0 auto}.site-header{background:#fff;border-bottom:1px solid #dfe7e5}.nav{min-height:76px;display:flex;align-items:center;justify-content:space-between;gap:24px}.brand{font-size:20px;font-weight:750;letter-spacing:-.03em;color:var(--ink);text-decoration:none}.nav-links{display:flex;gap:24px}.nav-links a{font-size:14px;font-weight:650;text-decoration:none}.hero{padding:clamp(72px,12vw,150px) 0;background:linear-gradient(115deg,#fff 0%,var(--paper) 70%)}.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);font-weight:750}.hero h1{max-width:850px;margin:10px 0 18px;font-size:clamp(42px,7vw,78px);letter-spacing:-.06em;line-height:1.02}.hero p{max-width:650px;color:var(--muted);font-size:19px}.button{display:inline-flex;margin-top:18px;padding:12px 19px;border-radius:var(--btn-r);background:var(--accent);color:#fff;text-decoration:none;font-weight:700;min-height:44px;align-items:center}.text-link{display:inline-block;margin:18px 0 0 18px;font-weight:650}.section{padding:80px 0}.section-soft{background:#fff}.section h2{font-size:clamp(30px,4vw,44px);letter-spacing:-.04em;line-height:1.15;margin:6px 0 24px}.section>div>p:not(.eyebrow){max-width:720px;color:var(--muted)}.service-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px}.service-card{padding:24px;background:#fff;border:1px solid var(--line);border-radius:var(--card-r)}.service-card h3{margin:0 0 10px;font-size:19px}.service-card p{margin:0;color:var(--muted)}.contact-form{max-width:600px;display:grid;gap:14px}.contact-form label{display:grid;gap:6px;font-size:14px;font-weight:650}.contact-form input,.contact-form textarea{width:100%;padding:12px;border:1px solid #aebfbc;border-radius:6px;background:#fff;color:var(--ink);font:inherit}.contact-form button{justify-self:start;border:0;cursor:pointer}.form-note{color:var(--muted);font-size:13px}.site-footer{padding:28px 0;background:var(--ink);color:#fff}.site-footer p{margin:0}@media(max-width:650px){.wrap{width:min(var(--max),calc(100% - 30px))}.nav{min-height:64px;align-items:flex-start;flex-direction:column;padding:15px 0;gap:10px}.nav-links{width:100%;overflow:auto;gap:20px;padding-bottom:3px}.nav-links a{white-space:nowrap}.hero{padding:72px 0}.hero p{font-size:17px}.section{padding:58px 0}.service-grid{grid-template-columns:1fr}.contact-form button{width:100%}.text-link{display:block;margin:16px 0 0}}</style>'''
     # Layouts change composition and typography, not only colour tokens.
     variants={
       'coastal': '.hero .wrap{display:grid;grid-template-columns:1.4fr 1fr;gap:12px 48px}.hero .eyebrow,.hero h1,.hero p,.hero .button{grid-column:1}.hero .button{justify-self:start}.hero .wrap:after{content:"";grid-column:2;grid-row:1/6;min-height:260px;border-radius:50% 10% 50% 10%;background:linear-gradient(145deg,var(--accent),var(--paper));box-shadow:24px 24px 0 #fff}.service-card{border-top:4px solid var(--accent)}@media(max-width:700px){.hero .wrap{display:block}.hero .wrap:after{display:none}}',
       'earth': '.hero{background:var(--ink);color:var(--paper)}.hero p{color:var(--paper)}.hero .eyebrow{color:#fff}.hero h1{max-width:760px;text-transform:uppercase;letter-spacing:-.045em}.service-grid{counter-reset:services}.service-card{border-radius:0;border-left:5px solid var(--accent)}.service-card:before{counter-increment:services;content:"0" counter(services);font-size:34px;font-weight:800;color:var(--accent)}.button{border-radius:0}.section h2{border-bottom:2px solid var(--accent);padding-bottom:22px}',
+      'blueprint': '.site-header{background:var(--paper);border-bottom:1px solid var(--ink)}.hero{background-color:var(--paper);background-image:repeating-linear-gradient(0deg,transparent 0 47px,var(--line) 47px 48px),repeating-linear-gradient(90deg,transparent 0 47px,var(--line) 47px 48px);border-bottom:1px solid var(--ink)}.hero h1{font-size:clamp(44px,8.5vw,104px);letter-spacing:-.01em;line-height:.95}.hero p{color:var(--ink)}.section h2{border-bottom:1px solid var(--ink);padding-bottom:16px;letter-spacing:0}.service-grid{counter-reset:services;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:0 48px}.service-card{background:transparent;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:26px 0;display:grid;grid-template-columns:56px 1fr}.service-card:before{counter-increment:services;content:counter(services,decimal-leading-zero);grid-row:1/3;font:700 15px/1.7 var(--display);color:var(--accent)}.section-soft{background:#fff}',
+      'garden': '.site-header{background:var(--paper);border-bottom:0}.hero{background:var(--paper);padding-bottom:0}.hero .wrap{border-bottom:1px solid var(--line);padding-bottom:clamp(40px,6vw,72px)}.hero h1{font-size:clamp(42px,7vw,84px);letter-spacing:-.02em;line-height:1.05}.eyebrow{text-transform:none;letter-spacing:.02em;font-size:15px}.section-soft{background:#fff}.service-card{border:0;background:#fff;box-shadow:0 1px 0 var(--line),0 12px 32px -24px var(--ink)}.section-soft .service-card{background:var(--paper)}',
+      'atelier': '.site-header{background:var(--paper);border-bottom:1px solid var(--line)}.hero{background:var(--paper);text-align:center}.hero h1,.hero p{margin-left:auto;margin-right:auto}.hero h1{font-size:clamp(46px,8vw,108px);letter-spacing:-.01em;line-height:1}.eyebrow{letter-spacing:.3em}.section h2{letter-spacing:-.01em}.service-grid{display:block;max-width:780px}.service-card{display:flex;justify-content:space-between;gap:24px;background:transparent;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:20px 0}.service-card h3{font-size:22px}.service-card p{max-width:55%;text-align:right}.section-soft{background:#fff}@media(max-width:650px){.service-card{display:block}.service-card p{max-width:none;text-align:left}}',
+      'workshop': '.hero{background:var(--ink);color:#fff}.hero .eyebrow,.hero p{color:#fff}.hero .text-link{color:#fff}.hero h1{letter-spacing:-.035em}.hero .button{font-size:19px;padding:14px 22px}.service-card{border-left:4px solid var(--accent)}.section-soft{background:#fff}',
       'studio': '.hero h1,.section h2{font-family:Georgia,serif;font-weight:400;letter-spacing:-.04em}.hero{border-bottom:1px solid var(--ink)}.hero .wrap{padding-left:clamp(0px,6vw,80px)}.eyebrow{letter-spacing:.22em}.service-card{border:0;border-top:1px solid var(--ink);border-radius:0;background:transparent;padding:28px 8px}.hero h1{font-size:clamp(44px,8vw,94px)}.button{border-radius:32px}.section-soft{background:var(--paper)}',
     }
-    style=style.replace('</style>',variants[content['theme']]+'a:focus-visible,input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:4px}p,h1,h2,h3,a{overflow-wrap:anywhere}</style>')
+    style=style.replace('</style>',variants[theme['layout']]+'a:focus-visible,input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:4px}p,h1,h2,h3,a{overflow-wrap:anywhere}</style>')
     contact_details=''
     if content.get('contact_email'):
         from sales_email import address
@@ -145,10 +158,17 @@ def render_site(content):
         phone=re.sub(r'[ ()-]','',content['contact_phone'])
         label=escape(content['contact_phone'])
         contact_details+='<p>Phone: '+('<a href="tel:'+phone+'">'+label+'</a>' if re.fullmatch(r'\+?[0-9]{6,15}',phone) else label)+'</p>'
+    # One main action: a tap-to-call button when we have a valid number, else the enquiry form.
+    contact_link='<a class="button" href="'+escape(href('contact'),quote=True)+'">Get in touch</a>'
+    phone_digits=re.sub(r'[ ()-]','',content.get('contact_phone') or '')
+    if re.fullmatch(r'\+?[0-9]{6,15}',phone_digits):
+        hero_actions='<a class="button" href="tel:'+phone_digits+'">Call '+escape(content['contact_phone'])+'</a><a class="text-link" href="'+escape(href('contact'),quote=True)+'">or send an enquiry</a>'
+    else:
+        hero_actions=contact_link
     output={}
     for page in content['pages']:
         if page['kind']=='home':
-            body='<section id="hero" class="hero"><div class="wrap"><p class="eyebrow">'+escape(content['industry'] or 'Local business')+'</p><h1>'+escape(page['heading'])+'</h1><p>'+escape(page['intro'])+'</p><a class="button" href="'+escape(href('contact'),quote=True)+'">Get in touch</a></div></section>'
+            body='<section id="hero" class="hero"><div class="wrap"><p class="eyebrow">'+escape(content['industry'] or 'Local business')+'</p><h1>'+escape(page['heading'])+'</h1><p>'+escape(page['intro'])+'</p>'+hero_actions+'</div></section>'
             if not multi:
                 body+='<section id="services" class="section"><div class="wrap"><p class="eyebrow">WHAT WE CAN HELP WITH</p><h2>Services</h2><div class="service-grid">'+services+'</div></div></section>'
                 body+='<section id="about" class="section section-soft"><div class="wrap"><p class="eyebrow">ABOUT</p><h2>About '+name+'</h2><p>'+escape(content.get('about') or page['intro'])+'</p></div></section>'
@@ -238,6 +258,12 @@ def quality_check(pages, brief, content):
     for html in pages.values():
         for match in claim_pattern.finditer(html):
             if match.group(0).casefold() not in brief_text.casefold(): errors.append('Unsupported business claim detected: '+match.group(0))
+    # House style (design/DESIGN.md): readable colours and no machine-written stock phrases.
+    theme=THEMES.get(content.get('theme'))
+    if theme: errors.extend('Colour check: '+problem for problem in design_system.contrast_problems(theme))
+    for slug,html in pages.items():
+        for phrase in design_system.slop_problems(html):
+            errors.append(slug+': uses the stock phrase "'+phrase+'"; rewrite it in the owner\'s plain words.')
     if not content.get('services'): errors.append('No accepted services were rendered.')
     if not content.get('testimonials'):
         warnings.append('No testimonial section was created because none was supplied and approved.')
@@ -248,7 +274,8 @@ def quality_check(pages, brief, content):
                             landmarks=all('<nav ' in h and '<footer' in h for h in pages.values()),
                             seo_description=all('<meta name="description"' in h for h in pages.values()),
                             unsupported_claim_scan=not any('Unsupported business claim' in e for e in errors),
-                            safe_static_markup=not any('Unsafe executable' in e for e in errors), scope_services=bool(content.get('services'))))
+                            safe_static_markup=not any('Unsafe executable' in e for e in errors), scope_services=bool(content.get('services')),
+                            design_rules=not any('Colour check' in e or 'stock phrase' in e for e in errors)))
 
 
 def apply_ai_copy(result, generated):
@@ -264,6 +291,8 @@ def apply_ai_copy(result, generated):
     for match in claim_pattern.finditer(headline+' '+intro):
         if match.group(0).casefold() not in brief_claims.casefold():
             raise WorkflowError('AI website copy contains an unsupported business claim; no website version was saved.')
+    if design_system.slop_problems(headline+' '+intro):
+        raise WorkflowError('AI website copy used stock phrases ('+', '.join(design_system.slop_problems(headline+' '+intro))+'); no website version was saved.')
     result['content']['pages'][0]['heading']=headline
     result['content']['pages'][0]['title']=headline
     result['content']['pages'][0]['intro']=intro
@@ -316,11 +345,13 @@ def register(app, get_db, login_required):
         latest=versions[0] if versions else None
         brief=json.loads(project['brief_json'])
         website_job=conn.execute("SELECT * FROM p5_jobs WHERE flow_id=? AND kind='website' ORDER BY id DESC LIMIT 1",(project['flow_id'],)).fetchone()
+        flow=conn.execute('SELECT snapshot_json FROM p5_flows WHERE id=?',(project['flow_id'],)).fetchone()
+        suggested=design_system.niche_for(json.loads(flow['snapshot_json']).get('lead',{}).get('industry','') if flow else '')
         releases=conn.execute('SELECT * FROM p10_releases WHERE site_id=? ORDER BY id DESC',(site['id'],)).fetchall() if site else []
         checks={release['id']:conn.execute('SELECT * FROM p10_checks WHERE release_id=? ORDER BY id DESC LIMIT 1',(release['id'],)).fetchone() for release in releases}
         alerts=conn.execute('SELECT * FROM p10_alerts WHERE owner_id=? AND (release_id IN (SELECT id FROM p10_releases WHERE site_id=?) OR release_id IS NULL) ORDER BY id DESC LIMIT 20',(session['user_id'],site['id'] if site else -1)).fetchall()
         return render_template('website_project.html',project=project,site=site,versions=versions,latest=latest,website_job=website_job,
-                               brief=brief,themes=THEMES,
+                               brief=brief,themes=THEMES,suggested_theme=suggested,
                                content=json.loads(latest['content_json']) if latest else {},
                                qa=json.loads(latest['qa_json']) if latest else {},releases=releases,checks=checks,release_alerts=alerts)
 
@@ -351,7 +382,7 @@ def register(app, get_db, login_required):
         snapshot=json.loads(row['snapshot_json']);
         store.enqueue(conn,row['flow_id'],'website',dict(site_id=site_id,project_id=project_id,brief_id=row['brief_id'],brief=brief,
             project=dict(id=project_id,client_name=row['client_name']),industry=snapshot.get('lead',{}).get('industry',''),
-            theme=request.form.get('theme','coastal'),revision_note=''),mode=mode,key='website-build-'+str(site_id)+'-'+str(time.time_ns()))
+            theme=request.form.get('theme','trades'),revision_note=''),mode=mode,key='website-build-'+str(site_id)+'-'+str(time.time_ns()))
         store.log(conn,session['user_id'],'Owner authorized local website generation from accepted brief; no publication authorized.',row['flow_id'])
         conn.commit()
         if mode=='ai': return redirect(url_for('sales_flow',flow_id=row['flow_id']))
@@ -361,7 +392,7 @@ def register(app, get_db, login_required):
     @login_required
     def website_revise(site_id):
         conn=get_db(); site=site_access(site_id); conn.execute('BEGIN IMMEDIATE')
-        note=request.form.get('revision_note','').strip(); theme=request.form.get('theme','coastal')
+        note=request.form.get('revision_note','').strip(); theme=request.form.get('theme','trades')
         if not note or len(note)>MAX_REVISION: raise WorkflowError('Describe the requested revision in 1,000 characters or fewer.')
         if theme not in THEMES: raise WorkflowError('Choose an available visual theme.')
         if conn.execute("SELECT 1 FROM p5_jobs WHERE flow_id=? AND kind='website' AND status IN ('Queued','Running','Awaiting approval')",(site['flow_id'],)).fetchone():
