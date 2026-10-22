@@ -27,6 +27,23 @@ for _theme in _LEGACY.values():
     _theme.update(line='#dfe7e5', display=_SYSTEM, body=_SYSTEM, display_weight='750', display_case='none', card_radius='12px', button_radius='6px')
 THEMES = {**design_system.niche_themes(), **_LEGACY}
 MAX_REVISION = 1000
+# The Signature chassis (design/DESIGN.md): black hero tile, big centred type, pill buttons,
+# photo spots that wait for the client's own job photos, roomy tiles. Trade looks keep their fonts and colours.
+SIGNATURE_LAYOUTS = ('blueprint', 'garden', 'atelier', 'workshop')
+SIGNATURE_CSS = ('.site-header{position:sticky;top:0;z-index:5;background:#000;border-bottom:0}.site-header .brand,.nav-links a{color:#f5f5f7}.nav-links a{opacity:.85}'
+    '.hero{background:#000;color:#f5f5f7;text-align:center;padding:clamp(96px,14vw,180px) 0 clamp(56px,7vw,88px);border:0}.hero .wrap{display:block;border:0;padding:0;width:min(1120px,calc(100% - 40px))}'
+    '.hero h1{font-size:clamp(46px,8vw,104px);letter-spacing:-.035em;line-height:1.02;margin:12px auto 18px;max-width:none}'
+    '.hero p,.hero .eyebrow{color:#d2d2d7;margin-left:auto;margin-right:auto}.hero p{font-size:clamp(19px,2.2vw,24px)}.hero .eyebrow{letter-spacing:.08em}.hero .text-link{color:#f5f5f7}'
+    '.button{border-radius:980px;padding:13px 26px;font-size:18px}'
+    '.photos{background:#000;padding:0 0 clamp(64px,9vw,120px)}.photo-grid{display:grid;grid-template-columns:2fr 1fr;grid-template-rows:1fr 1fr;gap:16px;height:clamp(320px,46vw,600px)}'
+    '.photo-slot{border-radius:22px;background:#1c1c1e;border:1px dashed #48484a;display:grid;place-items:center;text-align:center;padding:16px;color:#aeaeb2;font-size:15px}.photo-slot:first-child{grid-row:1/3}'
+    '.section{padding:clamp(88px,11vw,140px) 0;text-align:center}.section h2{font-size:clamp(40px,6vw,72px);letter-spacing:-.03em;border:0;padding:0;margin-bottom:16px}'
+    '.section>div>p:not(.eyebrow){margin-left:auto;margin-right:auto}.service-grid{display:grid;text-align:left;margin-top:44px;gap:20px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));border:0;max-width:none}'
+    '.service-card{display:block;background:#fff;border:0;border-radius:22px;padding:34px 30px;box-shadow:none}.service-card:before{content:none}.service-card h3{font-size:24px}.service-card p{max-width:none;text-align:left}'
+    '.section-soft{background:#fff}.section-soft .service-card{background:var(--paper)}.contact-form{margin:24px auto 0;text-align:left}.site-footer{background:#000}'
+    '@media(max-width:650px){.photo-grid{grid-template-columns:1fr;grid-template-rows:none;height:auto}.photo-slot{min-height:200px}.photo-slot:first-child{grid-row:auto;min-height:280px}}')
+PHOTO_SLOTS = ('<section class="photos" aria-label="Job photos"><div class="wrap photo-grid">'
+    '<div class="photo-slot">Your best job photo goes here</div><div class="photo-slot">A before shot</div><div class="photo-slot">The finished job</div></div></section>')
 
 
 def migrate(conn):
@@ -148,6 +165,7 @@ def render_site(content):
       'workshop': '.hero{background:var(--ink);color:#fff}.hero .eyebrow,.hero p{color:#fff}.hero .text-link{color:#fff}.hero h1{letter-spacing:-.035em}.hero .button{font-size:19px;padding:14px 22px}.service-card{border-left:4px solid var(--accent)}.section-soft{background:#fff}',
       'studio': '.hero h1,.section h2{font-family:Georgia,serif;font-weight:400;letter-spacing:-.04em}.hero{border-bottom:1px solid var(--ink)}.hero .wrap{padding-left:clamp(0px,6vw,80px)}.eyebrow{letter-spacing:.22em}.service-card{border:0;border-top:1px solid var(--ink);border-radius:0;background:transparent;padding:28px 8px}.hero h1{font-size:clamp(44px,8vw,94px)}.button{border-radius:32px}.section-soft{background:var(--paper)}',
     }
+    if theme['layout'] in SIGNATURE_LAYOUTS: variants[theme['layout']]+=SIGNATURE_CSS
     style=style.replace('</style>',variants[theme['layout']]+'a:focus-visible,input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:4px}p,h1,h2,h3,a{overflow-wrap:anywhere}</style>')
     contact_details=''
     if content.get('contact_email'):
@@ -169,6 +187,7 @@ def render_site(content):
     for page in content['pages']:
         if page['kind']=='home':
             body='<section id="hero" class="hero"><div class="wrap"><p class="eyebrow">'+escape(content['industry'] or 'Local business')+'</p><h1>'+escape(page['heading'])+'</h1><p>'+escape(page['intro'])+'</p>'+hero_actions+'</div></section>'
+            if theme['layout'] in SIGNATURE_LAYOUTS: body+=PHOTO_SLOTS
             if not multi:
                 body+='<section id="services" class="section"><div class="wrap"><p class="eyebrow">WHAT WE CAN HELP WITH</p><h2>Services</h2><div class="service-grid">'+services+'</div></div></section>'
                 body+='<section id="about" class="section section-soft"><div class="wrap"><p class="eyebrow">ABOUT</p><h2>About '+name+'</h2><p>'+escape(content.get('about') or page['intro'])+'</p></div></section>'
@@ -265,6 +284,8 @@ def quality_check(pages, brief, content):
         for phrase in design_system.slop_problems(html):
             errors.append(slug+': uses the stock phrase "'+phrase+'"; rewrite it in the owner\'s plain words.')
     if not content.get('services'): errors.append('No accepted services were rendered.')
+    if any('class="photo-slot"' in html for html in pages.values()):
+        warnings.append('Photo spots are waiting for the client\'s own job photos. Ask them with the photo request below; never use photos without their permission.')
     if not content.get('testimonials'):
         warnings.append('No testimonial section was created because none was supplied and approved.')
     warnings.extend(content['limitations'])
