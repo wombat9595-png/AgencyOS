@@ -30,8 +30,8 @@ NICHES={
 }
 STORIES={
  'builder':dict(title='Bare dirt to finished house (real time-lapse)',demo='builder-real',media='builder',name='Northline Building Co.',mark='N'),
- 'landscaper':dict(title='Messy yard to pool and garden',demo='landscaper',name='Greenhaven Landscapes',mark='G'),
- 'salon':dict(title='Cut, curls and colour',demo='salon',name='Maison Rosé Hair &amp; Beauty',mark='M'),
+ 'landscaper':dict(title='Bare ground to finished garden (real photos)',demo='landscaper-real',media='landscaper',name='Greenhaven Landscapes',mark='G'),
+ 'salon':dict(title='One appointment, start to finish (real photos)',demo='salon-real',media='salon',name='Maison Rosé Hair &amp; Beauty',mark='M'),
 }
 
 

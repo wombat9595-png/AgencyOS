@@ -49,7 +49,7 @@ class NightShiftTest(unittest.TestCase):
             self.assertEqual(playbook.review(subject,body,p,SETTINGS,kind),[],kind)
         self.assertIn('missing the "no thanks" opt-out (Spam Act)',playbook.review('Hi','Hi Fictional Builds team, we guarantee results',p,SETTINGS))
         self.assertEqual(playbook.story_for('Builders')['demo'],'builder-real')
-        self.assertEqual(playbook.story_for('Beauty salons')['demo'],'salon')
+        self.assertEqual(playbook.story_for('Beauty salons')['demo'],'salon-real')
         self.assertIsNone(playbook.story_for('Plumbers'))
 
     def test_shift_finds_checks_and_drafts_then_home_shows_the_queue(self):
@@ -162,7 +162,7 @@ class NightShiftTest(unittest.TestCase):
         self.assertIn('Six agents, one playbook',page);self.assertIn('Rules only (free)',page)
         self.assertIn('Pick a trade',self.post('/night-shift/beats',dict(trade='Nope',town='X',radius='10')).data.decode())
         self.post('/night-shift/beats',dict(trade='Beauty salons',town='Manly NSW',radius='5'))
-        self.assertIn('Cut, curls and colour',self.client.get('/night-shift').data.decode())
+        self.assertIn('One appointment, start to finish (real photos)',self.client.get('/night-shift').data.decode())
         beat=self.rows('night_shift_beats')[0]
         self.post(f'/night-shift/beats/{beat["id"]}/remove');self.assertEqual(self.rows('night_shift_beats'),[])
         self.post('/night-shift/toggle',dict(enabled='0'));self.assertEqual(self.rows('night_shift_settings')[0]['enabled'],0)

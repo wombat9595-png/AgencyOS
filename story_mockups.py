@@ -29,7 +29,7 @@ def render(p,s,story,inline=False,media_prefix=None):
     page=re.sub(r'Demo site by [^<]*? is a made-up business;[^<]*',
       'Free mock-up for '+name+' by '+maker+'. Photos, reviews, prices and numbers are placeholders until we add yours.',page)
     page=page.replace(story['name'],name)
-    if story['demo']=='salon':page=page.replace('Maison Rosé',name)
+    if story['demo'].startswith('salon'):page=page.replace('Maison Rosé',name)
     page=page.replace('aria-hidden="true">'+story['mark']+'</span>','aria-hidden="true">'+html.escape(p['name'][:1].upper())+'</span>')
     if p['phone']:
         page=page.replace(DEMO_PHONE,html.escape(p['phone'])).replace(DEMO_TEL,re.sub(r'[^0-9+]','',p['phone']))
