@@ -184,7 +184,7 @@ def ceo_answer(question,m,todo,is_paused,runtime,agents=''):
         p=m.get('prospects') or NO_PROSPECTS
         steps=[(m['leads'] or p['total'],'You have no leads yet. Open Find customers, pick a trade and your suburb, and AgencyOS will find local businesses and draft the first messages.'),
           (m['leads'] or p['contacted'],'You have '+str(p['total'])+' businesses found but have not contacted any yet. Open Find customers and send today\'s drafts.'),
-          (m['leads'] or p['interested'] or p['customers'],'You have contacted '+str(p['contacted'])+' businesses and none has said yes yet. Most say yes after a follow-up or a phone call, so keep going: aim for '+str(p['target'])+' a day.'),
+          (m['leads'] or p['interested'] or p['customers'],'You have contacted '+str(p['contacted'])+' businesses and none has said yes yet. Most say yes after a follow-up, so keep going: aim for '+str(p['target'])+' a day.'),
           (m['opportunities'],'You have '+str(m['leads'])+' lead(s) but none has been started as an opportunity. Open Customers and start one.'),
           (m['quotes'],'You have '+str(m['opportunities'])+' opportunity(ies) but no quote yet. Finish the questionnaire and prepare a quote.'),
           (m['accepted'],'You have '+str(m['quotes'])+' quote(s) out and none accepted yet. Follow up with those customers.'),

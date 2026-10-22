@@ -57,8 +57,8 @@ class LeadEngineTest(unittest.TestCase):
         good=self.prospect('Good Site Plumbing')
         self.assertEqual(good['reason'],'ok');self.assertEqual(good['score'],20)
         page=self.page()
-        self.assertIn('Fictional Pipes',page);self.assertIn('could not find a website',page);self.assertIn('Call script',page)
-        self.assertIn('does not resize',page);self.assertIn('OpenStreetMap contributors',page)
+        self.assertIn('Fictional Pipes',page);self.assertNotIn('Call script',page)
+        self.assertIn('OpenStreetMap contributors',page)
         # Searching again adds nobody twice; the geocode is cached.
         with patch('lead_engine.http_json',side_effect=[OSM]),patch('lead_engine._get',side_effect=fake_get):
             self.post('/find-customers/search',dict(trade='Plumbers',town='penrith  nsw',radius='10'))
@@ -91,10 +91,10 @@ class LeadEngineTest(unittest.TestCase):
             self.client.get('/find-customers')
         self.assertEqual(self.prospect('Fictional Pipes')['stage'],'No reply')
 
-    def test_call_interested_becomes_customer(self):
+    def test_interested_becomes_customer(self):
         self.search();pid=self.prospect('Old Site Plumbing')['id']
         with patch('lead_engine.today',return_value=TODAY):
-            self.post(f'/find-customers/{pid}/call',dict(outcome='interested'))
+            self.post(f'/find-customers/{pid}/interested')
             self.assertIn('Make them a customer',self.page())
             response=self.post(f'/find-customers/{pid}/customer')
         self.assertEqual(response.status_code,302)
@@ -114,7 +114,7 @@ class LeadEngineTest(unittest.TestCase):
         home=self.client.get('/business').data.decode()
         self.assertIn('Find your first local businesses',home)
         with patch('lead_engine._get',side_effect=OSError('offline')):
-            self.post('/find-customers/add',dict(name='Van Seen Electrical',trade='Electricians',suburb='Penrith',phone='0400 000 009',website='https://vanseen.example'))
+            self.post('/find-customers/add',dict(name='Van Seen Electrical',trade='Electricians',suburb='Penrith',phone='0400 000 009',email='jobs@vanseen.example',website='https://vanseen.example'))
         p=self.prospect('Van Seen Electrical')
         self.assertEqual(p['reason'],'down')
         self.assertEqual(self.post('/find-customers/add',dict(name='Van Seen Electrical',suburb='Penrith')).status_code,400)
@@ -129,7 +129,7 @@ class LeadEngineTest(unittest.TestCase):
         self.post('/find-customers/settings',dict(name='Benji Price',business='Price Web Co',email='benji@example.com',phone='0400 111 222',area='Penrith NSW',daily_target='15'))
         self.search()
         page=self.page()
-        self.assertIn('Price Web Co',page);self.assertIn('based in Penrith NSW',page);self.assertIn('0 of 15',page)
+        self.assertIn('Price Web Co',page);self.assertIn('based in Penrith NSW',page);self.assertIn('0 of 20',page)  # the Deliverability Guard's week-one number wins
 
     def test_approved_email_goes_to_gmail_drafts_and_is_noticed_when_sent(self):
         import os,time,sqlite3,base64

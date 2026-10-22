@@ -1,0 +1,91 @@
+{% extends "base.html" %}{% block title %}Team · AgencyOS{% endblock %}{% block page_heading %}Team{% endblock %}
+{% block content %}
+<style>
+.org{display:grid;gap:12px;margin:8px 0 4px}
+.org-row{display:grid;gap:12px;justify-content:center}
+.org-row.one{grid-template-columns:minmax(0,340px)}
+.org-row.six{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.org-card{border:1px solid rgba(127,127,127,.3);border-radius:14px;padding:12px 14px;background:rgba(127,127,127,.06)}
+.org-card h3{margin:0;font-size:1rem}.org-card .t{font-size:.78rem;opacity:.7;text-transform:uppercase;letter-spacing:.04em}
+.org-card .big{font-size:1.6rem;font-weight:700;line-height:1.1;margin-top:6px}.org-card .lbl{font-size:.8rem;opacity:.75}
+.org-card .sm{font-size:.75rem;opacity:.6;margin-top:2px}
+.divs{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;align-items:start}
+.div{border:1px dashed rgba(127,127,127,.35);border-radius:16px;padding:10px;min-width:0}.div .org-row.six{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}
+.mgr{border-color:#e8c547}
+.org-line{width:2px;height:14px;background:rgba(127,127,127,.4);margin:0 auto}
+.brief li{margin:4px 0}.lesson{display:flex;gap:8px;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(127,127,127,.2);padding:6px 0}
+.bar{height:8px;border-radius:4px;background:rgba(127,127,127,.2);overflow:hidden}.bar i{display:block;height:100%;background:#e8c547}
+.regions{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px 16px}
+</style>
+<div class="page-intro"><div><span class="eyebrow">AGENTS</span><h1>Your team</h1><p class="muted">Seventeen agents in one chain of command: a CEO, a Chief of Staff, three division managers and twelve workers. Email only, no calls. The workers find, check and draft around the clock, a shift every 2 hours while your Mac is awake; the CEO checks every draft before you see it; you say yes or no. Nothing is ever sent without your tap.</p></div></div>
+
+<section class="panel"><div class="panel-heading"><div><span class="eyebrow">MORNING BRIEF</span><h2>From the CEO</h2></div><a class="btn primary" href="{{ url_for('phone_queue') }}">Open your yes or no</a></div>
+<ul class="brief">{% for line in brief %}<li>{{ line }}</li>{% endfor %}</ul>
+</section>
+
+<section class="panel"><div class="panel-heading"><div><span class="eyebrow">ORG CHART</span><h2>Who does what</h2></div></div>
+{% set P = org.people %}
+<div class="org">
+  {% for key in ('ceo','chief') %}{% set a = P[key] %}
+  <div class="org-row one"><div class="org-card"><span class="t">{{ a.title }}</span><h3>{{ a.name }}</h3><div class="big">{{ a.card.big }}</div><div class="lbl">{{ a.card.label }}</div><div class="sm">{{ a.card.small }}</div></div></div>
+  <div class="org-line"></div>
+  {% endfor %}
+  <div class="divs">{% for d in org.divisions %}<div class="div">
+    {% set a = d.manager %}<div class="org-card mgr"><span class="t">{{ a.title }}</span><h3>{{ a.name }}</h3><div class="big">{{ a.card.big }}</div><div class="lbl">{{ a.card.label }}</div><div class="sm">{{ a.card.small }}</div></div>
+    <div class="org-line"></div>
+    <div class="org-row six">{% for a in d.workers %}<div class="org-card"><span class="t">{{ a.title }}</span><h3>{{ a.name }}</h3><div class="big">{{ a.card.big }}</div><div class="lbl">{{ a.card.label }}</div><div class="sm">{{ a.card.small }}</div></div>{% endfor %}</div>
+  </div>{% endfor %}</div>
+</div>
+<details><summary>Read each agent's playbook (the rules they work to)</summary>
+{% for a in P.values() %}<h3>{{ a.name }} <small class="muted">· {{ a.job }}</small></h3><ul>{% for r in a.playbook %}<li>{{ r }}</li>{% endfor %}{% for l in a.lessons %}<li><strong>Your lesson:</strong> {{ l.lesson }}{% if l.avoid %} (never say: {{ l.avoid }}){% endif %}</li>{% endfor %}</ul>{% endfor %}
+</details>
+</section>
+
+<section class="panel" id="teach"><div class="panel-heading"><div><span class="eyebrow">TEACH THEM</span><h2>Lessons and what they have learned</h2></div></div>
+<p class="muted">Two ways the team learns. 1) You teach a lesson here, in plain English. 2) Every yes, edit and no you give a draft is saved. When the same "no" reason comes up {{ 3 }} times, it becomes a standing rule. With Claude Haiku switched on, the Writer and CEO also read your lessons and copy the style of emails you approved after editing. With the free rules only, they obey your "never say" words, your standing rules and drop trades you keep rejecting, but they cannot rewrite their own wording.</p>
+<form method="post" action="{{ url_for('team_teach') }}" class="stack"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<label>Who<select name="agent"><option value="writer">Writer</option><option value="all">Everyone</option>{% for k,n in names.items() if k!='writer' %}<option value="{{ k }}">{{ n }}</option>{% endfor %}</select></label>
+<label class="wide">Lesson<input name="lesson" maxlength="400" required placeholder="Always say I am based on the Northern Beaches"></label>
+<label class="wide">Never use these words (optional, comma separated)<input name="avoid" maxlength="200" placeholder="cheap, deal, solutions"></label>
+<div class="wide"><button class="btn primary">Teach</button></div></form>
+{% set all = org.general %}
+{% for a in org.people.values() %}{% for l in a.lessons %}<div class="lesson"><span><strong>{{ a.name }}:</strong> {{ l.lesson }}{% if l.avoid %} <small class="muted">(never: {{ l.avoid }})</small>{% endif %}</span><form method="post" action="{{ url_for('team_forget',lesson_id=l.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn secondary">Remove</button></form></div>{% endfor %}{% endfor %}
+{% for l in all %}<div class="lesson"><span><strong>Everyone:</strong> {{ l.lesson }}{% if l.avoid %} <small class="muted">(never: {{ l.avoid }})</small>{% endif %}</span><form method="post" action="{{ url_for('team_forget',lesson_id=l.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn secondary">Remove</button></form></div>{% endfor %}
+<h3>What's working</h3>
+{% if working.trades %}<div class="regions">{% for b in working.trades[:8] %}<div><small>{{ b.name }} · {{ b.yes }} yes of {{ b.tried }} emailed · {{ b.rate }}%</small><div class="bar"><i style="width:{{ b.rate }}%"></i></div></div>{% endfor %}</div>
+{% if working.subjects %}<p class="tiny">Subject lines: {% for b in working.subjects %}"{{ b.name }}" {{ b.rate }}% · {% endfor %}the best one is used most once each has had 15 sends.</p>{% endif %}
+{% else %}<p class="muted">Shows which trades and subject lines get yeses, once emails go out.</p>{% endif %}
+<h3>Learned from your feedback</h3>
+{% if learned.total %}<p>You said yes to <strong>{{ learned.rate }}%</strong> of the last {{ learned.total }} drafts ({{ learned.edited }} after editing).{% for k,v in learned.reasons.items() %} {{ reasons[k] }}: {{ v }}.{% endfor %}</p>
+{% if learned.rules %}<ul>{% for r in learned.rules %}<li>{{ r }}</li>{% endfor %}</ul>{% endif %}
+{% if learned.bad_trades %}<p>The Writer now skips: {{ learned.bad_trades|join(', ') }} (you kept saying they are not a fit).</p>{% endif %}
+{% else %}<p class="muted">Nothing yet. Say yes or no to a few drafts and it shows up here.</p>{% endif %}
+</section>
+
+<section class="panel"><div class="panel-heading"><div><span class="eyebrow">CHIEF OF STAFF</span><h2>The plan</h2></div></div>
+<p>Every 2 hours, day and night: sweep <strong>{{ plan.tiles }}</strong> map squares{% if plan.region %} in <strong>{{ plan.region }}</strong>{% endif %} ({{ plan.per_day }} a day), check new websites for problems and email addresses, and write new drafts up to the safe limit of <strong>{{ plan.safe }}</strong> emails a day ({{ plan.waiting }} already waiting for you). Writer: {{ plan.writer.reason }}</p>
+<p><strong>Target: every business with no website in Australia.</strong> Sydney first, then every capital and big city, then 73 regional towns across every state and territory, then a catch-all for the rest of each state.</p>
+<div class="regions">{% for r in org.states %}<div><small>{{ r.name }} · {{ r.done }}/{{ r.total }} searches · {{ r.found }} found</small><div class="bar"><i style="width:{{ r.pct }}%"></i></div></div>{% endfor %}</div>
+<p class="tiny muted">Free OpenStreetMap data. It does not list every business, and "no website listed" is not proof they have none, so tap the Google link on a card before you send. Business data © OpenStreetMap contributors (ODbL).</p>
+</section>
+
+<section class="panel" id="settings"><div class="panel-heading"><div><span class="eyebrow">SETTINGS</span><h2>Pace and phone</h2></div></div>
+<form method="post" action="{{ url_for('team_settings') }}" class="stack"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<label>Map searches a day (0 to 480)<input name="tiles_per_night" inputmode="numeric" value="{{ settings.tiles_per_night }}"></label>
+<label>Most emails a day, once warmed up (0 to 60)<input name="daily_drafts" inputmode="numeric" value="{{ settings.daily_drafts }}"></label>
+<label>Where<select name="all_australia"><option value="1" {% if settings.all_australia %}selected{% endif %}>All of Australia, Sydney first</option><option value="0" {% if not settings.all_australia %}selected{% endif %}>Pause after Sydney</option></select></label>
+<label>Phone buzz when drafts are ready<select name="pings"><option value="1" {% if settings.pings %}selected{% endif %}>On (7 am to 9 pm, max 3 a day)</option><option value="0" {% if not settings.pings %}selected{% endif %}>Off</option></select></label>
+<label>Keep the Mac awake while plugged in<select name="keep_awake"><option value="1" {% if settings.keep_awake %}selected{% endif %}>On (so the team works all night)</option><option value="0" {% if not settings.keep_awake %}selected{% endif %}>Off</option></select></label>
+<label class="wide">Private phone address (Tailscale, optional)<input name="phone_url" maxlength="200" value="{{ settings.phone_url }}" placeholder="https://benjis-laptop.tail1234.ts.net"></label>
+<div class="wide"><button class="btn primary">Save</button>{% if not ntfy %} <small class="muted">Phone buzzes need the free ntfy app: switch them on under Studio, "Phone pings".</small>{% endif %}</div></form>
+<p class="tiny muted">Why the limit: a brand-new Gmail sending lots of cold emails at once gets flagged as spam, and then nothing lands. The Deliverability Guard starts at 20 a day and adds 10 a week up to your number. The Mac has to be plugged in with the lid open for the night shifts.</p>
+</section>
+
+<section class="panel" id="airtasker"><div class="panel-heading"><div><span class="eyebrow">AIRTASKER</span><h2>Quote helper</h2></div></div>
+<p class="muted">Airtasker's rules ban harvesting member details and lead generation, so the team does not scrape it. Instead: set an Airtasker alert for "website", open a task you like, paste it here, and the Writer drafts your quote. Keep it on Airtasker: no phone, email or links until they accept your offer.</p>
+<form method="post" action="{{ url_for('team_airtasker') }}" class="stack"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<label class="wide">The task<textarea name="task" rows="4" maxlength="1500" required>{{ task }}</textarea></label>
+<div class="wide"><button class="btn primary">Draft my quote</button></div></form>
+{% if quote %}<label class="wide">Your quote (copy into Airtasker)<textarea rows="8" readonly>{{ quote }}</textarea></label>{% endif %}
+</section>
+{% endblock %}

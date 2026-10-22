@@ -18,12 +18,12 @@
 
 <section class="panel" id="pack"><div class="panel-heading"><div><span class="eyebrow">GO ONLINE (WHEN YOU SAY SO)</span><h2>Publish pack</h2></div></div>
 <p>One zip with your homepage, niche pages, the demos, a private preview + proposal for your {{ ready }} best leads, and a private page for each monthly client. Preview and client pages sit at long random addresses and are hidden from Google.</p>
-<ol><li>Download the pack.</li><li>Cloudflare (free): Workers &amp; Pages → Create → Pages → Upload assets, and drop the unzipped folder in. Use the same project every time.</li><li>Paste the address Cloudflare gives you into "Online address" above. Preview links then appear on Calls and Find customers.</li></ol>
+<ol><li>Download the pack.</li><li>Cloudflare (free): Workers &amp; Pages → Create → Pages → Upload assets, and drop the unzipped folder in. Use the same project every time.</li><li>Paste the address Cloudflare gives you into "Online address" above. Preview links then appear on Find customers and in your emails.</li></ol>
 <p><a class="btn secondary" href="{{ url_for('studio_pack') }}">Download publish pack</a> <small class="muted">{% if last %}{{ packed }} preview and client pages in the last pack ({{ last[:10] }}).{% else %}Not made yet.{% endif %} Make a fresh pack after new leads or client updates.</small></p>
 </section>
 
 <section class="panel" id="pings"><div class="panel-heading"><div><span class="eyebrow">SPEED TO LEAD</span><h2>Phone ping when someone replies</h2></div></div>
-<p class="muted">When a lead replies in Gmail, AgencyOS stops their follow-ups, puts them top of your list and buzzes your phone, so you call back within the hour. Free with the ntfy app (iPhone or Android). The ping only says who replied.</p>
+<p class="muted">When a lead replies in Gmail, AgencyOS stops their follow-ups, puts them top of your list and buzzes your phone, so you can reply within the hour. Free with the ntfy app (iPhone or Android). The ping only says who replied.</p>
 {% if s.ntfy_topic %}<p>On. In the ntfy app, subscribe to <code>{{ s.ntfy_topic }}</code></p>
 <form method="post" action="{{ url_for('studio_ping') }}" style="display:inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn secondary" name="action" value="test">Send a test ping</button></form>
 <form method="post" action="{{ url_for('studio_ping') }}" style="display:inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn secondary" name="action" value="off">Turn off</button></form>

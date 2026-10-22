@@ -1,4 +1,4 @@
-"""Call Mode, Get paid, proposals, Studio, publish pack and client growth. No network, nothing sent."""
+"""Email scoreboard, Get paid, proposals, Studio, publish pack and client growth. No network, nothing sent."""
 from contextlib import closing
 from datetime import date,datetime,timedelta
 import io
@@ -11,7 +11,7 @@ from cryptography.fernet import Fernet
 import app as application
 import getpaid
 import lead_engine
-import phone
+import email_score
 import pitch
 import test_agencyos as fixtures
 from test_lead_engine import GEO,OSM,fake_get
@@ -35,48 +35,32 @@ class VipTest(unittest.TestCase):
             self.post('/find-customers/search',dict(trade='Plumbers',town='Penrith NSW',radius='10'))
         return {r['name']:r for r in self.rows('prospects')}
 
-    def test_grades_and_calling_hours(self):
-        base=dict(reason='none',trade='Builders',phone='0400 000 000',email='',stage='New')
-        self.assertEqual(phone.grade(base),'A')
-        self.assertEqual(phone.grade(dict(base,reason='ok',trade='Cafes',phone='')),'C')
-        tz=phone.TZ
-        self.assertTrue(phone.calling_window(datetime(2026,10,21,10,0,tzinfo=tz))[0])
-        self.assertFalse(phone.calling_window(datetime(2026,10,21,20,30,tzinfo=tz))[0])
-        self.assertFalse(phone.calling_window(datetime(2026,10,24,17,30,tzinfo=tz))[0])  # Saturday after 5
-        self.assertFalse(phone.calling_window(datetime(2026,10,25,11,0,tzinfo=tz))[0])  # Sunday
-        self.assertFalse(phone.calling_window(datetime(2026,12,25,11,0,tzinfo=tz))[0])
-        self.assertIn(date(2026,4,3),phone.national_holidays(2026))  # Good Friday 2026
+    def test_grades_need_an_email(self):
+        base=dict(reason='none',trade='Builders',phone='0400 000 000',email='hi@x.example',stage='New')
+        self.assertEqual(email_score.grade(base),'A')
+        self.assertEqual(email_score.grade(dict(base,email='')),'C')  # phone only: we only email, so we can't reach them
+        self.assertEqual(email_score.grade(dict(base,reason='ok',trade='Cafes')),'C')
 
-    def test_call_mode_logs_calls_and_offers_the_one_two(self):
+    def test_email_only_no_calls_anywhere(self):
         leads=self.leads()
         with patch('lead_engine.today',return_value=TODAY):
-            page=self.client.get('/calls').get_data(as_text=True)
-            self.assertIn('Call Mode',page);self.assertIn('Old Site Plumbing',page);self.assertIn('They said',page)
-            self.assertIn('word of mouth',page)
-            pid=leads['Old Site Plumbing']['id']
-            response=self.post(f'/calls/{pid}/log',dict(outcome='no_answer'))
-            self.assertIn('just='+str(pid),response.headers['Location'])
-            page=self.client.get(response.headers['Location']).get_data(as_text=True)
-            self.assertIn('Just tried calling',page);self.assertIn('Reply STOP',page)
-            p=[r for r in self.rows('prospects') if r['id']==pid][0]
-            self.assertEqual(p['stage'],'Contacted');self.assertEqual(p['next_on'],(TODAY+timedelta(days=2)).isoformat())
-            self.post(f'/calls/{pid}/log',dict(outcome='callback',callback_on=(TODAY+timedelta(days=5)).isoformat(),note='Ask for Dave'))
-            p=[r for r in self.rows('prospects') if r['id']==pid][0]
-            self.assertEqual(p['next_on'],(TODAY+timedelta(days=5)).isoformat());self.assertIn('Ask for Dave',p['notes'])
-            board=self.client.get('/calls').get_data(as_text=True)
-            self.assertIn('2 / 5',board)
+            self.assertEqual(self.client.get('/calls').status_code,404)
+            home=self.client.get('/business').get_data(as_text=True)
+            self.assertIn("Today's emails",home);self.assertNotIn('Call Mode',home);self.assertNotIn('calls</span>',home)
+            page=self.client.get('/find-customers').get_data(as_text=True)
+            self.assertNotIn('Call script',page);self.assertNotIn('Log call',page)
+            self.assertEqual(self.post(f"/find-customers/{leads['Old Site Plumbing']['id']}/call",dict(outcome='interested')).status_code,400)
             with self.conn() as conn:
-                b=phone.scoreboard(conn,1,TODAY)
-            self.assertEqual((b['calls'],b['talks']),(2,1))
-            self.assertIn('scoreboard',self.client.get('/business').get_data(as_text=True))
+                queue=lead_engine.queue(conn,1,TODAY,limit=50)
+                b=email_score.scoreboard(conn,1,TODAY)
+        self.assertTrue(queue);self.assertTrue(all(p['email'] for p in queue if p['stage']=='New'))
+        self.assertEqual((b['sent'],b['email_target']),(0,20))  # the Deliverability Guard's week-one number
 
-    def test_one_two_and_objections_are_personal(self):
-        p=dict(id=1,name='Fictional Builds',trade='Builders',suburb='Mona Vale',email='hi@x.example',phone='0400 111 222',website='',reason='none',site_check='',touches=0,stage='New',score=80)
-        kit=phone.one_two(p,SETTINGS,'https://benji.pages.dev/p/abc/')
-        self.assertIn('no thanks',kit['body']);self.assertIn('Benji Price Web Design',kit['body']);self.assertIn('https://benji.pages.dev/p/abc/',kit['text'])
-        self.assertTrue(kit['sms'].startswith('sms:0400111222'))
-        answers=dict((k,a) for k,_s,a in phone.objections(p,SETTINGS))
-        self.assertIn('Fictional Builds',answers['who']);self.assertNotIn('{',''.join(answers.values()))
+    def test_inspector_finds_the_email_on_their_site(self):
+        html='<a href="mailto:Info@OldSitePlumbing.com.au?subject=Hi">Email us</a> logo@2x.png bob@gmail.com'
+        self.assertEqual(lead_engine.find_email(html,'www.oldsiteplumbing.com.au'),'info@oldsiteplumbing.com.au')
+        self.assertEqual(lead_engine.find_email('write to bob@gmail.com or see icon@2x.png','x.com.au'),'bob@gmail.com')
+        self.assertEqual(lead_engine.find_email('no email here','x.com.au'),'')
 
     def test_get_paid_bank_details_deposit_pdf_and_money_in(self):
         key=Fernet.generate_key().decode()
@@ -148,8 +132,7 @@ class VipTest(unittest.TestCase):
         with application.app.test_request_context(),self.conn() as conn:
             self.assertEqual(pitch.preview_url(conn,1,pid),'https://benji-web.pages.dev/p/'+slug+'/')
         with patch('lead_engine.today',return_value=TODAY):
-            self.assertIn('/p/'+slug+'/',self.client.get('/calls').get_data(as_text=True))
-            self.assertIn('calendar.app.google/abc123',self.client.get('/find-customers').get_data(as_text=True))
+            self.assertNotIn('calendar.app.google/abc123',self.client.get('/find-customers').get_data(as_text=True))  # no "quick chat" call offers in emails
 
     def test_replies_stop_follow_ups_and_ping(self):
         leads=self.leads();p=leads['Fictional Pipes']
@@ -162,7 +145,7 @@ class VipTest(unittest.TestCase):
                 self.assertEqual(pitch.detect_replies(conn,1,send=lambda c,o,t,m:sent.append(t)),1)
                 self.assertEqual(pitch.detect_replies(conn,1,send=lambda c,o,t,m:sent.append(t)),0)
         row=[r for r in self.rows('prospects') if r['id']==p['id']][0]
-        self.assertTrue(row['replied_at']);self.assertEqual(row['next_on'],TODAY.isoformat());self.assertEqual(sent,['Fictional Pipes replied'])
+        self.assertTrue(row['replied_at']);self.assertEqual(row['next_on'],TODAY.isoformat());self.assertEqual(sent,['A lead replied'])  # ntfy is public: no names
         with patch('pitch.urlrequest.urlopen') as opened:
             with self.conn() as conn:self.assertFalse(pitch.ping(conn,1,'t','m'))
             opened.assert_not_called()
@@ -199,13 +182,11 @@ class VipTest(unittest.TestCase):
             s=lead_engine.settings(conn,1)
         self.assertEqual(lead_engine.subject_for(dict(id=7,name='Acme'),s),'Made Acme a free website preview')
         self.assertEqual(lead_engine.subject_for(dict(id=4,name='Acme'),dict(best_subject='')),'Quick idea for Acme')
-        self.assertIn('Made {name} a free website preview',self.client.get('/calls').get_data(as_text=True).replace('…','{name}'))
 
     def test_settings_form_keeps_new_columns(self):
-        self.post('/calls/settings',dict(call_target='8'))
         self.post('/find-customers/settings',dict(name='Benji Price',business='Benji Price Web Design',email='benji.price.webdesign@gmail.com',phone='',area='Northern Beaches',daily_target='12'))
         row=self.rows('prospect_settings')[0]
-        self.assertEqual((row['call_target'],row['daily_target'],row['area']),(8,12,'Northern Beaches'))
+        self.assertEqual((row['daily_target'],row['area']),(12,'Northern Beaches'))
 
 
 if __name__=='__main__':

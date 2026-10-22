@@ -1,10 +1,10 @@
-{% extends "base.html" %}{% block title %}Night shift · AgencyOS{% endblock %}{% block page_heading %}Night shift{% endblock %}
+{% extends "base.html" %}{% block title %}Shifts · AgencyOS{% endblock %}{% block page_heading %}Shifts{% endblock %}
 {% block content %}
-<div class="page-intro"><div><span class="eyebrow">AGENTS</span><h1>Night shift</h1><p class="muted">Every night after {{ start_hour }} am the agents work your search areas on their own: find businesses, check their websites, match a story mock-up and draft the message. In the morning it all waits on Home under "Ready for you". Nothing is ever sent or published without your tap.</p></div></div>
+<div class="page-intro"><div><span class="eyebrow">AGENTS</span><h1>Shifts</h1><p class="muted">Every 2 hours, day and night, the agents work on their own: find businesses, check their websites and emails, match a story mock-up and draft the email. It all waits on Home under "Ready for you". Nothing is ever sent or published without your tap.</p></div></div>
 
-<section class="panel"><div class="panel-heading"><div><span class="eyebrow">SWITCH</span><h2>{% if settings.enabled %}The night shift is on{% else %}The night shift is off{% endif %}</h2></div></div>
-<p class="muted">{% if paused %}The agency is paused, so no shift will run until you press Start on Home. {% endif %}It runs inside AgencyOS, so the launcher must be open on your Mac. If the Mac was asleep at 2 am, the shift runs as soon as AgencyOS is open again that day.</p>
-<form method="post" action="{{ url_for('night_shift_toggle') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="enabled" value="{{ '0' if settings.enabled else '1' }}"><button class="btn {{ 'secondary' if settings.enabled else 'primary' }}">{% if settings.enabled %}Switch the night shift off{% else %}Switch the night shift on{% endif %}</button></form>
+<section class="panel"><div class="panel-heading"><div><span class="eyebrow">SWITCH</span><h2>{% if settings.enabled %}Shifts are on{% else %}Shifts are off{% endif %}</h2></div></div>
+<p class="muted">{% if paused %}The agency is paused, so no shift will run until you press Start on Home. {% endif %}It runs inside AgencyOS, so the launcher must be open on your Mac. Keep the Mac plugged in with the lid open; the keep-awake setting on the Team page stops it sleeping.</p>
+<form method="post" action="{{ url_for('night_shift_toggle') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="enabled" value="{{ '0' if settings.enabled else '1' }}"><button class="btn {{ 'secondary' if settings.enabled else 'primary' }}">{% if settings.enabled %}Switch shifts off{% else %}Switch shifts on{% endif %}</button></form>
 <details><summary>Make the Mac wake itself at 2 am (one-time, optional)</summary>
 <p>Open the file <code>deploy/night-shift/Wake Mac for Night Shift.command</code> in the AgencyOS folder. It asks for your Mac password once, then the Mac wakes at 2:02 am every night when it is plugged in. To undo it, open <code>Stop Mac Waking.command</code> in the same folder.</p></details>
 </section>
@@ -45,7 +45,7 @@
 
 <section class="panel"><div class="panel-heading"><div><span class="eyebrow">HISTORY</span><h2>Recent shifts</h2></div></div>
 {% if runs %}<div class="table-wrap"><table><thead><tr><th>DATE</th><th>FOUND</th><th>CHECKED</th><th>DRAFTED</th><th>FOLLOW-UPS</th><th>NOTES</th></tr></thead><tbody>
-{% for r in runs %}<tr><td>{{ r.local_date }}<small>{{ 'Run by you' if r.source=='manual' else 'Overnight' }}{% if not r.finished_at %} · did not finish{% endif %}</small></td><td>{{ r.counts.found|default(0) }}</td><td>{{ r.counts.checked|default(0) }}</td><td>{{ r.counts.drafts|default(0) }}{% if r.counts.ai_drafts %}<small>{{ r.counts.ai_drafts }} by Haiku</small>{% endif %}</td><td>{{ r.counts.follow_ups|default(0) }}</td><td><small>{{ r.notes }}</small></td></tr>{% endfor %}
+{% for r in runs %}<tr><td>{{ r.local_date }}<small>{{ 'Run by you' if r.source=='manual' else 'Automatic shift' }}{% if not r.finished_at %} · did not finish{% endif %}</small></td><td>{{ r.counts.found|default(0) }}</td><td>{{ r.counts.checked|default(0) }}</td><td>{{ r.counts.drafts|default(0) }}{% if r.counts.ai_drafts %}<small>{{ r.counts.ai_drafts }} by Haiku</small>{% endif %}</td><td>{{ r.counts.follow_ups|default(0) }}</td><td><small>{{ r.notes }}</small></td></tr>{% endfor %}
 </tbody></table></div>{% else %}<div class="empty"><strong>No shifts yet</strong><p>Add a search area above. The first shift runs after {{ start_hour }} am, or press "Run a shift now" on Home.</p></div>{% endif %}
 </section>
 {% endblock %}

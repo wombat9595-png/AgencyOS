@@ -30,6 +30,11 @@ def configure(app):
     if os.environ.get('AGENCYOS_LOCAL_PRIVATE')=='1':
         if len(key)<32:raise RuntimeError('Private operation requires a stable session key.')
         app.config['TRUSTED_HOSTS']=['127.0.0.1']
+        # The owner's private Tailscale address for his phone (set on the Team page). Only *.ts.net is accepted.
+        phone=Path(os.environ.get('AGENCYOS_PRIVATE_DATA') or '/nonexistent')/'phone_host'
+        if phone.is_file() and not phone.is_symlink():
+            host=phone.read_text().strip()
+            if host.endswith('.ts.net') and len(host)<200:app.config['TRUSTED_HOSTS'].append(host)
     if key:app.secret_key=key
     app.config.update(PRODUCTION_MODE=production,PERMANENT_SESSION_LIFETIME=timedelta(hours=8))
 

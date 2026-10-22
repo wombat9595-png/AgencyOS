@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AgencyOS</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#111111"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AgencyOS">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/apple-touch-icon.png') }}">
+<style>
+:root{--bg:#111;--card:#1c1c1c;--fg:#f4f1ea;--muted:#a9a59c;--yes:#e8c547;--line:#2e2e2e}
+@media (prefers-color-scheme:light){:root{--bg:#f4f1ea;--card:#fff;--fg:#151515;--muted:#666;--line:#ddd}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.45 -apple-system,system-ui,sans-serif;padding:env(safe-area-inset-top) 16px 40px}
+header{display:flex;justify-content:space-between;align-items:center;padding:14px 0}header a{color:var(--muted);font-size:.9rem}
+h1{font-size:1.3rem;margin:0}.brief{color:var(--muted);font-size:.92rem;margin:0 0 14px;padding-left:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin:12px 0}
+.kind{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}.name{font-size:1.1rem;font-weight:700;margin:2px 0}
+.sub{color:var(--muted);font-size:.85rem}.ceo{font-size:.8rem;color:var(--muted);margin-top:6px}
+details{margin:10px 0}summary{cursor:pointer;color:var(--muted)}
+input,textarea{width:100%;font:inherit;background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:8px;margin:4px 0}
+.row{display:flex;gap:8px;margin-top:10px}.row>*{flex:1}
+button,.btn{display:block;text-align:center;font:inherit;font-weight:700;border:0;border-radius:12px;padding:14px;text-decoration:none;cursor:pointer}
+.yes{background:var(--yes);color:#111}.no{background:transparent;color:var(--fg);border:1px solid var(--line)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.chips button{flex:0 0 auto;padding:8px 10px;font-weight:500;font-size:.85rem;background:transparent;color:var(--fg);border:1px solid var(--line)}
+.flash{background:var(--card);border-left:4px solid var(--yes);padding:10px;border-radius:8px;margin:8px 0}
+.empty{color:var(--muted);text-align:center;padding:40px 0}a{color:inherit}
+</style>
+</head>
+<body>
+<header><h1>Yes or no</h1><a href="{{ url_for('business_home') }}">Full app</a></header>
+{% with messages = get_flashed_messages() %}{% for m in messages %}<div class="flash">{{ m }}</div>{% endfor %}{% endwith %}
+<ul class="brief">{% for line in brief %}<li>{{ line }}</li>{% endfor %}</ul>
+{% for p in cards %}
+<div class="card">
+  <div class="kind">{% if p.stage=='Interested' %}Interested{% elif p.channel=='replied' %}Replied{% elif p.stage=='Approved' %}Approved, waiting to send{% elif p.followup %}{{ p.step }}{% else %}New email{% endif %}{% if p.ai %} · Haiku{% endif %}</div>
+  <div class="name">{{ p.name }}</div>
+  <div class="sub">{{ p.trade }}{% if p.suburb %} · {{ p.suburb }}{% endif %} · {{ p.why }} · <a href="{{ p.google }}" target="_blank" rel="noopener">Google them</a></div>
+  {% if p.ceo_note %}<div class="ceo">CEO: {{ p.ceo_note }}</div>{% endif %}
+  {% if p.stage=='Interested' %}
+    <div class="row"><a class="btn yes" href="{{ p.mockup_url }}">Open their mock-up</a></div>
+  {% elif p.channel=='replied' %}
+    <p>They wrote back. Read it in Gmail and answer by email.</p>
+    <div class="row"><a class="btn yes" href="https://mail.google.com/mail/u/0/#inbox">Open Gmail</a>
+    <form method="post" action="{{ url_for('prospects_action',prospect_id=p.id,action='interested') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="next" value="phone"><button class="no">Interested</button></form></div>
+  {% elif p.stage=='Approved' %}
+    <div class="row">{% if p.gmail_draft_id %}<a class="btn yes" href="https://mail.google.com/mail/u/0/#drafts">Open Gmail Drafts</a>{% else %}<a class="btn yes" href="{{ p.mailto }}">Open in my email</a>{% endif %}
+    <form method="post" action="{{ url_for('prospects_action',prospect_id=p.id,action='sent') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="next" value="phone"><button class="no">I sent it</button></form></div>
+  {% else %}
+    <form method="post" action="{{ url_for('prospects_action',prospect_id=p.id,action='approve') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="next" value="phone">
+      <details><summary>Read or edit: {{ p.subject }}</summary>
+        <input name="subject" maxlength="200" value="{{ p.subject }}"><textarea name="body" rows="12" maxlength="5000">{{ p.body }}</textarea></details>
+      <div class="row"><button class="yes">Yes</button></div>
+    </form>
+    <details><summary>No, because…</summary>
+      <form method="post" action="{{ url_for('prospects_action',prospect_id=p.id,action='redo') }}" class="chips"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="next" value="phone">
+      {% for k,label in reasons.items() %}<button name="reason" value="{{ k }}">{{ label }}</button>{% endfor %}</form>
+    </details>
+  {% endif %}
+</div>
+{% else %}
+<p class="empty">Nothing waiting. The team works every 2 hours, day and night, and buzzes you when drafts are ready.</p>
+{% endfor %}
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{})}</script>
+</body>
+</html>

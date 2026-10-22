@@ -18,7 +18,7 @@
   <section class="tile tile-dark b-ready" id="ready" aria-labelledby="ready-h">
     <div class="tile-top">
       <h2 id="ready-h">Ready for you{% if mq.total %} <span class="tile-tag">{{ mq.total }}</span>{% endif %}</h2>
-      <span class="b-ready-links"><a href="{{ url_for('night_shift_home') }}">Night shift settings</a></span>
+      <span class="b-ready-links"><a href="{{ url_for('night_shift_home') }}">Shift settings</a></span>
     </div>
     <div class="b-shift">
       {% if mq.last %}{% set c = mq.last.counts %}
@@ -28,9 +28,9 @@
       </ul>
       {% if mq.last.notes %}<p class="tiny muted">{{ mq.last.notes }}</p>{% endif %}
       {% elif not mq.beats %}
-      <p class="b-shift-line"><strong>The night shift has nowhere to search yet.</strong> <span class="muted">Add a trade and suburb once and the agents work it every night.</span> <a class="b-btn b-btn-yellow" href="{{ url_for('night_shift_home') }}">Pick search areas</a></p>
+      <p class="b-shift-line"><strong>Pick where to search.</strong> <span class="muted">The Team sweeps all of Australia, Sydney first. Add your own trade and suburb too if you like.</span> <a class="b-btn b-btn-yellow" href="{{ url_for('night_shift_home') }}">Pick search areas</a></p>
       {% else %}
-      <p class="b-shift-line"><strong>{% if mq.enabled %}The first shift runs after 2 am.{% else %}The night shift is switched off.{% endif %}</strong> <span class="muted">{{ mq.beats }} search area{{ 's' if mq.beats!=1 }} set.</span></p>
+      <p class="b-shift-line"><strong>{% if mq.enabled %}The first shift starts within 2 hours.{% else %}Shifts are switched off.{% endif %}</strong> <span class="muted">{{ mq.beats }} search area{{ 's' if mq.beats!=1 }} set.</span></p>
       {% endif %}
       {% if mq.beats %}<form method="post" action="{{ url_for('night_shift_run') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="b-btn b-btn-ghost">Run a shift now</button></form>{% endif %}
     </div>
@@ -39,18 +39,20 @@
     {% for p in mq.leads %}
       <li class="q-card" id="q{{ p.id }}">
         <div class="q-head">
-          <span class="q-kind">{% if p.stage=='Interested' %}Interested{% elif p.channel=='call' %}Call script{% elif p.stage=='Approved' %}Approved, waiting to send{% elif p.followup %}{{ p.step }}{% else %}New email{% endif %}{% if p.ai %} · Haiku{% endif %}</span>
+          <span class="q-kind">{% if p.stage=='Interested' %}Interested{% elif p.channel=='replied' %}Replied{% elif p.stage=='Approved' %}Approved, waiting to send{% elif p.followup %}{{ p.step }}{% else %}New email{% endif %}{% if p.ai %} · Haiku{% endif %}</span>
           <strong>{{ p.name }}</strong>
           <span class="muted">{{ p.trade }}{% if p.suburb %} · {{ p.suburb }}{% endif %} · {{ p.why }}</span>
+          {% if p.ceo_note %}<span class="tiny muted">CEO: {{ p.ceo_note }}</span>{% endif %}
           <a class="q-mock" href="{{ p.mockup_url }}" target="_blank" rel="noopener">{% if p.story %}{{ p.story }} mock-up{% else %}Free mock-up{% endif %} ↗</a>
         </div>
         {% if p.stage=='Interested' %}
           <div class="q-acts"><a class="b-btn b-btn-ghost" href="{{ p.mockup_url }}?download=1">Download mock-up to attach</a>
           <form method="post" action="{{ url_for('prospects_action',prospect_id=p.id,action='customer') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="b-btn b-btn-yellow">Make them a customer</button></form></div>
-        {% elif p.channel=='call' %}
-          <details><summary>Read the call script</summary><div class="q-text">{{ p.body }}</div></details>
-          <div class="q-acts"><a class="b-btn b-btn-yellow" href="{{ url_for('prospects_home') }}#p{{ p.id }}">Log the call</a>
-          <form method="post" action="{{ url_for('prospects_action',prospect_id=p.id,action='skip') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="next" value="home"><button class="b-btn b-btn-ghost">Skip</button></form></div>
+        {% elif p.channel=='replied' %}
+          <p class="q-text">They wrote back. Read it in Gmail and answer by email. Their follow-ups have stopped.</p>
+          <div class="q-acts"><a class="b-btn b-btn-yellow" href="https://mail.google.com/mail/u/0/#inbox" target="_blank" rel="noopener">Open Gmail</a>
+          <form method="post" action="{{ url_for('prospects_action',prospect_id=p.id,action='interested') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="next" value="home"><button class="b-btn b-btn-ghost">They're interested</button></form>
+          <form method="post" action="{{ url_for('prospects_action',prospect_id=p.id,action='not_interested') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="next" value="home"><button class="b-btn b-btn-ghost">Not interested</button></form></div>
         {% elif p.stage=='Approved' %}
           <div class="q-acts">{% if p.gmail_draft_id %}<a class="b-btn b-btn-yellow" href="https://mail.google.com/mail/u/0/#drafts" target="_blank" rel="noopener">Open Gmail Drafts</a>{% else %}<a class="b-btn b-btn-yellow" href="{{ p.mailto }}">Open in my email</a>{% endif %}
           <form method="post" action="{{ url_for('prospects_action',prospect_id=p.id,action='sent') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="next" value="home"><button class="b-btn b-btn-ghost">I sent it</button></form></div>
@@ -63,6 +65,9 @@
             <div class="q-acts"><button class="b-btn b-btn-yellow">Approve</button>
             <button class="b-btn b-btn-ghost" formaction="{{ url_for('prospects_action',prospect_id=p.id,action='skip' if p.stage=='New' else 'not_interested') }}">{{ 'Skip' if p.stage=='New' else 'Stop chasing' }}</button></div>
           </form>
+          {% if p.stage=='New' %}<details class="tiny"><summary>No, because… (teaches the Writer)</summary>
+            <form method="post" action="{{ url_for('prospects_action',prospect_id=p.id,action='redo') }}" class="q-acts"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="next" value="home">
+            {% for k,label in (('too_long','Too long'),('too_salesy','Too salesy'),('wrong','Got a fact wrong'),('not_me','Not like me'),('bad_fit','Not a fit')) %}<button class="b-btn b-btn-ghost" name="reason" value="{{ k }}">{{ label }}</button>{% endfor %}</form></details>{% endif %}
         {% endif %}
       </li>
     {% endfor %}
@@ -95,8 +100,8 @@
 
   {% set sb = home_scoreboard() %}{% if sb %}
   <section class="tile tile-dark b-score" aria-label="Today's scoreboard">
-    <div class="tile-top"><span>Today's scoreboard{% if sb.streak %} · {{ sb.streak }} day streak{% endif %}</span><a class="b-office-open" href="{{ url_for('calls_home') }}" aria-label="Open Call Mode" title="Open Call Mode">↗</a></div>
-    <div class="b-score-row"><a href="{{ url_for('calls_home') }}"><strong>{{ sb.calls }}/{{ sb.call_target }}</strong><span>calls</span></a><a href="{{ url_for('prospects_home') }}"><strong>{{ sb.sent }}/{{ sb.email_target }}</strong><span>emails</span></a><span><strong>{{ sb.talks }}</strong><span>conversations</span></span><span><strong>{{ sb.interested_week }}</strong><span>yeses this week</span></span></div>
+    <div class="tile-top"><span>Today's emails{% if sb.streak %} · {{ sb.streak }} day streak{% endif %}</span><a class="b-office-open" href="{{ url_for('prospects_home') }}" aria-label="Open Find customers" title="Open Find customers">↗</a></div>
+    <div class="b-score-row"><a href="{{ url_for('prospects_home') }}"><strong>{{ sb.sent }}/{{ sb.email_target }}</strong><span>emails sent</span></a><span><strong>{{ sb.replies_week }}</strong><span>replies this week</span></span><span><strong>{{ sb.interested_week }}</strong><span>yeses this week</span></span><span><strong>{{ sb.deals_week }}</strong><span>new clients this week</span></span></div>
   </section>{% endif %}
 
   <section class="tile tile-dark b-office" aria-label="Your agents right now">

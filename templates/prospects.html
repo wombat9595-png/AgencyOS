@@ -1,10 +1,10 @@
 {% extends "base.html" %}{% block title %}Find customers · AgencyOS{% endblock %}{% block page_heading %}Find customers{% endblock %}
 {% block content %}
-<div class="page-intro"><div><span class="eyebrow">LEADS</span><h1>Find customers</h1><p class="muted">AgencyOS finds local businesses with no website or a weak one, checks their site and drafts the message. You read it, tap send in your own email or make the call. Nothing is sent from here.</p></div></div>
+<div class="page-intro"><div><span class="eyebrow">LEADS</span><h1>Find customers</h1><p class="muted">AgencyOS finds local businesses with no website or a weak one, checks their site and drafts the message. You read it and tap send in your own email. Email only, no calls. Nothing is sent from here.</p></div></div>
 <div class="stat-grid">
 <div class="stat-card"><div class="stat-top"><span>CONTACTED TODAY</span></div><strong>{{ counts.contacted_today }} of {{ counts.target }}</strong><small>Your daily target</small></div>
 <div class="stat-card"><div class="stat-top"><span>FOLLOW-UPS DUE</span></div><strong>{{ counts.follow_ups }}</strong><small>Drafted and waiting below</small></div>
-<div class="stat-card"><div class="stat-top"><span>READY TO CONTACT</span></div><strong>{{ counts.to_review + counts.ready }}</strong><small>Good leads with an email or phone</small></div>
+<div class="stat-card"><div class="stat-top"><span>READY TO CONTACT</span></div><strong>{{ counts.to_review + counts.ready }}</strong><small>Good leads with an email</small></div>
 <div class="stat-card"><div class="stat-top"><span>INTERESTED</span></div><strong>{{ counts.interested }}</strong><small>{{ counts.customers }} moved to Customers · {{ counts.waiting }} waiting on a reply</small></div>
 </div>
 
@@ -36,17 +36,15 @@
 <p>They said yes. Send the free mock-up, then move them to Customers to quote.</p>
 <p><a class="btn secondary" href="{{ p.mockup_url }}" target="_blank" rel="noopener">See their free {% if p.story %}story {% endif %}mock-up</a> <a class="btn secondary" href="{{ p.mockup_url }}?download=1">Download it to attach</a></p>
 <form method="post" action="{{ url_for('prospects_action',prospect_id=p.id,action='customer') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn primary">Make them a customer</button></form>
-{% elif p.channel=='call' %}
-<details open><summary>Call script</summary><div style="white-space:pre-line;overflow-wrap:anywhere">{{ p.body }}</div></details>
-<form method="post" action="{{ url_for('prospects_action',prospect_id=p.id,action='call') }}" class="stack"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-<label>How did the call go?<select name="outcome"><option value="no_answer">No answer</option><option value="message">Left a message</option><option value="interested">Interested</option><option value="not_interested">Not interested</option><option value="do_not_contact">Asked me not to contact them</option></select></label>
-<button class="btn primary">Log call</button></form>
 {% elif p.stage=='Approved' %}
 <div style="white-space:pre-line;overflow-wrap:anywhere"><strong>Subject: {{ p.subject }}</strong>
 
 {{ p.body }}</div>
 {% if p.gmail_draft_id %}<p>It is in your Gmail Drafts. Check it there and press Send. This card moves on by itself once Gmail shows it sent.</p><p><a class="btn primary" href="https://mail.google.com/mail/u/0/#drafts" target="_blank" rel="noopener">Open Gmail Drafts</a></p>{% else %}<p><a class="btn primary" href="{{ p.mailto }}">Open in my email</a></p>{% endif %}
 <form method="post" action="{{ url_for('prospects_action',prospect_id=p.id,action='sent') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn secondary">I sent it</button></form>
+{% elif p.channel=='replied' %}
+<p><strong>They wrote back.</strong> Read it in Gmail and answer by email. Their follow-ups have stopped. Then mark them below.</p>
+<form method="post" action="{{ url_for('prospects_action',prospect_id=p.id,action='interested') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn primary">They're interested</button></form>
 {% elif p.channel=='email' %}
 <form method="post" action="{{ url_for('prospects_action',prospect_id=p.id,action='approve') }}" class="stack"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 <label class="wide">Subject<input name="subject" maxlength="200" value="{{ p.subject }}"></label>
@@ -79,6 +77,6 @@
 <label>Email people reply to<input name="email" type="email" maxlength="160" value="{{ settings.email }}" required></label>
 <label>Phone (optional)<input name="phone" maxlength="60" value="{{ settings.phone }}"></label>
 <label>Where you are based (optional)<input name="area" maxlength="100" value="{{ settings.area }}" placeholder="Penrith NSW"></label>
-<label>Daily target<input name="daily_target" type="number" min="1" max="50" value="{{ settings.daily_target }}"></label>
+<input type="hidden" name="daily_target" value="{{ settings.daily_target }}"><p class="tiny muted wide">How many emails a day is set by the Deliverability Guard on the Team page (it warms your inbox up slowly).</p>
 <div class="wide"><button class="btn primary">Save</button></div></form></details></section>
 {% endblock %}

@@ -1,3 +1,27 @@
+# Where we're up to: agent team and phone (branch claude/project-thread-mqtkmq)
+
+Built on top of `claude/project-thread-4zj0lw` (PR #9, VIP upgrades), which is NOT yet installed on the Mac. Benji asked (21 Oct 2026) for a real org chart that pumps out drafts, agents he can teach, an ALL-of-Australia lead sweep starting with Sydney (he was clear: Australia-wide, not Sydney-wide), Airtasker, and phone notifications plus AgencyOS on his phone. Nothing here sends, charges or publishes.
+
+## Done
+- 21 Oct 14:05Z: EMAIL ONLY (Benji's hard rule: no cold calling, ever). phone.py became `email_score.py` (grades need an email, email scoreboard, what's working); Calls page, call scripts, Call Prepper and the book-a-call line removed; phone-only leads stay as data and are never drafted. Deliverability Guard (`team.safe_daily`: 20/day, +10/week, capped by the Team limit) is the ONE daily email number (`lead_engine.daily_target`). Inspector pulls each business's own email off its homepage (`lead_engine.find_email`). Shifts run every 2 hours around the clock (`night_shift.SHIFTS_A_DAY`), sweep stops after 3 minutes per shift, worker syncs Gmail sends, optional `caffeinate -s` keep-awake while plugged in. Replied leads get no more follow-ups and never expire to No reply.
+- `team.py` + `templates/team.html` (`/team`, sidebar "Team"): 17 roles: CEO, Chief of Staff, and three divisions each with a manager: Growth (Scout, Inspector, SEO Checker, Writer, Call Prepper, Designer), Sales (Chaser, Reply Handler, Closer), Delivery (Site Builder, Client Care, Bookkeeper), each with a written playbook and a live scorecard. Rules-based (A$0); Haiku used only for writing and the CEO's second opinion when switched on.
+- CEO review (`team.ceo_review`, run at the end of every night shift): playbook check + Benji's "never use" words; AI drafts that fail are swapped for the rules draft; with Haiku on the CEO can ask the Writer for one rewrite. `prospects.ceo_status` = ready / held / redo; held and redo drafts stay out of the queue.
+- Teaching: lessons per agent (`team_lessons`), every yes/edit/no stored (`team_feedback`, hooked into the approve action and a new `redo` action with a reason). The same no-reason 3 times becomes a standing rule ("too long" switches the rules Writer to a short first email; "not a fit" x3 for a trade stops drafting that trade). `team.coaching` feeds lessons, learned rules and Benji-edited approved emails (business name masked) into the Haiku brief.
+- Chief of Staff (`team.plan`): map searches per night (default 60, max 200), new drafts per day (default 25 minus drafts already waiting), and AI pacing (`smart_writer.paced_cents`: even share of the cap + 20% buffer). Haiku default cap raised to A$20 (approved by Benji).
+- `sweep.py`: all of Australia, 1,863 searches: Greater Sydney (165 squares of 0.05°), 19 other cities (889), 73 regional towns in every state/territory (657, 9 squares each), then a per-state catch-all (`area["ISO3166-2"="AU-XX"]`, one query per trade, 152). 2 s between searches; stops on a busy service and carries on next night; a too-big catch-all is marked done with a note. /team shows progress per state. ~31 nights at 60/night.
+- SEO Checker: `lead_engine.seo_notes` adds `seo` to the site check (no meta description, no h1, no tap-to-call, no LocalBusiness schema, thin title). Does not change scores.
+- Phone: `/m` "Yes or no" page (phone layout, Yes / No-because chips), web app manifest + icons + no-cache service worker so it can go on the home screen; `team.notify` buzzes via ntfy (`pitch.ping` now takes a click URL): max 3 a day, 7 am to 9 pm, only when the pile grows, never includes business names. Private Tailscale address (`*.ts.net` only) saved on /team is added to TRUSTED_HOSTS (file `phone_host` in the private data dir).
+- Airtasker: no scraping (their guidelines restrict "harvesting member information" and "lead generation related activities"). Quote helper on /team drafts a quote with no contact details.
+- `tests/test_team.py`: 14 tests. Full suite 354 passed.
+- Budget recommendation (artifact https://claude.ai/artifact/E2c4bHpTtRbGTeoqVYEj96): Recommended tier, about A$100 setup + A$190/mo (insurance added at first client). Nothing bought.
+
+## Waiting on Benji
+- Install (brings in PR #8 and #9 too) when he types the permission in the thread.
+- ntfy app + "Turn on phone pings" on /studio. Optional: Tailscale account (his call) and `tailscale serve` for the phone address.
+- Next idea: rename the Office robots to match the team.
+
+---
+
 # Where we're up to: VIP upgrades (branch claude/project-thread-4zj0lw)
 
 Built on top of `claude/project-thread-mdpkej` (PR #8, commit c6f1b94, which is NOT yet installed on the Mac). Benji said "yes to everything" on the 18-item menu in the "Road to Client One" artifact (21 Oct 2026). Nothing here sends, charges or publishes.

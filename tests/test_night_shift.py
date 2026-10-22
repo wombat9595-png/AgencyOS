@@ -1,6 +1,6 @@
 """Night shift, playbook, Writer, story mock-ups and Google Profile Care. No network, nothing sent, no AI called."""
 from contextlib import closing
-from datetime import date,datetime
+from datetime import date,datetime,timedelta
 import json
 import os
 import sqlite3
@@ -57,10 +57,10 @@ class NightShiftTest(unittest.TestCase):
         self.assertEqual(response.status_code,302);self.assertTrue(response.headers['Location'].endswith('/business#ready'))
         run=self.rows('night_shift_runs')[0];counts=json.loads(run['counts_json'])
         self.assertEqual(run['source'],'manual');self.assertTrue(run['finished_at'])
-        self.assertEqual(counts['found'],3);self.assertEqual(counts['checked'],2);self.assertEqual(counts['drafts'],2);self.assertEqual(counts['ai_drafts'],0)
+        self.assertEqual(counts['found'],3);self.assertEqual(counts['checked'],2);self.assertEqual(counts['drafts'],1);self.assertEqual(counts['ai_drafts'],0)
         built=self.prospect('Fictional Builds')
         self.assertEqual(built['draft_kind'],'first');self.assertEqual(built['draft_source'],'rules');self.assertIn('no thanks',built['draft_body'])
-        self.assertEqual(self.prospect('Old Site Plumbing')['draft_kind'],'call')
+        self.assertEqual(self.prospect('Old Site Plumbing')['draft_body'],'')  # phone only: email only, so no draft and no call script
         self.assertEqual(self.prospect('Good Site Plumbing')['draft_body'],'')  # site is fine, nothing drafted
         with patch('lead_engine.today',return_value=TODAY):
             home=self.client.get('/business').data.decode()
@@ -78,20 +78,21 @@ class NightShiftTest(unittest.TestCase):
         self.assertEqual(self.prospect('Fictional Builds')['touches'],1)
         self.assertIsNone(smart_writer.stored(self.prospect('Fictional Builds')))  # the old draft is not reused for the follow-up
 
-    def test_shift_runs_once_a_day_after_two_and_not_when_paused(self):
+    def test_shift_runs_every_two_hours_day_and_night_and_not_when_paused(self):
         with self.conn() as conn:
             owner=conn.execute('SELECT id FROM users').fetchone()[0]
-            early=datetime(2026,10,19,1,30,tzinfo=night_shift.TZ);late=datetime(2026,10,19,2,5,tzinfo=night_shift.TZ)
-            self.assertFalse(night_shift.due(conn,owner,early));self.assertTrue(night_shift.due(conn,owner,late))
-            night_shift.run(conn,owner,on=late.date())
-            self.assertFalse(night_shift.due(conn,owner,late))
-            self.assertTrue(night_shift.due(conn,owner,late.replace(day=20)))
+            at=night_shift.now_local()
+            self.assertTrue(night_shift.due(conn,owner,at))
+            conn.execute('INSERT INTO team_settings(owner_id,tiles_per_night) VALUES(?,0)',(owner,));conn.commit()  # map sweep off
+            night_shift.run(conn,owner,on=at.date())
+            self.assertFalse(night_shift.due(conn,owner,at+timedelta(minutes=30)))
+            self.assertTrue(night_shift.due(conn,owner,at+timedelta(hours=2)))
             conn.execute('UPDATE p4_control SET paused=1 WHERE id=1');conn.commit()
-            self.assertFalse(night_shift.due(conn,owner,late.replace(day=20)))
-        self.assertIn('No search areas set yet',self.rows('night_shift_runs')[0]['notes'])
+            self.assertFalse(night_shift.due(conn,owner,at+timedelta(hours=2)))
+        self.assertIn('No search areas set and the map sweep is off',self.rows('night_shift_runs')[0]['notes'])
 
     def test_worker_tick_runs_the_shift(self):
-        with patch('night_shift.now_local',return_value=datetime(2026,10,19,3,0,tzinfo=night_shift.TZ)):
+        with patch('night_shift.now_local',return_value=datetime(2026,10,19,3,0,tzinfo=night_shift.TZ)),patch('sweep.run',return_value=(0,0,[])):
             self.assertTrue(night_shift.worker_tick(application.DB_PATH))
             self.assertFalse(night_shift.worker_tick(application.DB_PATH))
         self.assertEqual(len(self.rows('night_shift_runs')),1)

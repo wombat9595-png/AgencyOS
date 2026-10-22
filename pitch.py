@@ -110,15 +110,18 @@ def video_script(p,s):
      ('0:10','Point at the first problem.',found[0]+'. '+lead_engine.why_it_matters(p)),
      ('0:30','Show the second thing, or scroll on a phone-sized window.',(found[1]+'.' if len(found)>1 else 'On a phone it is hard to find the number and tap to call.')+' That is usually where people give up and ring the next business.'),
      ('0:40','Open their free mock-up and scroll slowly.','So I went ahead and made you a free mock-up of what it could look like. '+('As you scroll, it tells the story of a job from start to finish.' if playbook.story_for(p['trade']) else 'Big tap-to-call button, your services up front, and it loads fast.')),
-     ('0:55','Back to your face.','No cost to look and no obligation. Reply to this email or give me a call and I will walk you through it. Cheers.'),
+     ('0:55','Back to your face.','No cost to look and no obligation. Just reply to this email and I will send it over. Cheers.'),
     ]
 
 
-def ping(conn,owner,title,message):
-    """Buzz the owner's phone through the free ntfy app. Only to his own private topic; returns False if it is off or fails."""
+def ping(conn,owner,title,message,click=''):
+    """Buzz the owner's phone through the free ntfy app. Only to his own private topic; returns False if it is off or fails.
+    click: the private phone address of AgencyOS to open when the notification is tapped."""
     s=lead_engine.settings(conn,owner);topic=s.get('ntfy_topic')
     if not topic:return False
-    req=urlrequest.Request(NTFY+topic,data=message[:300].encode(),headers={'Title':title[:80].encode('ascii','ignore').decode(),'Tags':'telephone_receiver'},method='POST')
+    headers={'Title':title[:80].encode('ascii','ignore').decode(),'Tags':'telephone_receiver'}
+    if click:headers['Click']=click
+    req=urlrequest.Request(NTFY+topic,data=message[:300].encode(),headers=headers,method='POST')
     try:
         with urlrequest.urlopen(req,timeout=8):return True
     except (urlerror.URLError,OSError,ValueError):
@@ -133,7 +136,7 @@ def detect_replies(conn,owner,send=ping):
     for p in rows:
         conn.execute("UPDATE prospects SET replied_at=?,next_on=? WHERE id=?",(p['received_at'],lead_engine.today().isoformat(),p['id']))
         lead_engine.record(conn,owner,p,'replied')
-        send(conn,owner,p['name']+' replied','Open AgencyOS Inbox and call them back within the hour.'+(' '+p['phone'] if p['phone'] else ''))
+        send(conn,owner,'A lead replied','Open AgencyOS and reply by email. Replying within the hour wins jobs.')
     conn.commit()
     return len(rows)
 
@@ -166,9 +169,9 @@ def studio_data(conn,owner,prefix='',local=False):
 
 
 def pack_leads(conn,owner):
-    import phone
+    import email_score
     rows=conn.execute("SELECT * FROM prospects WHERE owner_id=? AND stage IN ('New','Approved','Contacted','Interested') ORDER BY stage='Interested' DESC,score DESC,id LIMIT ?",(owner,PACK_LIMIT*3)).fetchall()
-    return [p for p in rows if p['stage']!='New' or phone.grade(p)=='A'][:PACK_LIMIT]
+    return [p for p in rows if p['stage']!='New' or email_score.grade(p)=='A'][:PACK_LIMIT]
 
 
 def publish_pack(conn,owner):

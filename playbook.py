@@ -44,11 +44,12 @@ def story_for(trade):
     return STORIES.get(key)
 
 
-def brief(p,s,kind):
-    """Everything the AI Writer needs, from the playbook and the lead's own record. No secrets, no other leads."""
+def brief(p,s,kind,coaching=''):
+    """Everything the AI Writer needs, from the playbook and the lead's own record. No secrets, no other leads.
+    coaching: the owner's lessons and approved examples from team.coaching(); the Writer's 'memory'."""
     import json
     check=json.loads(p['site_check']) if p['site_check'] else {}
-    return '\n'.join([
+    return '\n'.join(([coaching] if coaching else [])+[
       'You write one cold email for a one-person Australian web design business. '+VOICE,
       'Sender: '+s['name']+', '+s['business']+(', based in '+s['area'] if s['area'] else '')+'.',
       'Offer: '+OFFER+'. Ask them to reply "yes" if they want it.',
@@ -60,6 +61,12 @@ def brief(p,s,kind):
       'Do not mention prices. Do not invent facts, reviews, awards or numbers about them. Do not use: '+', '.join(BANNED)+'.',
       'Start the body with "Hi '+p['name']+' team,". Do not write a sign-off, signature or opt-out line; those are added for you.',
       'Reply with exactly two parts: a first line "Subject: ..." then the body.'])
+
+
+def review_words(subject,body,words):
+    """Extra words the owner taught an agent never to use."""
+    text=(subject+'\n'+body).casefold()
+    return ['uses "'+w+'" (you taught the team not to)' for w in words if w and w.casefold() in text]
 
 
 def review(subject,body,p,s,kind='first'):
