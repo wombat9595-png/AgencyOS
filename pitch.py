@@ -96,9 +96,9 @@ def _q(text):
     return quote(text)
 
 
-def mockup_html(conn,owner,p):
+def mockup_html(conn,owner,p,media_prefix=None):
     s=lead_engine.settings(conn,owner);story=playbook.story_for(p['trade'])
-    if story:return story_mockups.render(p,s,story,inline=True)
+    if story:return story_mockups.render(p,s,story,inline=True,media_prefix=media_prefix)
     return render_template('mockup.html',m=lead_engine.mockup(p,s))
 
 
@@ -184,7 +184,9 @@ def publish_pack(conn,owner):
         z.writestr(page['slug']+'/index.html',render_template('studio/niche.html',page=page,**studio_data(conn,owner,'../')))
     for story in playbook.STORIES.values():
         with open(os.path.join(ROOT,'templates','stories',story['demo']+'.html'),encoding='utf-8') as handle:
-            z.writestr('demos/'+story['demo']+'/index.html',handle.read())
+            page=handle.read()
+            if story.get('media'):page=page.replace('REAL_MEDIA/','../../real/'+story['media']+'/')
+            z.writestr('demos/'+story['demo']+'/index.html',page)
     kit=os.path.join(ROOT,'static','motion')
     for folder,_dirs,files in os.walk(kit):
         for name in files:
@@ -194,7 +196,7 @@ def publish_pack(conn,owner):
     for p in leads:
         slug=slug_for(conn,owner,'lead',p['id'])
         z.writestr('p/'+slug+'/index.html',render_template('proposal.html',**proposal_data(conn,owner,p,'site.html')))
-        z.writestr('p/'+slug+'/site.html',mockup_html(conn,owner,p))
+        z.writestr('p/'+slug+'/site.html',mockup_html(conn,owner,p,media_prefix='../../real/'))
     clients=grow.portal_clients(conn,owner)
     for client in clients:
         slug=slug_for(conn,owner,'client',client['id'])
@@ -253,6 +255,7 @@ def register(app,get_db,login_required):
         story=next((x for x in playbook.STORIES.values() if x['demo']==demo),None)
         if not story:raise WorkflowError('That demo does not exist.')
         page=story_mockups._read(ROOT,'templates','stories',demo+'.html').replace('../../kit/',url_for('static',filename='motion/kit/'))
+        if story.get('media'):page=story_mockups._real_media(page,story['media'],False)
         return page.replace('src="scene.js"','src="'+url_for('static',filename='motion/demos/'+demo+'/scene.js')+'"')
 
     @app.get('/studio/site/<slug>')

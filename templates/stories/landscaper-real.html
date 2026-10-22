@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Greenhaven Landscapes | Gardens, turf and outdoor living</title>
+<meta name="description" content="Landscaping, turf, gardens and outdoor living spaces, designed and built properly.">
+<meta name="theme-color" content="#000000">
+<style>
+/* Signature chassis (design/DESIGN.md + the Apple reference in design/references): photography first,
+   alternating dark and light tiles, tight display type, one quiet accent, no decoration. */
+:root{
+  --black:#000;--paper:#f4f3ee;--white:#fff;--ink:#1d1d1f;--muted:#6e6e73;--muted-dark:#a1a1a6;
+  --accent:#3d6b2a;--accent-dark:#9ed27f;--line:#d2d2d7;
+  --display:'Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif;
+  --text:"SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--white);color:var(--ink);font:17px/1.47 var(--text);-webkit-font-smoothing:antialiased}
+a{color:inherit}
+img{display:block;max-width:100%}
+.skip{position:absolute;left:-999px}.skip:focus{left:16px;top:16px;z-index:9;background:#fff;color:#000;padding:8px 12px}
+.wrap{width:min(1080px,calc(100% - 44px));margin:0 auto}
+h1,h2,h3{font-family:var(--display);margin:0;letter-spacing:-.015em;text-wrap:balance;font-weight:600}
+.nav{position:fixed;inset:0 0 auto;z-index:20;height:52px;background:rgba(0,0,0,.72);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);color:#f5f5f7}
+.nav .wrap{height:100%;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;font:600 17px/1 var(--text);letter-spacing:-.01em}
+.brand-mark{display:grid;place-items:center;width:26px;height:26px;border-radius:7px;background:#f5f5f7;color:#000;font-size:14px;font-weight:700}
+.nav-links{display:flex;gap:26px;font-size:13px}
+.nav-links a{text-decoration:none;opacity:.85}.nav-links a:hover{opacity:1}
+.nav-call{font-size:13px;font-weight:600;text-decoration:none;background:var(--accent);color:#fff;padding:7px 14px;border-radius:980px}
+
+.story{position:relative;height:520vh;background:var(--black);color:#f5f5f7}
+.story-stage{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden}
+.scene{position:absolute;inset:0;opacity:0;will-change:opacity,transform}
+.scene img{width:100%;height:100%;object-fit:cover}
+.scene:first-child{opacity:1}
+.shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.62) 0%,rgba(0,0,0,.15) 40%,rgba(0,0,0,.1) 60%,rgba(0,0,0,.72) 100%)}
+.story-copy{position:absolute;left:0;right:0;top:calc(52px + 7vh);text-align:center;padding:0 22px}
+.story-copy .eyebrow{font:600 15px/1 var(--text);color:var(--accent-dark);margin:0 auto 14px}
+.story-copy h1{font-size:clamp(44px,7.4vw,96px);line-height:1.02;letter-spacing:-.03em}
+.story-copy p{max-width:620px;margin:18px auto 0;font-size:clamp(19px,2vw,24px);line-height:1.35;color:#e8e8ed}
+.caption{position:absolute;left:50%;bottom:calc(7vh + 44px);transform:translateX(-50%);width:min(680px,calc(100% - 44px));text-align:center;font:600 clamp(26px,3.6vw,44px)/1.1 var(--display);letter-spacing:-.02em;opacity:0;transition:opacity .45s;margin:0}
+.caption.on{opacity:1}
+.labels{position:absolute;left:0;right:0;bottom:7vh;display:flex;justify-content:center;gap:clamp(10px,3vw,34px);padding:0 16px;flex-wrap:wrap}
+.labels span{font:600 13px/1 var(--text);color:rgba(255,255,255,.45);transition:color .3s}
+.labels span.on{color:#fff}
+.labels span.on:before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent-dark);margin-right:7px;vertical-align:2px}
+.progress{position:absolute;left:0;bottom:0;height:3px;background:var(--accent-dark);width:0}
+
+.tile{padding:clamp(88px,12vw,150px) 0;text-align:center}
+.tile.paper{background:var(--paper)}
+.tile.dark{background:var(--black);color:#f5f5f7}
+.tile h2{font-size:clamp(40px,6vw,80px);line-height:1.04;letter-spacing:-.03em}
+.tile .sub{max-width:700px;margin:20px auto 0;font-size:clamp(19px,2vw,24px);line-height:1.38;color:var(--muted)}
+.tile.dark .sub{color:var(--muted-dark)}
+.cards{margin-top:56px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;text-align:left}
+.card{background:var(--white);border-radius:22px;overflow:hidden;margin:0}
+.card img{width:100%;aspect-ratio:4/3;object-fit:cover}
+.card div{padding:20px 22px 24px}
+.card h3{font-size:21px}
+.card p{margin:6px 0 0;color:var(--muted);font-size:16px}
+.menu{margin:56px auto 0;max-width:760px;text-align:left}
+.menu div{display:flex;justify-content:space-between;gap:24px;padding:22px 0;border-bottom:1px solid var(--line)}
+.menu b{font:600 24px/1.2 var(--display);letter-spacing:-.01em}
+.menu span{color:var(--muted);text-align:right}
+.steps{margin-top:56px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:34px;text-align:left}
+.steps b{display:block;font:600 22px/1.2 var(--display);color:#f5f5f7}
+.steps p{margin:8px 0 0;color:var(--muted-dark)}
+.steps i{display:block;font:600 13px/1 var(--text);font-style:normal;color:var(--accent-dark);margin-bottom:12px}
+.contact .big{display:block;margin-top:26px;font:600 clamp(40px,7vw,84px)/1 var(--display);letter-spacing:-.03em;text-decoration:none;color:#f5f5f7}
+.contact .mail{display:inline-block;margin-top:16px;color:var(--accent-dark);font-size:21px;text-decoration:none}
+footer{background:var(--paper);color:var(--muted);font-size:12px;line-height:1.5;padding:22px 0 30px}
+footer .wrap{display:grid;gap:8px;border-top:1px solid var(--line);padding-top:16px}
+.demo-note{color:var(--ink)}
+@media (max-width:820px){.nav-links{display:none}.cards{grid-template-columns:1fr 1fr}.steps{grid-template-columns:1fr}}
+@media (max-width:560px){.cards{grid-template-columns:1fr}.menu div{display:block}.menu span{display:block;text-align:left;margin-top:4px}}
+@media (prefers-reduced-motion:reduce){.story{height:auto}.story-stage{position:relative}.caption,.labels span{transition:none}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true">G</span>Greenhaven Landscapes</a>
+    <nav class="nav-links" aria-label="Main"><a href="#work">Our work</a><a href="#services">Services</a><a href="#how">How it works</a><a href="#contact">Get a quote</a></nav>
+    <a class="nav-call" href="tel:0400000000">Call</a>
+  </div>
+</header>
+
+<main id="main">
+  <section class="story" id="top" aria-label="A backyard going from bare ground to finished garden as you scroll">
+    <div class="story-stage">
+      <div class="scene"><img src="REAL_MEDIA/p_5231236.jpg" alt="Fresh turf being rolled out by hand"></div>
+      <div class="scene"><img src="REAL_MEDIA/p_6728926.jpg" alt="A lawn being mown in late sun" loading="lazy"></div>
+      <div class="scene"><img src="REAL_MEDIA/p_7061672.jpg" alt="Finished garden with paved path and hedges" loading="lazy"></div>
+      <div class="scene"><img src="REAL_MEDIA/p_8134744.jpg" alt="Pool with timber deck and lawn" loading="lazy"></div>
+      <div class="shade"></div>
+      <div class="story-copy">
+        <p class="eyebrow">Landscaping and outdoor living</p>
+        <h1>Your backyard,<br>finally finished.</h1>
+        <p>Keep scrolling. This is how a yard turns into somewhere you want to be.</p>
+      </div>
+      <p class="caption">Fresh turf, laid by hand.</p>
+      <p class="caption">Kept sharp, every visit.</p>
+      <p class="caption">Paths, hedges and planting.</p>
+      <p class="caption">Somewhere to spend summer.</p>
+      <div class="labels" aria-hidden="true"><span>Turf</span><span>Care</span><span>Garden</span><span>Outdoor living</span></div>
+      <div class="progress"></div>
+    </div>
+  </section>
+
+  <section class="tile paper" id="work">
+    <div class="wrap">
+      <h2>Every yard tells<br>a before and after.</h2>
+      <p class="sub">Your jobs, start to finish, with photos at every stage.</p>
+      <div class="cards">
+        <figure class="card"><img src="REAL_MEDIA/p_5231236.jpg" alt="Turf being laid" loading="lazy"><div><h3>Turf and lawns</h3><p>Soil prep, levelling and fresh turf that takes.</p></div></figure>
+        <figure class="card"><img src="REAL_MEDIA/p_7546775.jpg" alt="Wide lawn in front of a new home" loading="lazy"><div><h3>New-build yards</h3><p>From builder's rubble to a lawn the kids can play on.</p></div></figure>
+        <figure class="card"><img src="REAL_MEDIA/p_7061672.jpg" alt="Garden path between hedges" loading="lazy"><div><h3>Gardens and paths</h3><p>Planting, paving and hedges that suit the house.</p></div></figure>
+        <figure class="card"><img src="REAL_MEDIA/p_9056671.jpg" alt="Timber deck around a pool" loading="lazy"><div><h3>Decks and pool surrounds</h3><p>Timber and stone that handle the summer.</p></div></figure>
+        <figure class="card"><img src="REAL_MEDIA/p_8134744.jpg" alt="Modern pool and lawn" loading="lazy"><div><h3>Outdoor living</h3><p>Entertaining areas built around how you use them.</p></div></figure>
+        <figure class="card"><img src="REAL_MEDIA/p_6728926.jpg" alt="Lawn mowing" loading="lazy"><div><h3>Ongoing care</h3><p>Mowing, hedging and tidy-ups on a schedule.</p></div></figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="tile" id="services">
+    <div class="wrap">
+      <h2>What we do.</h2>
+      <p class="sub">One team from the first sketch to the last plant.</p>
+      <div class="menu">
+        <div><b>Garden makeovers</b><span>Overgrown to easy to look after</span></div>
+        <div><b>Turf and lawns</b><span>Laid, levelled and kept green</span></div>
+        <div><b>Retaining walls</b><span>Sleeper, block and stone</span></div>
+        <div><b>Decks and paving</b><span>Timber, pavers and pool surrounds</span></div>
+        <div><b>Regular maintenance</b><span>Weekly, fortnightly or monthly</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="tile dark" id="how">
+    <div class="wrap">
+      <h2>Simple from the first call.</h2>
+      <div class="steps">
+        <div><i>Step 1</i><b>Walk the yard</b><p>Call or send a message. We come out, look at the space and listen.</p></div>
+        <div><i>Step 2</i><b>Clear quote</b><p>A fixed price with what's included and what isn't, in writing.</p></div>
+        <div><i>Step 3</i><b>We build it</b><p>Photo updates as it comes together, then a final walk-through.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="tile dark contact" id="contact" style="padding-top:0">
+    <div class="wrap">
+      <h2>Let's finish your yard.</h2>
+      <a class="big" href="tel:0400000000">0400 000 000</a>
+      <a class="mail" href="mailto:hello@example.com">hello@example.com</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© 2026 Greenhaven Landscapes</span>
+    <span class="demo-note">Demo site by Benji Price Web Design. Greenhaven is a made-up business; reviews and numbers are samples.</span>
+    <span>Placeholder photos from Pexels (free licence). Your own work replaces them.</span>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var story=document.querySelector('.story'),scenes=[].slice.call(document.querySelectorAll('.scene'));
+  var captions=[].slice.call(document.querySelectorAll('.caption')),labels=[].slice.call(document.querySelectorAll('.labels span'));
+  var bar=document.querySelector('.progress'),intro=document.querySelector('.story-copy');
+  var still=window.matchMedia('(prefers-reduced-motion: reduce)').matches,n=scenes.length;
+  function onScroll(){
+    var rect=story.getBoundingClientRect(),span=story.offsetHeight-window.innerHeight;
+    var p=still?0:Math.min(1,Math.max(0,-rect.top/span)),pos=p*(n-1);
+    scenes.forEach(function(s,i){
+      var d=Math.abs(pos-i),o=Math.max(0,1-d);
+      s.style.opacity=still?(i===0?1:0):o;
+      s.style.transform='scale('+(1.12-0.12*Math.min(1,Math.max(0,pos-i+1)/2))+')';
+    });
+    bar.style.width=(p*100)+'%';
+    intro.style.opacity=still?1:Math.max(0,1-p*7);
+    var active=Math.round(pos);
+    captions.forEach(function(c,i){c.classList.toggle('on',i===active&&p>0.04)});
+    labels.forEach(function(l,i){l.classList.toggle('on',i===active)});
+  }
+  window.addEventListener('scroll',function(){requestAnimationFrame(onScroll)},{passive:true});
+  window.addEventListener('resize',onScroll);
+  onScroll();
+})();
+</script>
+</body>
+</html>

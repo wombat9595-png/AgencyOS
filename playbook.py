@@ -4,6 +4,7 @@ Rule-based and local. The Writer (rules or the optional AI) drafts from it, and 
 checked against it before it reaches the owner. Nothing here sends anything.
 """
 import re
+import design_system
 
 VOICE=('Write like a friendly local tradie talking to another small-business owner: short sentences, plain Australian English, '
   'no hype, no jargon, no exclamation marks, no fake urgency. Mention one real thing about their business. Never promise results.')
@@ -28,9 +29,9 @@ NICHES={
  'Beauty salons':('clients want to see prices, results and book online without calling','salon'),
 }
 STORIES={
- 'builder':dict(title='Blueprint to finished house',demo='builder',name='Northline Building Co.',mark='N'),
- 'landscaper':dict(title='Messy yard to pool and garden',demo='landscaper',name='Greenhaven Landscapes',mark='G'),
- 'salon':dict(title='Cut, curls and colour',demo='salon',name='Maison Rosé Hair &amp; Beauty',mark='M'),
+ 'builder':dict(title='Bare dirt to finished house (real time-lapse)',demo='builder-real',media='builder',name='Northline Building Co.',mark='N'),
+ 'landscaper':dict(title='Bare ground to finished garden (real photos)',demo='landscaper-real',media='landscaper',name='Greenhaven Landscapes',mark='G'),
+ 'salon':dict(title='One appointment, start to finish (real photos)',demo='salon-real',media='salon',name='Maison Rosé Hair &amp; Beauty',mark='M'),
 }
 
 
@@ -58,7 +59,8 @@ def brief(p,s,kind,coaching=''):
       'Why it matters for this kind of business: '+niche_angle(p['trade'])+'.',
       'Message type: '+{'first':'first email','followup1':'short first follow-up (they have not replied)','followup2':'short last follow-up, friendly, no pressure'}[kind]+
         ', at most '+str(MAX_WORDS[kind])+' words in the body.',
-      'Do not mention prices. Do not invent facts, reviews, awards or numbers about them. Do not use: '+', '.join(BANNED)+'.',
+      'Do not mention prices. Do not invent facts, reviews, awards or numbers about them. Do not use: '+', '.join(BANNED+design_system.SLOP_PHRASES)+'.',
+      'Write like a local tradie talking: plain Australian English, short sentences, nothing that sounds like marketing copy.',
       'Start the body with "Hi '+p['name']+' team,". Do not write a sign-off, signature or opt-out line; those are added for you.',
       'Reply with exactly two parts: a first line "Subject: ..." then the body.'])
 
@@ -78,6 +80,7 @@ def review(subject,body,p,s,kind='first'):
     if s['name'].casefold() not in body.casefold() or s['business'].casefold() not in body.casefold():problems.append('does not say who it is from (Spam Act)')
     for word in BANNED:
         if word in text:problems.append('uses "'+word+'"')
+    for phrase in design_system.slop_problems(text):problems.append('sounds machine-written ("'+phrase+'")')
     if '[' in body or '{' in body:problems.append('has a placeholder left in it')
     words=len(re.findall(r"\b[\w'’-]+\b",body.split('\n\nCheers,')[0]))
     if kind in MAX_WORDS and words>MAX_WORDS[kind]+40:problems.append('too long ('+str(words)+' words)')

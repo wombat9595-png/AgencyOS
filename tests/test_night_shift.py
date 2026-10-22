@@ -48,8 +48,8 @@ class NightShiftTest(unittest.TestCase):
             subject,body=lead_engine.draft(dict(p,touches=touches),SETTINGS,kind)
             self.assertEqual(playbook.review(subject,body,p,SETTINGS,kind),[],kind)
         self.assertIn('missing the "no thanks" opt-out (Spam Act)',playbook.review('Hi','Hi Fictional Builds team, we guarantee results',p,SETTINGS))
-        self.assertEqual(playbook.story_for('Builders')['demo'],'builder')
-        self.assertEqual(playbook.story_for('Beauty salons')['demo'],'salon')
+        self.assertEqual(playbook.story_for('Builders')['demo'],'builder-real')
+        self.assertEqual(playbook.story_for('Beauty salons')['demo'],'salon-real')
         self.assertIsNone(playbook.story_for('Plumbers'))
 
     def test_shift_finds_checks_and_drafts_then_home_shows_the_queue(self):
@@ -64,7 +64,7 @@ class NightShiftTest(unittest.TestCase):
         self.assertEqual(self.prospect('Good Site Plumbing')['draft_body'],'')  # site is fine, nothing drafted
         with patch('lead_engine.today',return_value=TODAY):
             home=self.client.get('/business').data.decode()
-        self.assertIn('Ready for you',home);self.assertIn('Fictional Builds',home);self.assertIn('Blueprint to finished house mock-up',home)
+        self.assertIn('Ready for you',home);self.assertIn('Fictional Builds',home);self.assertIn('Bare dirt to finished house (real time-lapse) mock-up',home)
         self.assertIn('Last shift',home);self.assertIn('Run a shift now',home)
         self.assertEqual(self.rows('night_shift_settings')[0]['next_beat'],0)  # one beat, rotation wraps
 
@@ -128,12 +128,12 @@ class NightShiftTest(unittest.TestCase):
         self.shift();p=self.prospect('Fictional Builds')
         page=self.client.get(f'/find-customers/{p["id"]}/story').data.decode()
         self.assertIn('Fictional Builds',page);self.assertNotIn('Northline',page);self.assertNotIn('made-up business',page)
-        self.assertIn('/static/motion/kit/motion.js',page);self.assertIn('tel:0400111222',page);self.assertIn('hi@fictional-builds.example',page)
+        self.assertIn('/static/motion/real/builder/f_',page);self.assertIn('tel:0400111222',page);self.assertIn('hi@fictional-builds.example',page)
         download=self.client.get(f'/find-customers/{p["id"]}/story?download=1')
         self.assertIn('attachment; filename="fictional-builds-story-mockup.html"',download.headers['Content-Disposition'])
         packed=download.data.decode()
-        self.assertNotIn('../../kit',packed);self.assertNotIn('src="',packed.split('<svg')[0].split('</head>')[1] if '</head>' in packed else '');self.assertIn('data:font/woff2;base64,',packed)
-        self.assertIn('ScrollTrigger',packed)
+        self.assertNotIn('../../kit',packed);self.assertNotIn('REAL_MEDIA',packed);self.assertNotIn('/static/',packed)
+        self.assertIn('data:image/jpeg;base64,',packed);self.assertIn('BUILD_FRAMES={list:[',packed)
         self.client.get('/find-customers/1/story')  # plumbers (no story) fall back to the one-page mock-up
         with self.conn() as conn:
             conn.execute("UPDATE prospects SET trade='Plumbers' WHERE id=?",(p['id'],));conn.commit()
@@ -162,7 +162,7 @@ class NightShiftTest(unittest.TestCase):
         self.assertIn('Six agents, one playbook',page);self.assertIn('Rules only (free)',page)
         self.assertIn('Pick a trade',self.post('/night-shift/beats',dict(trade='Nope',town='X',radius='10')).data.decode())
         self.post('/night-shift/beats',dict(trade='Beauty salons',town='Manly NSW',radius='5'))
-        self.assertIn('Cut, curls and colour',self.client.get('/night-shift').data.decode())
+        self.assertIn('One appointment, start to finish (real photos)',self.client.get('/night-shift').data.decode())
         beat=self.rows('night_shift_beats')[0]
         self.post(f'/night-shift/beats/{beat["id"]}/remove');self.assertEqual(self.rows('night_shift_beats'),[])
         self.post('/night-shift/toggle',dict(enabled='0'));self.assertEqual(self.rows('night_shift_settings')[0]['enabled'],0)
