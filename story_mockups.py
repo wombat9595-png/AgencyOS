@@ -20,8 +20,9 @@ def _read(*parts):
     with open(os.path.join(*parts),encoding='utf-8') as handle:return handle.read()
 
 
-def render(p,s,story,inline=False):
-    """The demo page with the lead's details in it. inline=True packs every file into one page."""
+def render(p,s,story,inline=False,media_prefix=None):
+    """The demo page with the lead's details in it. inline=True packs every file into one page;
+    media_prefix keeps real footage as files at that relative path (the publish pack) instead."""
     page=_read(ROOT,'templates','stories',story['demo']+'.html')
     name=html.escape(p['name'],quote=True)
     maker=html.escape(s['business'],quote=True)
@@ -33,6 +34,7 @@ def render(p,s,story,inline=False):
     if p['phone']:
         page=page.replace(DEMO_PHONE,html.escape(p['phone'])).replace(DEMO_TEL,re.sub(r'[^0-9+]','',p['phone']))
     if p['email']:page=page.replace(DEMO_EMAIL,html.escape(p['email']))
+    if story.get('media'):page=_real_media(page,story['media'],inline,media_prefix)
     if not inline:
         page=page.replace('../../kit/',url_for('static',filename='motion/kit/'))
         return page.replace('src="scene.js"','src="'+url_for('static',filename='motion/demos/'+story['demo']+'/scene.js')+'"')
@@ -48,6 +50,26 @@ def render(p,s,story,inline=False):
         path=os.path.join(ROOT,'static','motion','demos',story['demo'],'scene.js') if match.group(1)=='scene.js' else os.path.join(KIT,match.group(1).removeprefix('../../kit/'))
         return '<script>'+_read(path).replace('</script','<\\/script')+'</script>'
     return re.sub(r'<script src="((?:\.\./\.\./kit/)?[^"]+)" defer></script>',script,page)
+
+
+def _data_uri(path):
+    with open(path,'rb') as handle:return 'data:image/jpeg;base64,'+base64.b64encode(handle.read()).decode()
+
+
+def _real_media(page,media,inline,prefix=None):
+    """Real footage pages (static/motion/real/<media>/). In the app they load the full frame set;
+    the downloadable single file carries every fourth frame at email-friendly size."""
+    folder=os.path.join(ROOT,'static','motion','real',media)
+    if prefix:return page.replace('REAL_MEDIA/',prefix+media+'/')
+    if not inline:return page.replace('REAL_MEDIA/',url_for('static',filename='motion/real/'+media+'/'))
+    small=os.path.join(folder,'inline')
+    frames=sorted(name for name in os.listdir(small) if name.startswith('i_'))
+    page=re.sub(r"window\.BUILD_FRAMES=\{[^}]*\};",lambda m:'window.BUILD_FRAMES={list:['+','.join("'"+_data_uri(os.path.join(small,f))+"'" for f in frames)+']};',page)
+    def still(match):
+        name=match.group(1)
+        if name.startswith('f_'):name=frames[min(len(frames)-1,(int(name[2:5])-1)//4)]
+        return _data_uri(os.path.join(small,name))
+    return re.sub(r'REAL_MEDIA/([a-z0-9_-]+\.jpg)',still,page)
 
 
 def register(app,get_db,login_required):

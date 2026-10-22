@@ -29,7 +29,7 @@ NICHES={
  'Beauty salons':('clients want to see prices, results and book online without calling','salon'),
 }
 STORIES={
- 'builder':dict(title='Blueprint to finished house',demo='builder',name='Northline Building Co.',mark='N'),
+ 'builder':dict(title='Bare dirt to finished house (real time-lapse)',demo='builder-real',media='builder',name='Northline Building Co.',mark='N'),
  'landscaper':dict(title='Messy yard to pool and garden',demo='landscaper',name='Greenhaven Landscapes',mark='G'),
  'salon':dict(title='Cut, curls and colour',demo='salon',name='Maison Rosé Hair &amp; Beauty',mark='M'),
 }

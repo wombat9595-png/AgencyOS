@@ -123,7 +123,7 @@ class VipTest(unittest.TestCase):
             blob=self.client.get('/studio/pack.zip').get_data()
         z=zipfile.ZipFile(io.BytesIO(blob));names=z.namelist()
         self.assertIn('index.html',names);self.assertIn('websites-for-builders-mona-vale/index.html',names)
-        self.assertIn('demos/builder/index.html',names);self.assertIn('kit/motion.js',names)
+        self.assertIn('demos/builder-real/index.html',names);self.assertIn('kit/motion.js',names);self.assertIn('real/builder/f_001.jpg',names)
         self.assertIn('Disallow: /p/',z.read('robots.txt').decode())
         previews=[n for n in names if n.startswith('p/') and n.endswith('/index.html')]
         self.assertTrue(previews)
