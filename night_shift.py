@@ -151,6 +151,9 @@ def worker_tick(path):
             import pitch
             try:pitch.detect_replies(conn,owner[0])  # a lead wrote back: stop chasing them and buzz the owner's phone
             except Exception:conn.rollback()
+            import autosend
+            try:autosend.tick(conn,owner[0])  # opt-out replies always; sends only if Benji switched CEO auto-send on
+            except Exception:conn.rollback()
             import team
             try:lead_engine.sync_gmail(conn,owner[0])  # approved drafts that Benji sent: schedule their follow-ups
             except Exception:conn.rollback()
