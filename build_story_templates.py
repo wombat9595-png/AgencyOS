@@ -1,0 +1,376 @@
+"""Builds templates/stories/{builder,landscaper,salon}.html: the blended "Signature Story" mock-up.
+
+Mix of the three theme directions Benji liked (2026-10-23): Trade Mark's brand colour and loud type,
+Golden Hour's cinematic letterboxed time-lapse with subtitles, Site Diary's day stamps and ruled steps,
+on top of the motion kit (smooth scroll, reveals, split headlines, marquee).
+
+story_mockups.render() swaps in the lead's name, phone and email, so every hook it looks for stays:
+the demo business name, the logo mark span, 0400 000 000 / tel:0400000000 / hello@example.com and the
+"Demo site by ... is a made-up business;" note. Photos are listed in data-frames as ../../story/... paths.
+"""
+import html
+import json
+import pathlib
+import sys
+
+OUT = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else 'templates/stories')
+
+NICHES = {
+  'builder': dict(
+    name='Northline Building Co.', short='Northline', mark='N', field='#8f2f1d', deep='#5e1d11', pop='#f2c94c',
+    trade='Custom homes and knockdown rebuilds', area='Sydney and surrounds',
+    h1=('We build', 'the whole house.'),
+    lede='Knockdown rebuilds and custom homes, slab to keys. One fixed-price contract, one site supervisor, and a photo update from your block every week.',
+    cta='Book a site visit', unit='Day',
+    frames=['b/%02d.jpg' % i for i in range(1, 31)], mode='scrub',
+    story_title='Watch a house go up', story_note='Real time-lapse of one build. Scroll to play it.',
+    stages=[(0.00, 1, 'Site cut', 'Old house gone, block levelled, services marked.'),
+            (0.16, 21, 'Slab poured', 'Footings inspected, slab down and curing.'),
+            (0.38, 64, 'Frame and roof', 'Frame inspection passed, roof on before winter.'),
+            (0.62, 120, 'Lock-up', 'Windows, cladding and doors. The weather stays out.'),
+            (0.86, 214, 'Handover', 'Final clean, defects walk-through, keys.')],
+    services=[('Knockdown rebuild', 'Demolition, approvals and a new home on your block.', '9 to 12 months'),
+              ('Custom home', "Your architect's plans, or ours, built to the drawing.", '8 to 14 months'),
+              ('Second storey', 'Go up instead of moving out. Staged so you can stay in.', '4 to 6 months'),
+              ('Extensions', 'Kitchens, living areas and granny flats out the back.', '3 to 5 months')],
+    steps=[('Site visit', 'We walk the block with you and talk budget straight away.'),
+           ('Fixed-price quote', 'Every line itemised. No provisional-sum surprises.'),
+           ('Build', 'One supervisor, weekly photos, a shared schedule.'),
+           ('Handover', 'A defects walk-through, then the keys.')],
+    band=['Fixed-price contracts', 'One site supervisor', 'Weekly photo updates', 'Licensed and insured', 'Knockdown rebuilds'],
+    before='The block, day one', after='Handover, day 214',
+    credit='Time-lapse: "Modern Architecture - Time Lapse Construction Custom Home Builder In Southern Oregon" by Van Wey Homes, LLC, Wikimedia Commons, CC BY 3.0 (trimmed, resized, yard sign removed).'),
+  'landscaper': dict(
+    name='Greenhaven Landscapes', short='Greenhaven', mark='G', field='#1f4a3a', deep='#12302a', pop='#e8d36a',
+    trade='Backyards, pool surrounds and turf', area='Sydney and surrounds',
+    h1=('Backyards built', 'from bare dirt.'),
+    lede='Full backyard builds: dig-out, drainage, paving, decks, pool surrounds and turf. Drawn up on paper first, so you see it before we dig.',
+    cta='Get a backyard plan', unit='Week',
+    frames=['l/%d.jpg' % i for i in range(6)], mode='dissolve',
+    story_title='One backyard, start to finish', story_note='Stand-in photos from several jobs. For your site we use photos of your own work.',
+    stages=[(0.00, 1, 'Dig-out', 'Machines in, levels set, drainage trenched.'),
+            (0.20, 3, 'Turf goes down', 'Soil prepped and rolled, turf laid the same day.'),
+            (0.40, 5, 'Pool and deck', 'Hardwood deck and coping around the pool.'),
+            (0.60, 7, 'Handover', 'Planting, lighting and a walk-through.'),
+            (0.80, 8, 'Kept sharp', 'Fortnightly mow and edge, if you want it.')],
+    services=[('Full backyard build', 'Design, dig-out, paving, planting and turf.', '4 to 8 weeks'),
+              ('Pool surrounds', 'Decks, coping, glass fencing and garden beds.', '2 to 4 weeks'),
+              ('Turf and irrigation', 'New lawn with a timer system that suits the soil.', '2 to 5 days'),
+              ('Maintenance', 'Mowing, hedging and seasonal tidy-ups.', 'Fortnightly')],
+    steps=[('Measure-up', 'We come out, measure, and ask how you use the yard.'),
+           ('Plan on paper', 'A drawn plan and a fixed price before anything moves.'),
+           ('Build', 'The same crew from dig-out to the last plant.'),
+           ('Look after it', 'Optional maintenance so it stays like day one.')],
+    band=['Designed before we dig', 'Fixed prices', 'Same crew start to finish', 'Pools, decks and turf', 'Licensed and insured'],
+    before='Dig-out, week 1', after='Handover, week 7',
+    credit='Photos: Pexels (free licence). Dig-out frame from the Van Wey Homes time-lapse, CC BY 3.0.'),
+  'salon': dict(
+    name='Maison Rosé Hair &amp; Beauty', short='Maison Rosé', mark='M', field='#4a1e3c', deep='#2f1226', pop='#f0b8a0',
+    trade='Colour, cuts and event styling', area='Sydney',
+    h1=('Colour that lasts', 'to week six.'),
+    lede='Lived-in colour, precision cuts and event styling. Every booking starts with a consult, so you leave with the hair you asked for.',
+    cta='Book online', unit='Min',
+    frames=['s/%d.jpg' % i for i in range(5)], mode='dissolve',
+    story_title='One appointment, chair to mirror', story_note='Stand-in photos from several appointments. For your site we use photos of your own work.',
+    stages=[(0.00, 0, 'Consult and colour', 'Tone matched to your skin and how you wear it.'),
+            (0.22, 40, 'Processing', 'Timed and checked, never left to guess.'),
+            (0.44, 90, 'Set', 'Sectioned and pinned so the curl holds.'),
+            (0.66, 130, 'Curl', 'Shaped by hand, section by section.'),
+            (0.86, 165, 'Done', 'Finished, photographed, booked for next time.')],
+    services=[('Lived-in colour', 'Balayage and foils that grow out softly.', '2.5 to 3.5 hrs'),
+              ('Precision cut', "Cut to suit the way your hair falls.", '60 min'),
+              ('Event styling', 'Curls, sets and up-styles for weddings and formals.', '75 min'),
+              ('Treatments', 'Bond repair and gloss between colours.', '30 min')],
+    steps=[('Book', 'Pick a stylist and a time online, any hour.'),
+           ('Consult', 'Photos, honest advice, a price before we start.'),
+           ('Appointment', 'Colour, cut or style, with no rushing.'),
+           ('Rebook', "A reminder when it's time, not before.")],
+    band=['Consult first', 'Lived-in colour', 'Event styling', 'Online booking', 'Bond repair'],
+    before='Colour going on', after='Finished curls',
+    credit='Photos: Pexels (free licence). People shown are stock models.'),
+}
+
+DEMO_NOTE = 'Demo site by Benji Price Web Design. {short} is a made-up business; photos, reviews and numbers are samples.'
+
+CSS = r'''
+:root { --field: FIELD; --deep: DEEP; --pop: POP; --film: #0f0d0b; --film-ink: #efe8dc; --film-muted: #a99d8c;
+  --cream: #f6f1e8; --ink: #1b1613; --soft: #5f554d; --line-c: rgba(27,22,19,.14);
+  --font-display: 'Archivo', system-ui, sans-serif; --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-film: 'Cormorant Garamond', Georgia, serif; }
+body { background: var(--cream); color: var(--ink); }
+.m-wrap { max-width: 1240px; margin: 0 auto; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+.m-label { font: 700 12px/1.3 var(--font-body); letter-spacing: .14em; text-transform: uppercase; }
+.m-ribbon { background: #000; color: #ffd84d; text-align: center; font: 600 12px/1.4 var(--font-body); padding: 8px 16px; letter-spacing: .02em; }
+.m-badge { position: fixed; left: max(12px, env(safe-area-inset-left, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); z-index: 50; background: #ffd84d; color: #111; font: 800 11px/1 var(--font-body); letter-spacing: .12em; padding: 7px 10px; border-radius: 4px; pointer-events: none; }
+
+.m-head { position: absolute; left: 0; right: 0; z-index: 5; color: #fff; }
+.m-head .m-wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 22px; }
+.m-logo { display: flex; align-items: center; gap: 12px; font: 900 18px/1.1 var(--font-display); text-transform: uppercase; letter-spacing: -.01em; text-decoration: none; }
+.m-logo .mark { flex: none; width: 38px; height: 38px; display: grid; place-items: center; background: var(--pop); color: var(--ink); border-radius: 10px; font-size: 20px; }
+.m-head nav { display: flex; gap: 28px; font-size: 15px; font-weight: 500; }
+.m-head nav a { text-decoration: none; opacity: .9; }
+.m-pill { display: inline-flex; align-items: center; gap: 8px; background: var(--pop); color: var(--ink); font-weight: 800; text-decoration: none; padding: 13px 22px; border-radius: 999px; white-space: nowrap; }
+.m-ghost { display: inline-flex; align-items: center; gap: 8px; color: #fff; border: 1.5px solid rgba(255,255,255,.65); font-weight: 600; text-decoration: none; padding: 12px 22px; border-radius: 999px; white-space: nowrap; }
+
+.m-hero { position: relative; min-height: 640px; height: 92vh; height: 92svh; max-height: 900px; overflow: hidden; background: var(--film); color: #fff; display: flex; align-items: flex-end; }
+.m-hero .hero-media { position: absolute; inset: 0; }
+.m-hero canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.m-hero .shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8,6,5,.55) 0%, rgba(8,6,5,0) 24%, rgba(8,6,5,.25) 52%, rgba(8,6,5,.92) 100%), linear-gradient(90deg, rgba(8,6,5,.5), rgba(8,6,5,0) 65%); }
+.m-hero .hero-copy { position: relative; width: 100%; padding-bottom: 56px; }
+.m-hero h1 { font: 900 clamp(44px, 8.4vw, 128px)/.9 var(--font-display); text-transform: uppercase; letter-spacing: -.035em; margin: 14px 0 20px; max-width: 13ch; }
+.m-hero h1 span { color: var(--pop); display: block; }
+.m-hero .lede { max-width: 40ch; font-size: clamp(17px, 1.4vw, 20px); color: rgba(255,255,255,.86); margin: 0 0 26px; }
+.m-hero .m-row { display: flex; flex-wrap: wrap; gap: 12px; }
+.m-hero .m-label { color: rgba(255,255,255,.8); }
+
+.m-band { background: var(--pop); color: var(--ink); overflow: hidden; white-space: nowrap; }
+.m-band .marquee-row { display: inline-flex; gap: 0; padding: 16px 0; font: 900 clamp(20px, 2.6vw, 32px)/1 var(--font-display); text-transform: uppercase; letter-spacing: -.01em; }
+.m-band .marquee-row span { padding: 0 22px; }
+.m-band .marquee-row span::after { content: "\2022"; padding-left: 44px; opacity: .45; }
+
+.m-story { position: relative; height: 480vh; background: var(--film); color: var(--film-ink); }
+.m-story .stick { position: sticky; top: 0; height: 100vh; height: 100svh; display: grid; grid-template-rows: 1fr auto 1fr; overflow: hidden; }
+.m-story .bar { display: flex; align-items: flex-end; }
+.m-story .bar.bot { align-items: flex-start; }
+.m-story .bar .m-wrap { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-block: 16px; }
+.m-story .m-label { color: var(--film-muted); }
+.m-story .day { font: 900 clamp(26px, 3vw, 40px)/1 var(--font-display); text-transform: uppercase; color: var(--pop); font-variant-numeric: tabular-nums; }
+.m-story .screen { position: relative; width: 100%; aspect-ratio: 2.39 / 1; max-height: 70vh; margin: 0 auto; }
+.m-story canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.m-story .grain { position: absolute; inset: 0; pointer-events: none; opacity: .12; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+.m-story .sub { position: absolute; left: 50%; bottom: 8%; transform: translateX(-50%); width: min(92%, 780px); text-align: center; text-shadow: 0 2px 16px rgba(0,0,0,.85); }
+.m-story .sub b { display: block; font: italic 500 clamp(30px, 3.8vw, 52px)/1.05 var(--font-film); color: #fff; }
+.m-story .sub span { font-size: 15px; color: #ebe3d6; }
+.m-ticks { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; width: 100%; }
+.m-ticks div { border-top: 3px solid rgba(239,232,220,.18); padding-top: 8px; font-size: 13px; color: var(--film-muted); transition: color .3s, border-color .3s; min-width: 0; }
+.m-ticks div b { display: block; font: 700 11px/1.2 var(--font-body); letter-spacing: .1em; text-transform: uppercase; }
+.m-ticks div.on { border-color: var(--pop); color: var(--film-ink); }
+.m-story h2 { font: 900 clamp(22px, 2.4vw, 30px)/1 var(--font-display); text-transform: uppercase; margin: 0; letter-spacing: -.01em; }
+
+.m-field { background: var(--field); color: var(--cream); }
+.m-sec { padding-block: clamp(72px, 9vw, 120px); }
+.m-sec h2 { font: 900 clamp(38px, 6vw, 84px)/.92 var(--font-display); text-transform: uppercase; letter-spacing: -.03em; margin: 10px 0 0; }
+.m-split { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: 48px; align-items: end; }
+.m-field .m-label { color: var(--pop); }
+.m-field p { color: rgba(246,241,232,.82); }
+.m-compare { position: relative; border-radius: 22px; overflow: hidden; aspect-ratio: 16 / 10; background: var(--deep); touch-action: pan-y; }
+.m-compare canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.m-compare .after { clip-path: inset(0 0 0 var(--pos, 50%)); }
+.m-compare .handle { position: absolute; top: 0; bottom: 0; left: var(--pos, 50%); width: 3px; margin-left: -1.5px; background: var(--pop); pointer-events: none; }
+.m-compare .handle::after { content: "\2194"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 52px; height: 52px; border-radius: 50%; background: var(--pop); color: var(--ink); display: grid; place-items: center; font-weight: 900; font-size: 20px; }
+.m-compare .tag { position: absolute; top: 14px; background: rgba(0,0,0,.72); color: #fff; padding: 7px 12px; border-radius: 999px; font: 700 11px/1 var(--font-body); letter-spacing: .1em; text-transform: uppercase; }
+.m-compare .tag.l { left: 14px; } .m-compare .tag.r { right: 14px; background: var(--pop); color: var(--ink); }
+.m-compare input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; margin: 0; cursor: ew-resize; }
+.m-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-top: 44px; }
+.m-card { background: var(--cream); color: var(--ink); border-radius: 22px; padding: 26px 24px; display: flex; flex-direction: column; gap: 10px; min-height: 240px; }
+.m-card h3 { font: 900 24px/1 var(--font-display); text-transform: uppercase; letter-spacing: -.01em; margin: 0; }
+.m-card p { color: var(--soft); margin: 0; flex: 1; }
+.m-card .m-label { color: var(--field); }
+
+.m-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 28px; margin-top: 44px; border-top: 2px solid var(--ink); }
+.m-steps div { padding-top: 20px; }
+.m-steps .n { font: 900 52px/1 var(--font-display); color: var(--field); }
+.m-steps h3 { font: 800 20px/1.2 var(--font-body); margin: 12px 0 6px; letter-spacing: -.01em; }
+.m-steps p { color: var(--soft); margin: 0; font-size: 16px; }
+.m-cream .m-label { color: var(--field); }
+
+.m-quote { background: var(--film); color: var(--film-ink); text-align: center; }
+.m-quote p.q { font: italic 500 clamp(30px, 3.8vw, 52px)/1.12 var(--font-film); max-width: 24ch; margin: 18px auto 0; text-wrap: balance; }
+.m-quote small { display: block; color: var(--film-muted); margin-top: 16px; font-size: 14px; }
+.m-quote .m-label { color: var(--pop); }
+
+.m-cta { background: var(--pop); color: var(--ink); }
+.m-cta .m-wrap { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 32px; }
+.m-cta h2 { font: 900 clamp(48px, 8.6vw, 128px)/.86 var(--font-display); text-transform: uppercase; letter-spacing: -.04em; margin: 0; }
+.m-cta .num { display: block; font: 900 clamp(32px, 4.4vw, 56px)/1 var(--font-display); text-decoration: none; margin: 10px 0 18px; letter-spacing: -.02em; }
+.m-cta .m-pill { background: var(--ink); color: var(--cream); }
+.m-cta .mail { display: block; margin-top: 12px; font-weight: 600; }
+.m-foot { background: var(--film); color: var(--film-muted); font-size: 13px; }
+.m-foot .m-wrap { padding-block: 28px 72px; display: grid; gap: 8px; }
+
+@media (max-width: 900px) {
+  .m-head nav { display: none; }
+  .m-head .m-pill { padding: 10px 14px; font-size: 14px; }
+  .m-head .m-pill .wd { display: none; }
+  .m-logo { font-size: 15px; }
+  .m-split { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  .m-cards, .m-steps { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .m-card { min-height: 0; }
+  .m-story .screen { aspect-ratio: auto; height: 60svh; max-height: none; }
+  .m-ticks div span { display: none; }
+}
+@media (max-width: 560px) {
+  .m-logo span.nm { max-width: 12ch; }
+  .m-cards, .m-steps { grid-template-columns: minmax(0, 1fr); }
+  .m-hero h1 { font-size: clamp(38px, 11vw, 60px); }
+  .m-ticks div b { font-size: 9px; letter-spacing: .04em; }
+}
+@media (prefers-reduced-motion: reduce) { .m-story { height: auto; } .m-story .stick { position: relative; height: auto; min-height: 100svh; } }
+a:focus-visible, input:focus-visible + .handle { outline: 3px solid var(--pop); outline-offset: 3px; }
+'''
+
+JS = r'''
+(function () {
+  'use strict';
+  var REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  var stages = JSON.parse(document.getElementById('m-stages').textContent);
+  var cfg = document.getElementById('m-story');
+  var mode = cfg.getAttribute('data-mode'), unit = cfg.getAttribute('data-unit');
+  var srcs = cfg.getAttribute('data-frames').split('|');
+  var imgs = srcs.map(function (s) { var im = new Image(); im.onload = function () { im.ok = true; redraw(); }; im.src = s; return im; });
+  var views = [];
+  function nearest(i) { for (var d = 0; d < imgs.length; d++) { if (imgs[i - d] && imgs[i - d].ok) return imgs[i - d]; if (imgs[i + d] && imgs[i + d].ok) return imgs[i + d]; } return null; }
+  function cover(ctx, im, w, h, z, a) {
+    if (!im || !im.ok) return;
+    var r = Math.max(w / im.naturalWidth, h / im.naturalHeight) * (z || 1), dw = im.naturalWidth * r, dh = im.naturalHeight * r;
+    ctx.globalAlpha = a == null ? 1 : a; ctx.drawImage(im, (w - dw) / 2, (h - dh) * 0.5, dw, dh); ctx.globalAlpha = 1;
+  }
+  function View(canvas, p, grade) { this.c = canvas; this.ctx = canvas.getContext('2d'); this.p = p; this.grade = grade; views.push(this); this.size(); }
+  View.prototype.size = function () {
+    var dpr = Math.min(window.devicePixelRatio || 1, 2), r = this.c.getBoundingClientRect();
+    this.c.width = Math.max(1, Math.round(r.width * dpr)); this.c.height = Math.max(1, Math.round(r.height * dpr)); this.draw(this.p);
+  };
+  View.prototype.draw = function (p) {
+    this.p = p = clamp(p, 0, 1);
+    var ctx = this.ctx, w = this.c.width, h = this.c.height, n = imgs.length;
+    if (this.grade) ctx.filter = 'sepia(0.14) saturate(1.08) contrast(1.06) brightness(0.97)';
+    ctx.clearRect(0, 0, w, h);
+    if (mode === 'scrub') { cover(ctx, nearest(Math.round(p * (n - 1))), w, h, 1.02 + 0.04 * p); return; }
+    var f = p * (n - 1), k = Math.floor(f), t = f - k, fade = clamp((t - 0.72) / 0.28, 0, 1);
+    fade = fade * fade * (3 - 2 * fade);
+    cover(ctx, nearest(k), w, h, 1 + 0.07 * t);
+    if (k + 1 < n && fade > 0) cover(ctx, imgs[k + 1], w, h, 1, fade);
+  };
+  function redraw() { views.forEach(function (v) { v.draw(v.p); }); }
+  window.addEventListener('resize', function () { views.forEach(function (v) { v.size(); }); });
+  function stamp(s) { if (unit === 'Min') return Math.floor(s[1] / 60) + ':' + ('0' + s[1] % 60).slice(-2); return unit + ' ' + ('00' + s[1]).slice(-3); }
+
+  new View(document.getElementById('m-hero-c'), 1, true);
+  new View(document.getElementById('m-before'), 0, false);
+  new View(document.getElementById('m-after'), 1, false);
+  var story = new View(document.getElementById('m-story-c'), 0, true);
+  var ticks = document.querySelectorAll('.m-ticks div'), sb = document.getElementById('m-sub-b'), ss = document.getElementById('m-sub-s'), day = document.getElementById('m-day'), cur = -1;
+  function tick() {
+    var r = cfg.getBoundingClientRect(), span = r.height - window.innerHeight;
+    var p = REDUCED ? 1 : (span > 0 ? clamp(-r.top / span, 0, 1) : 1);
+    story.draw(p);
+    var i = 0; stages.forEach(function (s, j) { if (p >= s[0]) i = j; });
+    if (i !== cur) { cur = i; sb.textContent = stages[i][2]; ss.textContent = stages[i][3]; day.textContent = stamp(stages[i]);
+      ticks.forEach(function (t, j) { t.classList.toggle('on', j <= i); }); }
+  }
+  window.addEventListener('scroll', tick, { passive: true }); window.addEventListener('resize', tick); tick();
+})();
+'''
+
+
+def esc(t):
+    return html.escape(t, quote=False)
+
+
+def page(key, n):
+    stages_json = json.dumps([[a, b, c, d] for a, b, c, d in n['stages']])
+    frames = '|'.join('../../story/' + f for f in n['frames'])
+    note = DEMO_NOTE.format(short=n['short'])
+    h1a, h1b = n['h1']
+    css = CSS.replace('FIELD', n['field']).replace('DEEP', n['deep']).replace('POP', n['pop'])
+    band = ''.join('<span>' + esc(b) + '</span>' for b in n['band'])
+    cards = ''.join('<article class="m-card" data-reveal><span class="m-label">%s</span><h3>%s</h3><p>%s</p></article>' % (esc(t), esc(s), esc(d)) for s, d, t in n['services'])
+    steps = ''.join('<div data-reveal><span class="n">%02d</span><h3>%s</h3><p>%s</p></div>' % (i + 1, esc(a), esc(b)) for i, (a, b) in enumerate(n['steps']))
+    ticks = ''.join('<div><b>%s</b><span>%s</span></div>' % (esc(s[2]), esc(s[3])) for s in n['stages'])
+    return f'''<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{n['name']} | {esc(n['trade'])}</title>
+<meta name="description" content="{esc(n['lede'])}">
+<link rel="preload" href="../../kit/fonts/archivo-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../../kit/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../../kit/vendor/lenis.css">
+<link rel="stylesheet" href="../../kit/motion.css">
+<style>{css}</style>
+</head>
+<body>
+<div class="m-ribbon"><span class="demo-note">{note}</span></div>
+<div class="m-badge" aria-hidden="true">MOCK-UP</div>
+
+<header class="m-head"><div class="m-wrap">
+  <a class="m-logo" href="#top"><span class="mark" aria-hidden="true">{n['mark']}</span><span class="nm">{n['name']}</span></a>
+  <nav aria-label="Main"><a href="#work">The work</a><a href="#services">Services</a><a href="#process">How it works</a><a href="#contact">Contact</a></nav>
+  <a class="m-pill" href="tel:0400000000"><span class="wd">Call </span>0400 000 000</a>
+</div></header>
+
+<main id="top">
+<section class="m-hero" data-hero>
+  <div class="hero-media"><canvas id="m-hero-c" aria-label="Finished job"></canvas><div class="shade"></div></div>
+  <div class="hero-copy m-wrap">
+    <span class="m-label">{esc(n['trade'])} &middot; {esc(n['area'])}</span>
+    <h1>{esc(h1a)} <span>{esc(h1b)}</span></h1>
+    <p class="lede">{esc(n['lede'])}</p>
+    <div class="m-row"><a class="m-pill" href="#contact">{esc(n['cta'])} &rarr;</a><a class="m-ghost" href="#work">Watch the job &darr;</a></div>
+  </div>
+</section>
+
+<div class="m-band" data-marquee="34" aria-hidden="true"><div class="marquee-row">{band}{band}</div></div>
+
+<section class="m-story" id="work"><div id="m-story" data-mode="{n['mode']}" data-unit="{n['unit']}" data-frames="{frames}" style="height:100%">
+  <div class="stick">
+    <div class="bar"><div class="m-wrap"><div><span class="m-label">The work</span><h2>{esc(n['story_title'])}</h2></div><span class="day" id="m-day"></span></div></div>
+    <div class="screen"><canvas id="m-story-c" aria-label="Time-lapse of the job"></canvas><div class="grain"></div><div class="sub"><b id="m-sub-b"></b><span id="m-sub-s"></span></div></div>
+    <div class="bar bot"><div class="m-wrap" style="flex-direction:column;align-items:stretch"><div class="m-ticks">{ticks}</div><span class="m-label" style="font-weight:500;letter-spacing:.06em;text-transform:none">{esc(n['story_note'])}</span></div></div>
+  </div>
+</div></section>
+
+<section class="m-field m-sec"><div class="m-wrap m-split">
+  <div><span class="m-label">Before and after</span><h2 data-split style="font-size:clamp(34px, 4.4vw, 64px)">See the difference</h2><p style="margin-top:18px">{esc(n['before'])} on the left, {esc(n['after'].lower())} on the right.</p></div>
+  <div class="m-compare" data-reveal><canvas id="m-before" aria-label="Before"></canvas><canvas class="after" id="m-after" aria-label="After"></canvas><div class="handle"></div>
+    <span class="tag l">Before</span><span class="tag r">After</span><input type="range" min="0" max="100" value="50" aria-label="Drag to compare before and after"
+    oninput="this.parentNode.style.setProperty('--pos', this.value + '%')"></div>
+</div></section>
+
+<section class="m-field m-sec" id="services" style="padding-top:0"><div class="m-wrap">
+  <span class="m-label">Services</span><h2 data-split>What we take on</h2>
+  <div class="m-cards" data-stagger>{cards}</div>
+</div></section>
+
+<section class="m-cream m-sec" id="process"><div class="m-wrap">
+  <span class="m-label">How it works</span><h2 data-split>Four steps, no surprises</h2>
+  <div class="m-steps" data-stagger>{steps}</div>
+</div></section>
+
+<section class="m-quote m-sec"><div class="m-wrap">
+  <span class="m-label">Reviews</span>
+  <p class="q" data-reveal>&ldquo;Your best Google review goes here, word for word, with the customer&rsquo;s first name and suburb.&rdquo;</p>
+  <small>Placeholder. Only real reviews go on the finished site.</small>
+</div></section>
+
+<section class="m-cta m-sec" id="contact"><div class="m-wrap">
+  <h2 data-split>Let&rsquo;s get<br>it booked.</h2>
+  <div><span class="m-label">Call or text</span><a class="num" href="tel:0400000000">0400 000 000</a><a class="m-pill" href="tel:0400000000">{esc(n['cta'])} &rarr;</a><a class="mail" href="mailto:hello@example.com">hello@example.com</a></div>
+</div></section>
+</main>
+
+<footer class="m-foot"><div class="m-wrap">
+  <span class="demo-note">{note}</span>
+  <span>{esc(n['credit'])}</span>
+</div></footer>
+
+<script type="application/json" id="m-stages">{stages_json}</script>
+<script>{JS}</script>
+<script src="../../kit/vendor/gsap.min.js" defer></script>
+<script src="../../kit/vendor/ScrollTrigger.min.js" defer></script>
+<script src="../../kit/vendor/SplitText.min.js" defer></script>
+<script src="../../kit/vendor/lenis.min.js" defer></script>
+<script src="../../kit/motion.js" defer></script>
+</body>
+</html>
+'''
+
+
+if __name__ == '__main__':
+    OUT.mkdir(parents=True, exist_ok=True)
+    for key, n in NICHES.items():
+        (OUT / (key + '.html')).write_text(page(key, n), encoding='utf-8')
+        print('wrote', OUT / (key + '.html'))

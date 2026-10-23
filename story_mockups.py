@@ -1,4 +1,4 @@
-"""The Designer agent: a scroll-story mock-up for each lead, built from the motion-kit demos.
+"""The Designer agent: a scroll-story mock-up for each lead, built on the motion kit with a real time-lapse story.
 
 The three demo sites (builder, landscaper, salon) are filled in with the lead's own name,
 phone and email. "Download" makes one self-contained HTML file to attach to an email.
@@ -34,9 +34,13 @@ def render(p,s,story,inline=False):
         page=page.replace(DEMO_PHONE,html.escape(p['phone'])).replace(DEMO_TEL,re.sub(r'[^0-9+]','',p['phone']))
     if p['email']:page=page.replace(DEMO_EMAIL,html.escape(p['email']))
     if not inline:
-        page=page.replace('../../kit/',url_for('static',filename='motion/kit/'))
+        page=page.replace('../../kit/',url_for('static',filename='motion/kit/')).replace('../../story/',url_for('static',filename='motion/story/'))
         return page.replace('src="scene.js"','src="'+url_for('static',filename='motion/demos/'+story['demo']+'/scene.js')+'"')
     page=re.sub(r'<link rel="preload"[^>]*>\n?','',page)
+    def photo(match):
+        data=base64.b64encode(open(os.path.join(ROOT,'static','motion','story',match.group(1)),'rb').read()).decode()
+        return 'data:image/jpeg;base64,'+data
+    page=re.sub(r'\.\./\.\./story/([a-z]/[0-9]+\.jpg)',photo,page)
     def css(match):
         text=_read(KIT,match.group(1))
         def font(m):
