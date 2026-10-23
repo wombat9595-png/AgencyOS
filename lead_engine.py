@@ -477,7 +477,7 @@ def queue(conn,owner,on=None,limit=12):
     """Today's work, most urgent first: follow-ups due, approved drafts to send, then the best new leads."""
     iso=(on or today()).isoformat()
     return conn.execute("""SELECT * FROM prospects WHERE owner_id=? AND (
-        (stage='Contacted' AND replied_at!='') OR (stage='Contacted' AND next_on!='' AND next_on<=? AND email!='' AND replied_at='') OR stage IN ('Approved','Interested') OR (stage='New' AND score>=50 AND email!='' AND ceo_status NOT IN ('held','redo')))
+        (stage='Contacted' AND replied_at!='') OR (stage='Contacted' AND next_on!='' AND next_on<=? AND email!='' AND replied_at='') OR stage IN ('Approved','Interested') OR (stage='New' AND score>=50 AND email!='' AND ceo_status NOT IN ('held','redo') AND (website='' OR checked_at!='')))
       ORDER BY CASE WHEN stage='Interested' OR replied_at!='' THEN 0 WHEN stage='Contacted' THEN 1 WHEN stage='Approved' THEN 2 ELSE 3 END, score DESC, id LIMIT ?""",(owner,iso,limit)).fetchall()
 
 
