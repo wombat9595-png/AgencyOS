@@ -2,372 +2,254 @@
 <html lang="en-AU">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Northline Building Co. | Custom homes, extensions and renovations</title>
-<meta name="description" content="Locally owned builder for custom homes, extensions and renovations. Fixed-price quotes and a builder who picks up the phone.">
-<meta name="theme-color" content="#101418">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Northline Building Co. | Custom homes and knockdown rebuilds</title>
+<meta name="description" content="Knockdown rebuilds and custom homes, slab to keys. One fixed-price contract, one site supervisor, and a photo update from your block every week.">
 <link rel="preload" href="../../kit/fonts/archivo-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="../../kit/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="../../kit/vendor/lenis.css">
 <link rel="stylesheet" href="../../kit/motion.css">
 <style>
-  :root {
-    --bg: #f4f1ec;
-    --surface: #ffffff;
-    --ink: #14181c;
-    --muted: #5a6168;
-    --accent: #e8622c;
-    --dark: #101418;
-    --dark-ink: #eef0ee;
-    --font-display: 'Archivo', system-ui, sans-serif;
-    --display-weight: 800;
-  }
-  .hero { color: #fff; background: #0e1216; }
-  .hero-art { position: absolute; inset: 0; background:
-      radial-gradient(1200px 600px at 75% 20%, rgba(232,98,44,0.35), transparent 60%),
-      linear-gradient(180deg, #1b2530 0%, #0e1216 100%); }
-  .hero-art .grid-lines { position: absolute; inset: 0; opacity: 0.18;
-      background-image: linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px);
-      background-size: 64px 64px; mask-image: linear-gradient(180deg, #000 20%, transparent 85%); -webkit-mask-image: linear-gradient(180deg, #000 20%, transparent 85%); }
-  .hero-art svg { position: absolute; right: -4%; bottom: 12%; width: min(78vw, 980px); opacity: 0.95; }
-  .hero h1 em { font-style: normal; color: var(--accent); }
-  .hero .lead { color: rgba(255,255,255,0.78); }
-  .hero .btn-ghost { color: #fff; }
+:root { --field: #8f2f1d; --deep: #5e1d11; --pop: #f2c94c; --film: #0f0d0b; --film-ink: #efe8dc; --film-muted: #a99d8c;
+  --cream: #f6f1e8; --ink: #1b1613; --soft: #5f554d; --line-c: rgba(27,22,19,.14);
+  --font-display: 'Archivo', system-ui, sans-serif; --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-film: 'Cormorant Garamond', Georgia, serif; }
+body { background: var(--cream); color: var(--ink); }
+.m-wrap { max-width: 1240px; margin: 0 auto; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+.m-label { font: 700 12px/1.3 var(--font-body); letter-spacing: .14em; text-transform: uppercase; }
+.m-ribbon { background: #000; color: #ffd84d; text-align: center; font: 600 12px/1.4 var(--font-body); padding: 8px 16px; letter-spacing: .02em; }
+.m-badge { position: fixed; left: max(12px, env(safe-area-inset-left, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); z-index: 50; background: #ffd84d; color: #111; font: 800 11px/1 var(--font-body); letter-spacing: .12em; padding: 7px 10px; border-radius: 4px; pointer-events: none; }
 
-  .proj-a { background: linear-gradient(160deg, #d8c7a8, #8f7a5c); }
-  .proj-b { background: linear-gradient(160deg, #a8b8c4, #46596a); }
-  .proj-c { background: linear-gradient(160deg, #e3d4c0, #b98d63); }
-  .proj-d { background: linear-gradient(160deg, #9fb19b, #44583f); }
-  .proj-e { background: linear-gradient(160deg, #cfd3d6, #6f777e); }
-  .card-art svg { position: absolute; left: 8%; right: 8%; bottom: 0; width: 84%; }
-  .project-tag { position: absolute; top: 16px; left: 16px; background: rgba(255,255,255,0.9); color: #14181c; padding: 6px 12px; border-radius: 999px; font-size: 0.8rem; font-weight: 600; }
+.m-head { position: absolute; left: 0; right: 0; z-index: 5; color: #fff; }
+.m-head .m-wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 22px; }
+.m-logo { display: flex; align-items: center; gap: 12px; font: 900 18px/1.1 var(--font-display); text-transform: uppercase; letter-spacing: -.01em; text-decoration: none; }
+.m-logo .mark { flex: none; width: 38px; height: 38px; display: grid; place-items: center; background: var(--pop); color: var(--ink); border-radius: 10px; font-size: 20px; }
+.m-head nav { display: flex; gap: 28px; font-size: 15px; font-weight: 500; }
+.m-head nav a { text-decoration: none; opacity: .9; }
+.m-pill { display: inline-flex; align-items: center; gap: 8px; background: var(--pop); color: var(--ink); font-weight: 800; text-decoration: none; padding: 13px 22px; border-radius: 999px; white-space: nowrap; }
+.m-ghost { display: inline-flex; align-items: center; gap: 8px; color: #fff; border: 1.5px solid rgba(255,255,255,.65); font-weight: 600; text-decoration: none; padding: 12px 22px; border-radius: 999px; white-space: nowrap; }
 
-  .compare-before { background: linear-gradient(180deg, #c9ccc7, #9a9d97); }
-  .compare-after { background: linear-gradient(180deg, #f6d9b8, #e8a46f 55%, #6b8f5b 56%, #4f7343); }
-  .compare svg { position: absolute; left: 10%; bottom: 0; width: 80%; }
+.m-hero { position: relative; min-height: 640px; height: 92vh; height: 92svh; max-height: 900px; overflow: hidden; background: var(--film); color: #fff; display: flex; align-items: flex-end; }
+.m-hero .hero-media { position: absolute; inset: 0; }
+.m-hero canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.m-hero .shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8,6,5,.55) 0%, rgba(8,6,5,0) 24%, rgba(8,6,5,.25) 52%, rgba(8,6,5,.92) 100%), linear-gradient(90deg, rgba(8,6,5,.5), rgba(8,6,5,0) 65%); }
+.m-hero .hero-copy { position: relative; width: 100%; padding-bottom: 56px; }
+.m-hero h1 { font: 900 clamp(44px, 8.4vw, 128px)/.9 var(--font-display); text-transform: uppercase; letter-spacing: -.035em; margin: 14px 0 20px; max-width: 13ch; }
+.m-hero h1 span { color: var(--pop); display: block; }
+.m-hero .lede { max-width: 40ch; font-size: clamp(17px, 1.4vw, 20px); color: rgba(255,255,255,.86); margin: 0 0 26px; }
+.m-hero .m-row { display: flex; flex-wrap: wrap; gap: 12px; }
+.m-hero .m-label { color: rgba(255,255,255,.8); }
+
+.m-band { background: var(--pop); color: var(--ink); overflow: hidden; white-space: nowrap; }
+.m-band .marquee-row { display: inline-flex; gap: 0; padding: 16px 0; font: 900 clamp(20px, 2.6vw, 32px)/1 var(--font-display); text-transform: uppercase; letter-spacing: -.01em; }
+.m-band .marquee-row span { padding: 0 22px; }
+.m-band .marquee-row span::after { content: "\2022"; padding-left: 44px; opacity: .45; }
+
+.m-story { position: relative; height: 480vh; background: var(--film); color: var(--film-ink); }
+.m-story .stick { position: sticky; top: 0; height: 100vh; height: 100svh; display: grid; grid-template-rows: 1fr auto 1fr; overflow: hidden; }
+.m-story .bar { display: flex; align-items: flex-end; }
+.m-story .bar.bot { align-items: flex-start; }
+.m-story .bar .m-wrap { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-block: 16px; }
+.m-story .m-label { color: var(--film-muted); }
+.m-story .day { font: 900 clamp(26px, 3vw, 40px)/1 var(--font-display); text-transform: uppercase; color: var(--pop); font-variant-numeric: tabular-nums; }
+.m-story .screen { position: relative; width: 100%; aspect-ratio: 2.39 / 1; max-height: 70vh; margin: 0 auto; }
+.m-story canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.m-story .grain { position: absolute; inset: 0; pointer-events: none; opacity: .12; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+.m-story .sub { position: absolute; left: 50%; bottom: 8%; transform: translateX(-50%); width: min(92%, 780px); text-align: center; text-shadow: 0 2px 16px rgba(0,0,0,.85); }
+.m-story .sub b { display: block; font: italic 500 clamp(30px, 3.8vw, 52px)/1.05 var(--font-film); color: #fff; }
+.m-story .sub span { font-size: 15px; color: #ebe3d6; }
+.m-ticks { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; width: 100%; }
+.m-ticks div { border-top: 3px solid rgba(239,232,220,.18); padding-top: 8px; font-size: 13px; color: var(--film-muted); transition: color .3s, border-color .3s; min-width: 0; }
+.m-ticks div b { display: block; font: 700 11px/1.2 var(--font-body); letter-spacing: .1em; text-transform: uppercase; }
+.m-ticks div.on { border-color: var(--pop); color: var(--film-ink); }
+.m-story h2 { font: 900 clamp(22px, 2.4vw, 30px)/1 var(--font-display); text-transform: uppercase; margin: 0; letter-spacing: -.01em; }
+
+.m-field { background: var(--field); color: var(--cream); }
+.m-sec { padding-block: clamp(72px, 9vw, 120px); }
+.m-sec h2 { font: 900 clamp(38px, 6vw, 84px)/.92 var(--font-display); text-transform: uppercase; letter-spacing: -.03em; margin: 10px 0 0; }
+.m-split { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: 48px; align-items: end; }
+.m-field .m-label { color: var(--pop); }
+.m-field p { color: rgba(246,241,232,.82); }
+.m-compare { position: relative; border-radius: 22px; overflow: hidden; aspect-ratio: 16 / 10; background: var(--deep); touch-action: pan-y; }
+.m-compare canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.m-compare .after { clip-path: inset(0 0 0 var(--pos, 50%)); }
+.m-compare .handle { position: absolute; top: 0; bottom: 0; left: var(--pos, 50%); width: 3px; margin-left: -1.5px; background: var(--pop); pointer-events: none; }
+.m-compare .handle::after { content: "\2194"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 52px; height: 52px; border-radius: 50%; background: var(--pop); color: var(--ink); display: grid; place-items: center; font-weight: 900; font-size: 20px; }
+.m-compare .tag { position: absolute; top: 14px; background: rgba(0,0,0,.72); color: #fff; padding: 7px 12px; border-radius: 999px; font: 700 11px/1 var(--font-body); letter-spacing: .1em; text-transform: uppercase; }
+.m-compare .tag.l { left: 14px; } .m-compare .tag.r { right: 14px; background: var(--pop); color: var(--ink); }
+.m-compare input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; margin: 0; cursor: ew-resize; }
+.m-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-top: 44px; }
+.m-card { background: var(--cream); color: var(--ink); border-radius: 22px; padding: 26px 24px; display: flex; flex-direction: column; gap: 10px; min-height: 240px; }
+.m-card h3 { font: 900 24px/1 var(--font-display); text-transform: uppercase; letter-spacing: -.01em; margin: 0; }
+.m-card p { color: var(--soft); margin: 0; flex: 1; }
+.m-card .m-label { color: var(--field); }
+
+.m-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 28px; margin-top: 44px; border-top: 2px solid var(--ink); }
+.m-steps div { padding-top: 20px; }
+.m-steps .n { font: 900 52px/1 var(--font-display); color: var(--field); }
+.m-steps h3 { font: 800 20px/1.2 var(--font-body); margin: 12px 0 6px; letter-spacing: -.01em; }
+.m-steps p { color: var(--soft); margin: 0; font-size: 16px; }
+.m-cream .m-label { color: var(--field); }
+
+.m-quote { background: var(--film); color: var(--film-ink); text-align: center; }
+.m-quote p.q { font: italic 500 clamp(30px, 3.8vw, 52px)/1.12 var(--font-film); max-width: 24ch; margin: 18px auto 0; text-wrap: balance; }
+.m-quote small { display: block; color: var(--film-muted); margin-top: 16px; font-size: 14px; }
+.m-quote .m-label { color: var(--pop); }
+
+.m-cta { background: var(--pop); color: var(--ink); }
+.m-cta .m-wrap { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 32px; }
+.m-cta h2 { font: 900 clamp(48px, 8.6vw, 128px)/.86 var(--font-display); text-transform: uppercase; letter-spacing: -.04em; margin: 0; }
+.m-cta .num { display: block; font: 900 clamp(32px, 4.4vw, 56px)/1 var(--font-display); text-decoration: none; margin: 10px 0 18px; letter-spacing: -.02em; }
+.m-cta .m-pill { background: var(--ink); color: var(--cream); }
+.m-cta .mail { display: block; margin-top: 12px; font-weight: 600; }
+.m-foot { background: var(--film); color: var(--film-muted); font-size: 13px; }
+.m-foot .m-wrap { padding-block: 28px 72px; display: grid; gap: 8px; }
+
+@media (max-width: 900px) {
+  .m-head nav { display: none; }
+  .m-head .m-pill { padding: 10px 14px; font-size: 14px; }
+  .m-head .m-pill .wd { display: none; }
+  .m-logo { font-size: 15px; }
+  .m-split { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  .m-cards, .m-steps { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .m-card { min-height: 0; }
+  .m-story .screen { aspect-ratio: auto; height: 60svh; max-height: none; }
+  .m-ticks div span { display: none; }
+}
+@media (max-width: 560px) {
+  .m-logo span.nm { max-width: 12ch; }
+  .m-cards, .m-steps { grid-template-columns: minmax(0, 1fr); }
+  .m-hero h1 { font-size: clamp(38px, 11vw, 60px); }
+  .m-ticks div b { font-size: 9px; letter-spacing: .04em; }
+}
+@media (prefers-reduced-motion: reduce) { .m-story { height: auto; } .m-story .stick { position: relative; height: auto; min-height: 100svh; } }
+a:focus-visible, input:focus-visible + .handle { outline: 3px solid var(--pop); outline-offset: 3px; }
 </style>
 </head>
 <body>
-<a class="skip" href="#main">Skip to content</a>
-<div class="scroll-progress" aria-hidden="true"></div>
+<div class="m-ribbon"><span class="demo-note">Demo site by Benji Price Web Design. Northline is a made-up business; photos, reviews and numbers are samples.</span></div>
+<div class="m-badge" aria-hidden="true">MOCK-UP</div>
 
-<header class="site-header on-dark">
-  <div class="wrap">
-    <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true">N</span>Northline Building Co.</a>
-    <nav class="nav" aria-label="Main">
-      <a href="#services">Services</a>
-      <a href="#process">How it works</a>
-      <a href="#projects">Projects</a>
-      <a href="#reviews">Reviews</a>
-      <a class="btn btn-primary" href="#quote">Free quote</a>
-    </nav>
+<header class="m-head"><div class="m-wrap">
+  <a class="m-logo" href="#top"><span class="mark" aria-hidden="true">N</span><span class="nm">Northline Building Co.</span></a>
+  <nav aria-label="Main"><a href="#work">The work</a><a href="#services">Services</a><a href="#process">How it works</a><a href="#contact">Contact</a></nav>
+  <a class="m-pill" href="tel:0400000000"><span class="wd">Call </span>0400 000 000</a>
+</div></header>
+
+<main id="top">
+<section class="m-hero" data-hero>
+  <div class="hero-media"><canvas id="m-hero-c" aria-label="Finished job"></canvas><div class="shade"></div></div>
+  <div class="hero-copy m-wrap">
+    <span class="m-label">Custom homes and knockdown rebuilds &middot; Sydney and surrounds</span>
+    <h1>We build <span>the whole house.</span></h1>
+    <p class="lede">Knockdown rebuilds and custom homes, slab to keys. One fixed-price contract, one site supervisor, and a photo update from your block every week.</p>
+    <div class="m-row"><a class="m-pill" href="#contact">Book a site visit &rarr;</a><a class="m-ghost" href="#work">Watch the job &darr;</a></div>
   </div>
-</header>
+</section>
 
-<main id="main">
-  <section class="hero" id="top" data-hero>
-    <div class="hero-media" aria-hidden="true">
-      <div class="hero-art">
-        <div class="grid-lines"></div>
-        <svg viewBox="0 0 900 420" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="2">
-          <path d="M40 400h820"/>
-          <path d="M120 400V220l190-130 190 130v180"/>
-          <path d="M500 400V250h320v150"/>
-          <path d="M480 250l170-110 190 110" stroke="#e8622c" stroke-width="3"/>
-          <rect x="170" y="280" width="80" height="80"/>
-          <rect x="370" y="290" width="70" height="110"/>
-          <rect x="560" y="290" width="200" height="70"/>
-          <path d="M210 280v80M170 320h80M660 290v70"/>
-        </svg>
-      </div>
-    </div>
-    <div class="wrap hero-copy">
-      <span class="eyebrow">Licensed builder · Locally owned</span>
-      <h1>Homes built <em>properly</em>,<br>on time and on budget.</h1>
-      <p class="lead">Custom homes, extensions and renovations with a fixed-price quote and a builder who actually picks up the phone.</p>
-      <div class="btn-row">
-        <a class="btn btn-primary" href="#quote">Get a free quote</a>
-        <a class="btn btn-ghost" href="#projects">See our work</a>
-      </div>
-      <div class="hero-badges"><span>Fixed-price contracts</span><span>Fully insured</span><span>7-year structural warranty</span></div>
-    </div>
-  </section>
+<div class="m-band" data-marquee="34" aria-hidden="true"><div class="marquee-row"><span>Fixed-price contracts</span><span>One site supervisor</span><span>Weekly photo updates</span><span>Licensed and insured</span><span>Knockdown rebuilds</span><span>Fixed-price contracts</span><span>One site supervisor</span><span>Weekly photo updates</span><span>Licensed and insured</span><span>Knockdown rebuilds</span></div></div>
 
-  <div class="marquee" data-marquee="28" aria-hidden="true">
-    <div class="marquee-row"><span>Custom homes</span><span>Extensions</span><span>Renovations</span><span>Decks and alfresco</span><span>Granny flats</span><span>Knockdown rebuilds</span></div>
+<section class="m-story" id="work"><div id="m-story" data-mode="scrub" data-unit="Day" data-frames="../../story/b/01.jpg|../../story/b/02.jpg|../../story/b/03.jpg|../../story/b/04.jpg|../../story/b/05.jpg|../../story/b/06.jpg|../../story/b/07.jpg|../../story/b/08.jpg|../../story/b/09.jpg|../../story/b/10.jpg|../../story/b/11.jpg|../../story/b/12.jpg|../../story/b/13.jpg|../../story/b/14.jpg|../../story/b/15.jpg|../../story/b/16.jpg|../../story/b/17.jpg|../../story/b/18.jpg|../../story/b/19.jpg|../../story/b/20.jpg|../../story/b/21.jpg|../../story/b/22.jpg|../../story/b/23.jpg|../../story/b/24.jpg|../../story/b/25.jpg|../../story/b/26.jpg|../../story/b/27.jpg|../../story/b/28.jpg|../../story/b/29.jpg|../../story/b/30.jpg" style="height:100%">
+  <div class="stick">
+    <div class="bar"><div class="m-wrap"><div><span class="m-label">The work</span><h2>Watch a house go up</h2></div><span class="day" id="m-day"></span></div></div>
+    <div class="screen"><canvas id="m-story-c" aria-label="Time-lapse of the job"></canvas><div class="grain"></div><div class="sub"><b id="m-sub-b"></b><span id="m-sub-s"></span></div></div>
+    <div class="bar bot"><div class="m-wrap" style="flex-direction:column;align-items:stretch"><div class="m-ticks"><div><b>Site cut</b><span>Old house gone, block levelled, services marked.</span></div><div><b>Slab poured</b><span>Footings inspected, slab down and curing.</span></div><div><b>Frame and roof</b><span>Frame inspection passed, roof on before winter.</span></div><div><b>Lock-up</b><span>Windows, cladding and doors. The weather stays out.</span></div><div><b>Handover</b><span>Final clean, defects walk-through, keys.</span></div></div><span class="m-label" style="font-weight:500;letter-spacing:.06em;text-transform:none">Real time-lapse of one build. Scroll to play it.</span></div></div>
   </div>
+</div></section>
 
-  <section class="section" id="services">
-    <div class="wrap">
-      <div class="section-head">
-        <div>
-          <span class="eyebrow">What we build</span>
-          <h2 data-split>Everything from a new deck to a whole new home.</h2>
-        </div>
-        <p class="lead" data-reveal>One team from first sketch to handover, so nothing gets lost between trades and you always know who to call.</p>
-      </div>
-      <div class="grid" data-stagger>
-        <article class="card" data-reveal>
-          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg></div>
-          <h3>Custom homes</h3>
-          <p class="muted">Designed around how you live, built to last, with a fixed price before we start.</p>
-        </article>
-        <article class="card" data-reveal>
-          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V9l6-4 6 4v12M15 13h6v8"/></svg></div>
-          <h3>Extensions</h3>
-          <p class="muted">More room without moving. Second storeys, rear extensions and open-plan living.</p>
-        </article>
-        <article class="card" data-reveal>
-          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 6l4 4M4 20l3-1 11-11-2-2L5 17z"/></svg></div>
-          <h3>Renovations</h3>
-          <p class="muted">Kitchens, bathrooms and full makeovers, finished cleanly and on schedule.</p>
-        </article>
-        <article class="card" data-reveal>
-          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18h18M5 18V10h14v8M8 10V6h8v4"/></svg></div>
-          <h3>Decks and alfresco</h3>
-          <p class="muted">Outdoor living spaces in hardwood or composite, roofed or open.</p>
-        </article>
-      </div>
-    </div>
-  </section>
+<section class="m-field m-sec"><div class="m-wrap m-split">
+  <div><span class="m-label">Before and after</span><h2 data-split>See the difference</h2><p style="margin-top:18px">The block, day one on the left, handover, day 214 on the right.</p></div>
+  <div class="m-compare" data-reveal><canvas id="m-before" aria-label="Before"></canvas><canvas class="after" id="m-after" aria-label="After"></canvas><div class="handle"></div>
+    <span class="tag l">Before</span><span class="tag r">After</span><input type="range" min="0" max="100" value="50" aria-label="Drag to compare before and after"
+    oninput="this.parentNode.style.setProperty('--pos', this.value + '%')"></div>
+</div></section>
 
-  <section class="scene" id="build" data-scene="build" data-scene-fit="1200,700,690,600,0.74,720,0.6" data-scene-length="750" style="--scene-bg:#14365a" aria-label="Watch a house get built as you scroll">
-    <svg class="scene-svg" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-      <defs>
-        <linearGradient id="b-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5f9ccc"/><stop offset="1" stop-color="#cfe5f2"/></linearGradient>
-        <linearGradient id="b-dusk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d2547"/><stop offset="0.55" stop-color="#8a4f6b"/><stop offset="1" stop-color="#f2a65e"/></linearGradient>
-        <pattern id="b-grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="rgba(255,255,255,0.09)" stroke-width="1"/></pattern>
-        <clipPath id="b-wall-cp"><rect id="wall-clip" x="380" y="420" width="440" height="168"/></clipPath>
-        <clipPath id="b-roof-cp"><rect id="roof-clip" x="350" y="280" width="520" height="150"/></clipPath>
-        <clipPath id="b-ext-cp"><rect id="ext-wall-clip" x="820" y="470" width="180" height="118"/></clipPath>
-      </defs>
+<section class="m-field m-sec" id="services" style="padding-top:0"><div class="m-wrap">
+  <span class="m-label">Services</span><h2 data-split>What we take on</h2>
+  <div class="m-cards" data-stagger><article class="m-card" data-reveal><span class="m-label">9 to 12 months</span><h3>Knockdown rebuild</h3><p>Demolition, approvals and a new home on your block.</p></article><article class="m-card" data-reveal><span class="m-label">8 to 14 months</span><h3>Custom home</h3><p>Your architect's plans, or ours, built to the drawing.</p></article><article class="m-card" data-reveal><span class="m-label">4 to 6 months</span><h3>Second storey</h3><p>Go up instead of moving out. Staged so you can stay in.</p></article><article class="m-card" data-reveal><span class="m-label">3 to 5 months</span><h3>Extensions</h3><p>Kitchens, living areas and granny flats out the back.</p></article></div>
+</div></section>
 
-      <rect x="-1200" y="-1600" width="3600" height="2300" fill="url(#b-sky)"/>
-      <circle cx="930" cy="170" r="46" fill="#fff4cf"/>
-      <g id="dusk" opacity="0">
-        <rect x="-1200" y="-1600" width="3600" height="2300" fill="url(#b-dusk)"/>
-        <g fill="#fff" opacity="0.8"><circle cx="160" cy="80" r="1.6"/><circle cx="300" cy="150" r="1.2"/><circle cx="520" cy="60" r="1.4"/><circle cx="760" cy="120" r="1.2"/><circle cx="1040" cy="70" r="1.6"/><circle cx="420" cy="-60" r="1.3"/><circle cx="880" cy="-120" r="1.5"/></g>
-      </g>
+<section class="m-cream m-sec" id="process"><div class="m-wrap">
+  <span class="m-label">How it works</span><h2 data-split>Four steps, no surprises</h2>
+  <div class="m-steps" data-stagger><div data-reveal><span class="n">01</span><h3>Site visit</h3><p>We walk the block with you and talk budget straight away.</p></div><div data-reveal><span class="n">02</span><h3>Fixed-price quote</h3><p>Every line itemised. No provisional-sum surprises.</p></div><div data-reveal><span class="n">03</span><h3>Build</h3><p>One supervisor, weekly photos, a shared schedule.</p></div><div data-reveal><span class="n">04</span><h3>Handover</h3><p>A defects walk-through, then the keys.</p></div></div>
+</div></section>
 
-      <g id="ground">
-        <rect x="-1200" y="600" width="3600" height="1400" fill="#8a6a4c"/>
-        <rect x="-1200" y="600" width="3600" height="8" fill="#6f533a"/>
-      </g>
-      <rect id="lawn" x="-1200" y="598" width="3600" height="260" fill="#5f9150"/>
-      <polygon id="path" points="580,600 620,600 680,860 520,860" fill="#d9cfbd"/>
+<section class="m-quote m-sec"><div class="m-wrap">
+  <span class="m-label">Reviews</span>
+  <p class="q" data-reveal>&ldquo;Your best Google review goes here, word for word, with the customer&rsquo;s first name and suburb.&rdquo;</p>
+  <small>Placeholder. Only real reviews go on the finished site.</small>
+</div></section>
 
-      <rect id="slab" x="370" y="588" width="460" height="12" fill="#a9adaf"/>
-      <rect id="ext-slab" x="820" y="588" width="190" height="12" fill="#a9adaf"/>
-
-      <g id="studs" fill="#c99e6a"></g>
-      <rect id="top-plate" x="380" y="414" width="440" height="8" fill="#b5884f"/>
-      <g id="trusses" fill="none" stroke="#c99e6a" stroke-width="6" stroke-linejoin="round">
-        <path d="M368 420L600 298L832 420Z"/><path d="M600 298V420M484 360L540 420M716 360L660 420M484 360L600 420M716 360L600 420"/>
-      </g>
-
-      <g clip-path="url(#b-wall-cp)">
-        <rect x="380" y="420" width="440" height="168" fill="#e3d8c6"/>
-        <g id="boards" stroke="rgba(0,0,0,0.08)" stroke-width="2"></g>
-        <g id="paint" opacity="0"><rect x="380" y="420" width="440" height="168" fill="#f6f3ee"/><rect x="380" y="420" width="440" height="168" fill="none" stroke="#2d3338" stroke-width="6"/></g>
-      </g>
-      <g id="windows">
-        <g><rect x="415" y="455" width="100" height="78" rx="3" fill="#2a3a46"/><path d="M465 455v78M415 494h100" stroke="#f6f3ee" stroke-width="4"/></g>
-        <g><rect x="685" y="455" width="100" height="78" rx="3" fill="#2a3a46"/><path d="M735 455v78M685 494h100" stroke="#f6f3ee" stroke-width="4"/></g>
-      </g>
-      <g id="glow" opacity="0" fill="#ffd27a"><rect x="419" y="459" width="44" height="33"/><rect x="467" y="459" width="44" height="33"/><rect x="419" y="496" width="44" height="33"/><rect x="467" y="496" width="44" height="33"/><rect x="689" y="459" width="44" height="33"/><rect x="737" y="459" width="44" height="33"/><rect x="689" y="496" width="44" height="33"/><rect x="737" y="496" width="44" height="33"/></g>
-      <g id="door"><rect x="572" y="500" width="56" height="88" rx="2" fill="#e8622c"/><circle cx="617" cy="546" r="3.5" fill="#fff"/></g>
-
-      <g clip-path="url(#b-roof-cp)"><polygon points="356,424 600,294 844,424" fill="#30373d"/><path d="M420 390L600 296M500 404L600 352" stroke="rgba(255,255,255,0.06)" stroke-width="3"/></g>
-      <rect id="gutter" x="356" y="420" width="488" height="8" rx="2" fill="#22282d"/>
-
-      <g id="ext-studs" fill="#c99e6a"></g>
-      <g clip-path="url(#b-ext-cp)">
-        <rect x="820" y="470" width="180" height="118" fill="#e3d8c6"/>
-        <g id="ext-boards" stroke="rgba(0,0,0,0.08)" stroke-width="2"></g>
-        <g id="ext-paint" opacity="0"><rect x="820" y="470" width="180" height="118" fill="#3a4148"/></g>
-      </g>
-      <g id="ext-glass"><rect x="842" y="492" width="136" height="96" fill="#2a3a46"/><path d="M887 492v96M932 492v96" stroke="#9aa4ab" stroke-width="3"/></g>
-      <rect id="ext-glow" x="845" y="495" width="130" height="93" fill="#ffd27a" opacity="0"/>
-      <polygon id="ext-roof" points="812,476 1012,452 1012,466 812,486" fill="#22282d"/>
-
-      <g id="garden">
-        <circle cx="400" cy="590" r="22" fill="#3f6d38"/><circle cx="436" cy="594" r="16" fill="#4d7f43"/>
-        <circle cx="770" cy="592" r="18" fill="#4d7f43"/><circle cx="802" cy="588" r="24" fill="#3f6d38"/>
-        <g><rect x="246" y="510" width="10" height="90" fill="#6b4a32"/><circle cx="251" cy="500" r="44" fill="#3f6d38"/><circle cx="226" cy="520" r="28" fill="#4d7f43"/></g>
-        <g><rect x="676" y="566" width="6" height="34" fill="#2d3338"/><rect x="668" y="552" width="22" height="16" rx="3" fill="#2d3338"/></g>
-      </g>
-      <g id="ext-garden"><circle cx="1030" cy="592" r="20" fill="#3f6d38"/><circle cx="1060" cy="595" r="14" fill="#4d7f43"/></g>
-
-      <g id="family">
-        <g transform="translate(640 560)"><circle cx="0" cy="-26" r="9" fill="#2d3338"/><rect x="-9" y="-16" width="18" height="34" rx="8" fill="#e8622c"/><rect x="-7" y="16" width="5" height="22" fill="#2d3338"/><rect x="2" y="16" width="5" height="22" fill="#2d3338"/></g>
-        <g transform="translate(668 566)"><circle cx="0" cy="-22" r="8" fill="#2d3338"/><rect x="-8" y="-13" width="16" height="30" rx="7" fill="#5f9ccc"/><rect x="-6" y="15" width="4" height="19" fill="#2d3338"/><rect x="2" y="15" width="4" height="19" fill="#2d3338"/></g>
-        <g transform="translate(690 576)"><circle cx="0" cy="-14" r="6" fill="#2d3338"/><rect x="-6" y="-8" width="12" height="20" rx="5" fill="#f2c14e"/><rect x="-4" y="10" width="3" height="14" fill="#2d3338"/><rect x="1" y="10" width="3" height="14" fill="#2d3338"/></g>
-      </g>
-
-      <g id="tradie-a" transform="translate(300 556)">
-        <circle cx="0" cy="-26" r="9" fill="#e6b48f"/><path d="M-11 -30a11 9 0 0 1 22 0z" fill="#f28c28"/>
-        <rect x="-10" y="-16" width="20" height="34" rx="6" fill="#f2c14e"/><rect x="-10" y="-4" width="20" height="4" fill="#cfd6db"/>
-        <rect x="-8" y="16" width="6" height="28" fill="#33414d"/><rect x="2" y="16" width="6" height="28" fill="#33414d"/>
-      </g>
-
-      <g id="excavator" transform="translate(150 0)">
-        <rect x="0" y="560" width="150" height="28" rx="14" fill="#2d3338"/>
-        <rect x="10" y="510" width="110" height="52" rx="6" fill="#f2b632"/>
-        <rect x="70" y="478" width="44" height="40" rx="4" fill="#f2b632"/><rect x="78" y="484" width="30" height="24" fill="#a9d3ee"/>
-        <g class="arm"><path d="M110 520L190 470L230 540" fill="none" stroke="#f2b632" stroke-width="14" stroke-linejoin="round"/><path d="M220 532l26 6-6 24-28-10z" fill="#2d3338"/></g>
-      </g>
-
-      <g id="crane">
-        <path d="M1080 600V96M1104 600V96M1080 600L1104 560L1080 520L1104 480L1080 440L1104 400L1080 360L1104 320L1080 280L1104 240L1080 200L1104 160L1080 120" stroke="#f2b632" stroke-width="5" fill="none"/>
-        <rect x="560" y="96" width="640" height="16" fill="#f2b632"/><rect x="1150" y="112" width="44" height="40" fill="#2d3338"/>
-        <rect x="1070" y="60" width="44" height="40" fill="#2d3338"/><rect x="1076" y="66" width="32" height="20" fill="#a9d3ee"/>
-        <g id="trolley"><rect x="966" y="112" width="28" height="12" fill="#2d3338"/><line id="hook-line" x1="980" y1="124" x2="980" y2="130" stroke="#2d3338" stroke-width="3"/></g>
-      </g>
-
-      <g id="blueprint">
-        <rect x="-1200" y="-1600" width="3600" height="3600" fill="#14365a"/>
-        <rect x="-1200" y="-1600" width="3600" height="3600" fill="url(#b-grid)"/>
-      </g>
-      <g id="bp" fill="none" stroke="#d6e8f8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <path data-line d="M380 588V420H820V588"/>
-        <path data-line d="M356 424L600 294L844 424"/>
-        <path data-line d="M330 588H1030"/>
-        <path data-line d="M415 455h100v78H415zM685 455h100v78H685z"/>
-        <path data-line d="M572 588V500h56v88"/>
-        <path data-line d="M820 588V470h180v118" stroke-dasharray="8 8"/>
-        <path data-line d="M380 640H820M380 630v20M820 630v20"/>
-        <path data-line d="M870 300V420M860 300h20M860 420h20"/>
-        <g id="bp-notes" fill="#d6e8f8" stroke="none" font-family="Inter, sans-serif" font-size="15" letter-spacing="2">
-          <text x="380" y="672">FRONT ELEVATION · 12.0 M</text>
-          <text x="890" y="366">2.7 M</text>
-          <text x="842" y="460">EXTENSION (STAGE 2)</text>
-        </g>
-      </g>
-    </svg>
-    <div class="scene-ui">
-      <div class="scene-captions">
-        <div class="scene-caption" data-scene-caption="plans"><span class="eyebrow">Step 1 · Plans</span><h2>It starts on paper.</h2><p>Drawings you sign off on, so the house you get is the house you agreed to.</p></div>
-        <div class="scene-caption" data-scene-caption="slab"><span class="eyebrow">Step 2 · Site and slab</span><h2>Ground work done right.</h2><p>Site cut, footings and a level slab. The bit nobody sees, done properly.</p></div>
-        <div class="scene-caption" data-scene-caption="frame"><span class="eyebrow">Step 3 · Frame</span><h2>Up it goes.</h2><p>Frame and roof trusses in place, checked and signed off by the certifier.</p></div>
-        <div class="scene-caption" data-scene-caption="lockup"><span class="eyebrow">Step 4 · Lock-up</span><h2>Walls, windows, roof.</h2><p>Weatherproof and secure. You get photos every Friday.</p></div>
-        <div class="scene-caption" data-scene-caption="handover"><span class="eyebrow">Step 5 · Handover</span><h2>Welcome home.</h2><p>Final walkthrough, every defect fixed, keys in your hand.</p></div>
-        <div class="scene-caption" data-scene-caption="extension"><span class="eyebrow">Need more room?</span><h2>We add on, too.</h2><p>Extensions built to match, without you moving out.</p></div>
-      </div>
-      <div class="scene-steps" aria-hidden="true"><span data-scene-dot></span><span data-scene-dot></span><span data-scene-dot></span><span data-scene-dot></span><span data-scene-dot></span><span data-scene-dot></span></div>
-      <div class="scene-hint">Keep scrolling</div>
-    </div>
-  </section>
-
-  <section class="steps section-dark" id="process" data-pin-steps>
-    <div class="wrap steps-layout">
-      <div>
-        <span class="eyebrow">How it works</span>
-        <h2>Four steps. No surprises.</h2>
-        <p class="lead">You get one fixed price, a clear timeline and a weekly update, whatever the size of the job.</p>
-        <div class="steps-rail" aria-hidden="true"><span class="step-dot is-active"></span><span class="step-dot"></span><span class="step-dot"></span><span class="step-dot"></span></div>
-      </div>
-      <div class="steps-stage">
-        <div class="step" data-step><div class="step-num">01</div><h3>Free site visit</h3><p class="muted">We come out, listen, measure up and talk budget honestly. No pressure, no cost.</p></div>
-        <div class="step" data-step><div class="step-num">02</div><h3>Plans and fixed quote</h3><p class="muted">Drawings, specs and a fixed price in writing. What we quote is what you pay.</p></div>
-        <div class="step" data-step><div class="step-num">03</div><h3>We build</h3><p class="muted">A dedicated site lead, a tidy site and a photo update every Friday.</p></div>
-        <div class="step" data-step><div class="step-num">04</div><h3>Handover</h3><p class="muted">Final walkthrough, every defect fixed, keys in your hand and warranty in writing.</p></div>
-      </div>
-    </div>
-  </section>
-
-  <section class="hscroll" id="projects" data-hscroll>
-    <div class="wrap hscroll-intro">
-      <span class="eyebrow">Recent projects</span>
-      <h2>Scroll through our latest work.</h2>
-    </div>
-    <div class="hscroll-track">
-      <figure class="project"><div class="project-frame"><div class="card-art proj-a"><svg viewBox="0 0 300 200" fill="rgba(255,255,255,0.85)"><path d="M20 200V110l90-60 90 60v90zM200 200v-70h80v70z"/></svg></div><span class="project-tag">Custom home</span></div><figcaption><strong>Two-storey family home</strong><span class="muted">7 months</span></figcaption></figure>
-      <figure class="project"><div class="project-frame"><div class="card-art proj-b"><svg viewBox="0 0 300 200" fill="rgba(255,255,255,0.85)"><path d="M30 200V90h120v110zM150 200v-60h120v60z"/></svg></div><span class="project-tag">Extension</span></div><figcaption><strong>Rear living extension</strong><span class="muted">14 weeks</span></figcaption></figure>
-      <figure class="project"><div class="project-frame"><div class="card-art proj-c"><svg viewBox="0 0 300 200" fill="rgba(255,255,255,0.85)"><path d="M40 200v-80l110-70 110 70v80z"/></svg></div><span class="project-tag">Renovation</span></div><figcaption><strong>Queenslander restoration</strong><span class="muted">5 months</span></figcaption></figure>
-      <figure class="project"><div class="project-frame"><div class="card-art proj-d"><svg viewBox="0 0 300 200" fill="rgba(255,255,255,0.85)"><path d="M10 200v-40h280v40zM40 160v-60h220v60z"/></svg></div><span class="project-tag">Alfresco</span></div><figcaption><strong>Hardwood deck and roof</strong><span class="muted">4 weeks</span></figcaption></figure>
-      <figure class="project"><div class="project-frame"><div class="card-art proj-e"><svg viewBox="0 0 300 200" fill="rgba(255,255,255,0.85)"><path d="M60 200v-100l90-50 90 50v100z"/></svg></div><span class="project-tag">Granny flat</span></div><figcaption><strong>Two-bedroom granny flat</strong><span class="muted">11 weeks</span></figcaption></figure>
-    </div>
-  </section>
-
-  <section class="section">
-    <div class="wrap">
-      <div class="section-head">
-        <div>
-          <span class="eyebrow">Before and after</span>
-          <h2 data-split>Drag to see the difference.</h2>
-        </div>
-        <p class="lead" data-reveal>A tired 1970s brick home turned into a bright, modern family house without leaving the street they love.</p>
-      </div>
-      <div class="compare" data-compare data-reveal="scale">
-        <div class="compare-layer compare-before" aria-hidden="true"><svg viewBox="0 0 400 220" fill="#6f726c"><path d="M20 220V120l120-70 120 70v100z"/><rect x="60" y="140" width="40" height="40" fill="#b9bbb5"/><rect x="170" y="150" width="40" height="70" fill="#b9bbb5"/></svg></div>
-        <div class="compare-layer compare-after" aria-hidden="true"><svg viewBox="0 0 400 220"><path d="M20 220V110l120-80 120 80v110z" fill="#fbfaf7"/><path d="M260 220v-90h120v90z" fill="#2c3a44"/><rect x="50" y="130" width="70" height="60" fill="#8fc3e6"/><rect x="170" y="140" width="45" height="80" fill="#14181c"/><rect x="280" y="150" width="80" height="40" fill="#8fc3e6"/></svg></div>
-        <div class="compare-handle" aria-hidden="true"></div>
-        <span class="compare-label before">Before</span><span class="compare-label after">After</span>
-        <input type="range" min="0" max="100" value="50" aria-label="Drag to compare before and after">
-      </div>
-    </div>
-  </section>
-
-  <section class="section section-dark">
-    <div class="wrap stats">
-      <div data-reveal><div class="stat-num" data-counter="18" data-suffix=" yrs">18 yrs</div><div class="stat-label">building locally</div></div>
-      <div data-reveal><div class="stat-num" data-counter="240" data-suffix="+">240+</div><div class="stat-label">homes and extensions finished</div></div>
-      <div data-reveal><div class="stat-num" data-counter="97" data-suffix="%">97%</div><div class="stat-label">finished on or before the date we promised</div></div>
-      <div data-reveal><div class="stat-num" data-counter="5" data-suffix=".0 ★">5.0 ★</div><div class="stat-label">average Google rating</div></div>
-    </div>
-  </section>
-
-  <section class="section" id="reviews">
-    <div class="wrap">
-      <div class="section-head"><div><span class="eyebrow">Reviews</span><h2 data-split>What our clients say.</h2></div></div>
-      <div class="grid">
-        <article class="card review" data-reveal><div class="stars" aria-label="5 stars">★★★★★</div><blockquote>"They quoted a price and stuck to it. Weekly photos meant we never had to chase anyone."</blockquote><cite>Sample review<span>Extension client</span></cite></article>
-        <article class="card review" data-reveal><div class="stars" aria-label="5 stars">★★★★★</div><blockquote>"Tidy site, polite team, and finished a week early. We'd use them again tomorrow."</blockquote><cite>Sample review<span>New home client</span></cite></article>
-        <article class="card review" data-reveal><div class="stars" aria-label="5 stars">★★★★★</div><blockquote>"The only builder who actually called us back. Couldn't be happier with the deck."</blockquote><cite>Sample review<span>Deck client</span></cite></article>
-      </div>
-    </div>
-  </section>
-
-  <section class="section section-dark" id="quote">
-    <div class="wrap quote-grid">
-      <div>
-        <span class="eyebrow">Free quote</span>
-        <h2 data-split>Tell us about your project.</h2>
-        <p class="lead">We reply within one business day, usually the same day.</p>
-        <div class="contact-lines">
-          <a href="tel:0400000000">Call 0400 000 000</a>
-          <a href="mailto:hello@example.com">hello@example.com</a>
-          <span class="muted">Mon to Fri, 7am to 5pm</span>
-        </div>
-      </div>
-      <form class="form" data-reveal onsubmit="event.preventDefault(); this.querySelector('button').textContent = 'Demo only: this form is not connected';">
-        <label>Name<input name="name" autocomplete="name" required></label>
-        <label>Phone<input name="phone" type="tel" autocomplete="tel" required></label>
-        <label>Project type<select name="type"><option>New home</option><option>Extension</option><option>Renovation</option><option>Deck or alfresco</option><option>Something else</option></select></label>
-        <label>Tell us a bit more<textarea name="message" rows="4"></textarea></label>
-        <button class="btn btn-primary" type="submit">Request my free quote</button>
-      </form>
-    </div>
-  </section>
+<section class="m-cta m-sec" id="contact"><div class="m-wrap">
+  <h2 data-split>Let&rsquo;s get<br>it booked.</h2>
+  <div><span class="m-label">Call or text</span><a class="num" href="tel:0400000000">0400 000 000</a><a class="m-pill" href="tel:0400000000">Book a site visit &rarr;</a><a class="mail" href="mailto:hello@example.com">hello@example.com</a></div>
+</div></section>
 </main>
 
-<footer class="site-footer">
-  <div class="wrap">
-    <span>© 2026 Northline Building Co.</span>
-    <span class="demo-note">Demo site by Benji Price Web Design. Northline is a made-up business; reviews and numbers are samples.</span>
-  </div>
-</footer>
+<footer class="m-foot"><div class="m-wrap">
+  <span class="demo-note">Demo site by Benji Price Web Design. Northline is a made-up business; photos, reviews and numbers are samples.</span>
+  <span>Time-lapse: "Modern Architecture - Time Lapse Construction Custom Home Builder In Southern Oregon" by Van Wey Homes, LLC, Wikimedia Commons, CC BY 3.0 (trimmed, resized, yard sign removed).</span>
+</div></footer>
 
-<div class="callbar">
-  <a class="btn btn-primary" href="tel:0400000000">Call now</a>
-  <a class="btn btn-ghost" href="#quote">Free quote</a>
-</div>
+<script type="application/json" id="m-stages">[[0.0, 1, "Site cut", "Old house gone, block levelled, services marked."], [0.16, 21, "Slab poured", "Footings inspected, slab down and curing."], [0.38, 64, "Frame and roof", "Frame inspection passed, roof on before winter."], [0.62, 120, "Lock-up", "Windows, cladding and doors. The weather stays out."], [0.86, 214, "Handover", "Final clean, defects walk-through, keys."]]</script>
+<script>
+(function () {
+  'use strict';
+  var REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  var stages = JSON.parse(document.getElementById('m-stages').textContent);
+  var cfg = document.getElementById('m-story');
+  var mode = cfg.getAttribute('data-mode'), unit = cfg.getAttribute('data-unit');
+  var srcs = cfg.getAttribute('data-frames').split('|');
+  var imgs = srcs.map(function (s) { var im = new Image(); im.onload = function () { im.ok = true; redraw(); }; im.src = s; return im; });
+  var views = [];
+  function nearest(i) { for (var d = 0; d < imgs.length; d++) { if (imgs[i - d] && imgs[i - d].ok) return imgs[i - d]; if (imgs[i + d] && imgs[i + d].ok) return imgs[i + d]; } return null; }
+  function cover(ctx, im, w, h, z, a) {
+    if (!im || !im.ok) return;
+    var r = Math.max(w / im.naturalWidth, h / im.naturalHeight) * (z || 1), dw = im.naturalWidth * r, dh = im.naturalHeight * r;
+    ctx.globalAlpha = a == null ? 1 : a; ctx.drawImage(im, (w - dw) / 2, (h - dh) * 0.5, dw, dh); ctx.globalAlpha = 1;
+  }
+  function View(canvas, p, grade) { this.c = canvas; this.ctx = canvas.getContext('2d'); this.p = p; this.grade = grade; views.push(this); this.size(); }
+  View.prototype.size = function () {
+    var dpr = Math.min(window.devicePixelRatio || 1, 2), r = this.c.getBoundingClientRect();
+    this.c.width = Math.max(1, Math.round(r.width * dpr)); this.c.height = Math.max(1, Math.round(r.height * dpr)); this.draw(this.p);
+  };
+  View.prototype.draw = function (p) {
+    this.p = p = clamp(p, 0, 1);
+    var ctx = this.ctx, w = this.c.width, h = this.c.height, n = imgs.length;
+    if (this.grade) ctx.filter = 'sepia(0.14) saturate(1.08) contrast(1.06) brightness(0.97)';
+    ctx.clearRect(0, 0, w, h);
+    if (mode === 'scrub') { cover(ctx, nearest(Math.round(p * (n - 1))), w, h, 1.02 + 0.04 * p); return; }
+    var f = p * (n - 1), k = Math.floor(f), t = f - k, fade = clamp((t - 0.72) / 0.28, 0, 1);
+    fade = fade * fade * (3 - 2 * fade);
+    cover(ctx, nearest(k), w, h, 1 + 0.07 * t);
+    if (k + 1 < n && fade > 0) cover(ctx, imgs[k + 1], w, h, 1, fade);
+  };
+  function redraw() { views.forEach(function (v) { v.draw(v.p); }); }
+  window.addEventListener('resize', function () { views.forEach(function (v) { v.size(); }); });
+  function stamp(s) { if (unit === 'Min') return Math.floor(s[1] / 60) + ':' + ('0' + s[1] % 60).slice(-2); return unit + ' ' + ('00' + s[1]).slice(-3); }
 
+  new View(document.getElementById('m-hero-c'), 1, true);
+  new View(document.getElementById('m-before'), 0, false);
+  new View(document.getElementById('m-after'), 1, false);
+  var story = new View(document.getElementById('m-story-c'), 0, true);
+  var ticks = document.querySelectorAll('.m-ticks div'), sb = document.getElementById('m-sub-b'), ss = document.getElementById('m-sub-s'), day = document.getElementById('m-day'), cur = -1;
+  function tick() {
+    var r = cfg.getBoundingClientRect(), span = r.height - window.innerHeight;
+    var p = REDUCED ? 1 : (span > 0 ? clamp(-r.top / span, 0, 1) : 1);
+    story.draw(p);
+    var i = 0; stages.forEach(function (s, j) { if (p >= s[0]) i = j; });
+    if (i !== cur) { cur = i; sb.textContent = stages[i][2]; ss.textContent = stages[i][3]; day.textContent = stamp(stages[i]);
+      ticks.forEach(function (t, j) { t.classList.toggle('on', j <= i); }); }
+  }
+  window.addEventListener('scroll', tick, { passive: true }); window.addEventListener('resize', tick); tick();
+})();
+</script>
 <script src="../../kit/vendor/gsap.min.js" defer></script>
 <script src="../../kit/vendor/ScrollTrigger.min.js" defer></script>
 <script src="../../kit/vendor/SplitText.min.js" defer></script>
 <script src="../../kit/vendor/lenis.min.js" defer></script>
-<script src="scene.js" defer></script>
 <script src="../../kit/motion.js" defer></script>
 </body>
 </html>

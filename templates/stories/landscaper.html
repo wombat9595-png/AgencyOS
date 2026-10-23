@@ -2,339 +2,254 @@
 <html lang="en-AU">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Greenhaven Landscapes | Garden design, landscaping and maintenance</title>
-<meta name="description" content="Garden design, landscaping and maintenance. Turn a tired backyard into the place you want to be.">
-<meta name="theme-color" content="#1f3a2b">
-<link rel="preload" href="../../kit/fonts/fraunces-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Greenhaven Landscapes | Backyards, pool surrounds and turf</title>
+<meta name="description" content="Full backyard builds: dig-out, drainage, paving, decks, pool surrounds and turf. Drawn up on paper first, so you see it before we dig.">
+<link rel="preload" href="../../kit/fonts/archivo-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="../../kit/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="../../kit/vendor/lenis.css">
 <link rel="stylesheet" href="../../kit/motion.css">
 <style>
-  :root {
-    --bg: #f3f0e6;
-    --surface: #fbfaf5;
-    --ink: #1c2a21;
-    --muted: #59665c;
-    --accent: #3f7a4f;
-    --accent-ink: #ffffff;
-    --dark: #1f3a2b;
-    --dark-ink: #eef2e8;
-    --font-display: 'Fraunces', Georgia, serif;
-    --display-weight: 600;
-    --display-tracking: -0.02em;
-    --radius: 24px;
-  }
-  h1 em, h2 em { font-style: italic; font-weight: 400; color: var(--accent); }
-  .section-dark h2 em { color: #b9dba0; }
-  .hero { align-items: flex-start; padding-top: clamp(130px, 18vh, 200px); background: #f6dcb4; --hero-shade: none; }
-  .sky { position: absolute; inset: 0; background: linear-gradient(180deg, #f9e7c6 0%, #f4c99a 45%, #e8a77a 70%, #c98c6e 100%); }
-  .sun { position: absolute; width: min(36vw, 380px); aspect-ratio: 1; border-radius: 50%; right: 14%; top: 22%; background: radial-gradient(circle, #fff6df 0%, #ffd99a 55%, rgba(255,217,154,0) 72%); }
-  .layer { position: absolute; left: -5%; width: 110%; bottom: -8%; }
-  .layer svg { width: 100%; height: auto; }
-  @media (max-width: 799px) { .layer svg { height: 30svh; } .layer { bottom: 0; } }
-  .hero .lead { color: #3d4a40; }
-  .hero-badges { color: #2b3a2f; }
+:root { --field: #1f4a3a; --deep: #12302a; --pop: #e8d36a; --film: #0f0d0b; --film-ink: #efe8dc; --film-muted: #a99d8c;
+  --cream: #f6f1e8; --ink: #1b1613; --soft: #5f554d; --line-c: rgba(27,22,19,.14);
+  --font-display: 'Archivo', system-ui, sans-serif; --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-film: 'Cormorant Garamond', Georgia, serif; }
+body { background: var(--cream); color: var(--ink); }
+.m-wrap { max-width: 1240px; margin: 0 auto; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+.m-label { font: 700 12px/1.3 var(--font-body); letter-spacing: .14em; text-transform: uppercase; }
+.m-ribbon { background: #000; color: #ffd84d; text-align: center; font: 600 12px/1.4 var(--font-body); padding: 8px 16px; letter-spacing: .02em; }
+.m-badge { position: fixed; left: max(12px, env(safe-area-inset-left, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); z-index: 50; background: #ffd84d; color: #111; font: 800 11px/1 var(--font-body); letter-spacing: .12em; padding: 7px 10px; border-radius: 4px; pointer-events: none; }
 
-  .proj-a { background: linear-gradient(170deg, #cfe3c1, #6f9a63 60%, #3e6a3c); }
-  .proj-b { background: linear-gradient(170deg, #e9dcc3, #b9a27b 60%, #7a6a4f); }
-  .proj-c { background: linear-gradient(170deg, #c7e0e4, #74a9a3 60%, #3d6f6a); }
-  .proj-d { background: linear-gradient(170deg, #e6e2bc, #a8b06b 60%, #5b6a37); }
-  .proj-e { background: linear-gradient(170deg, #d9e8d0, #8fb486 60%, #4b7448); }
-  .card-art svg { position: absolute; left: 0; bottom: 0; width: 100%; }
-  .project-tag { position: absolute; top: 16px; left: 16px; background: rgba(255,255,255,0.9); color: var(--ink); padding: 6px 12px; border-radius: 999px; font-size: 0.8rem; font-weight: 600; }
+.m-head { position: absolute; left: 0; right: 0; z-index: 5; color: #fff; }
+.m-head .m-wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 22px; }
+.m-logo { display: flex; align-items: center; gap: 12px; font: 900 18px/1.1 var(--font-display); text-transform: uppercase; letter-spacing: -.01em; text-decoration: none; }
+.m-logo .mark { flex: none; width: 38px; height: 38px; display: grid; place-items: center; background: var(--pop); color: var(--ink); border-radius: 10px; font-size: 20px; }
+.m-head nav { display: flex; gap: 28px; font-size: 15px; font-weight: 500; }
+.m-head nav a { text-decoration: none; opacity: .9; }
+.m-pill { display: inline-flex; align-items: center; gap: 8px; background: var(--pop); color: var(--ink); font-weight: 800; text-decoration: none; padding: 13px 22px; border-radius: 999px; white-space: nowrap; }
+.m-ghost { display: inline-flex; align-items: center; gap: 8px; color: #fff; border: 1.5px solid rgba(255,255,255,.65); font-weight: 600; text-decoration: none; padding: 12px 22px; border-radius: 999px; white-space: nowrap; }
 
-  .compare-before { background: linear-gradient(180deg, #dcd6c8 0 55%, #b4a68c 55%); }
-  .compare-after { background: linear-gradient(180deg, #d7ecf2 0 55%, #6e9d5a 55%); }
-  .compare svg { position: absolute; left: 0; bottom: 0; width: 100%; }
-  .leaf-band { background: var(--dark); color: var(--dark-ink); border: 0; }
-  .leaf-band .marquee-row span::after { content: '\2767'; color: #b9dba0; }
+.m-hero { position: relative; min-height: 640px; height: 92vh; height: 92svh; max-height: 900px; overflow: hidden; background: var(--film); color: #fff; display: flex; align-items: flex-end; }
+.m-hero .hero-media { position: absolute; inset: 0; }
+.m-hero canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.m-hero .shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8,6,5,.55) 0%, rgba(8,6,5,0) 24%, rgba(8,6,5,.25) 52%, rgba(8,6,5,.92) 100%), linear-gradient(90deg, rgba(8,6,5,.5), rgba(8,6,5,0) 65%); }
+.m-hero .hero-copy { position: relative; width: 100%; padding-bottom: 56px; }
+.m-hero h1 { font: 900 clamp(44px, 8.4vw, 128px)/.9 var(--font-display); text-transform: uppercase; letter-spacing: -.035em; margin: 14px 0 20px; max-width: 13ch; }
+.m-hero h1 span { color: var(--pop); display: block; }
+.m-hero .lede { max-width: 40ch; font-size: clamp(17px, 1.4vw, 20px); color: rgba(255,255,255,.86); margin: 0 0 26px; }
+.m-hero .m-row { display: flex; flex-wrap: wrap; gap: 12px; }
+.m-hero .m-label { color: rgba(255,255,255,.8); }
+
+.m-band { background: var(--pop); color: var(--ink); overflow: hidden; white-space: nowrap; }
+.m-band .marquee-row { display: inline-flex; gap: 0; padding: 16px 0; font: 900 clamp(20px, 2.6vw, 32px)/1 var(--font-display); text-transform: uppercase; letter-spacing: -.01em; }
+.m-band .marquee-row span { padding: 0 22px; }
+.m-band .marquee-row span::after { content: "\2022"; padding-left: 44px; opacity: .45; }
+
+.m-story { position: relative; height: 480vh; background: var(--film); color: var(--film-ink); }
+.m-story .stick { position: sticky; top: 0; height: 100vh; height: 100svh; display: grid; grid-template-rows: 1fr auto 1fr; overflow: hidden; }
+.m-story .bar { display: flex; align-items: flex-end; }
+.m-story .bar.bot { align-items: flex-start; }
+.m-story .bar .m-wrap { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-block: 16px; }
+.m-story .m-label { color: var(--film-muted); }
+.m-story .day { font: 900 clamp(26px, 3vw, 40px)/1 var(--font-display); text-transform: uppercase; color: var(--pop); font-variant-numeric: tabular-nums; }
+.m-story .screen { position: relative; width: 100%; aspect-ratio: 2.39 / 1; max-height: 70vh; margin: 0 auto; }
+.m-story canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.m-story .grain { position: absolute; inset: 0; pointer-events: none; opacity: .12; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+.m-story .sub { position: absolute; left: 50%; bottom: 8%; transform: translateX(-50%); width: min(92%, 780px); text-align: center; text-shadow: 0 2px 16px rgba(0,0,0,.85); }
+.m-story .sub b { display: block; font: italic 500 clamp(30px, 3.8vw, 52px)/1.05 var(--font-film); color: #fff; }
+.m-story .sub span { font-size: 15px; color: #ebe3d6; }
+.m-ticks { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; width: 100%; }
+.m-ticks div { border-top: 3px solid rgba(239,232,220,.18); padding-top: 8px; font-size: 13px; color: var(--film-muted); transition: color .3s, border-color .3s; min-width: 0; }
+.m-ticks div b { display: block; font: 700 11px/1.2 var(--font-body); letter-spacing: .1em; text-transform: uppercase; }
+.m-ticks div.on { border-color: var(--pop); color: var(--film-ink); }
+.m-story h2 { font: 900 clamp(22px, 2.4vw, 30px)/1 var(--font-display); text-transform: uppercase; margin: 0; letter-spacing: -.01em; }
+
+.m-field { background: var(--field); color: var(--cream); }
+.m-sec { padding-block: clamp(72px, 9vw, 120px); }
+.m-sec h2 { font: 900 clamp(38px, 6vw, 84px)/.92 var(--font-display); text-transform: uppercase; letter-spacing: -.03em; margin: 10px 0 0; }
+.m-split { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: 48px; align-items: end; }
+.m-field .m-label { color: var(--pop); }
+.m-field p { color: rgba(246,241,232,.82); }
+.m-compare { position: relative; border-radius: 22px; overflow: hidden; aspect-ratio: 16 / 10; background: var(--deep); touch-action: pan-y; }
+.m-compare canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.m-compare .after { clip-path: inset(0 0 0 var(--pos, 50%)); }
+.m-compare .handle { position: absolute; top: 0; bottom: 0; left: var(--pos, 50%); width: 3px; margin-left: -1.5px; background: var(--pop); pointer-events: none; }
+.m-compare .handle::after { content: "\2194"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 52px; height: 52px; border-radius: 50%; background: var(--pop); color: var(--ink); display: grid; place-items: center; font-weight: 900; font-size: 20px; }
+.m-compare .tag { position: absolute; top: 14px; background: rgba(0,0,0,.72); color: #fff; padding: 7px 12px; border-radius: 999px; font: 700 11px/1 var(--font-body); letter-spacing: .1em; text-transform: uppercase; }
+.m-compare .tag.l { left: 14px; } .m-compare .tag.r { right: 14px; background: var(--pop); color: var(--ink); }
+.m-compare input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; margin: 0; cursor: ew-resize; }
+.m-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-top: 44px; }
+.m-card { background: var(--cream); color: var(--ink); border-radius: 22px; padding: 26px 24px; display: flex; flex-direction: column; gap: 10px; min-height: 240px; }
+.m-card h3 { font: 900 24px/1 var(--font-display); text-transform: uppercase; letter-spacing: -.01em; margin: 0; }
+.m-card p { color: var(--soft); margin: 0; flex: 1; }
+.m-card .m-label { color: var(--field); }
+
+.m-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 28px; margin-top: 44px; border-top: 2px solid var(--ink); }
+.m-steps div { padding-top: 20px; }
+.m-steps .n { font: 900 52px/1 var(--font-display); color: var(--field); }
+.m-steps h3 { font: 800 20px/1.2 var(--font-body); margin: 12px 0 6px; letter-spacing: -.01em; }
+.m-steps p { color: var(--soft); margin: 0; font-size: 16px; }
+.m-cream .m-label { color: var(--field); }
+
+.m-quote { background: var(--film); color: var(--film-ink); text-align: center; }
+.m-quote p.q { font: italic 500 clamp(30px, 3.8vw, 52px)/1.12 var(--font-film); max-width: 24ch; margin: 18px auto 0; text-wrap: balance; }
+.m-quote small { display: block; color: var(--film-muted); margin-top: 16px; font-size: 14px; }
+.m-quote .m-label { color: var(--pop); }
+
+.m-cta { background: var(--pop); color: var(--ink); }
+.m-cta .m-wrap { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 32px; }
+.m-cta h2 { font: 900 clamp(48px, 8.6vw, 128px)/.86 var(--font-display); text-transform: uppercase; letter-spacing: -.04em; margin: 0; }
+.m-cta .num { display: block; font: 900 clamp(32px, 4.4vw, 56px)/1 var(--font-display); text-decoration: none; margin: 10px 0 18px; letter-spacing: -.02em; }
+.m-cta .m-pill { background: var(--ink); color: var(--cream); }
+.m-cta .mail { display: block; margin-top: 12px; font-weight: 600; }
+.m-foot { background: var(--film); color: var(--film-muted); font-size: 13px; }
+.m-foot .m-wrap { padding-block: 28px 72px; display: grid; gap: 8px; }
+
+@media (max-width: 900px) {
+  .m-head nav { display: none; }
+  .m-head .m-pill { padding: 10px 14px; font-size: 14px; }
+  .m-head .m-pill .wd { display: none; }
+  .m-logo { font-size: 15px; }
+  .m-split { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  .m-cards, .m-steps { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .m-card { min-height: 0; }
+  .m-story .screen { aspect-ratio: auto; height: 60svh; max-height: none; }
+  .m-ticks div span { display: none; }
+}
+@media (max-width: 560px) {
+  .m-logo span.nm { max-width: 12ch; }
+  .m-cards, .m-steps { grid-template-columns: minmax(0, 1fr); }
+  .m-hero h1 { font-size: clamp(38px, 11vw, 60px); }
+  .m-ticks div b { font-size: 9px; letter-spacing: .04em; }
+}
+@media (prefers-reduced-motion: reduce) { .m-story { height: auto; } .m-story .stick { position: relative; height: auto; min-height: 100svh; } }
+a:focus-visible, input:focus-visible + .handle { outline: 3px solid var(--pop); outline-offset: 3px; }
 </style>
 </head>
 <body>
-<a class="skip" href="#main">Skip to content</a>
-<div class="scroll-progress" aria-hidden="true"></div>
+<div class="m-ribbon"><span class="demo-note">Demo site by Benji Price Web Design. Greenhaven is a made-up business; photos, reviews and numbers are samples.</span></div>
+<div class="m-badge" aria-hidden="true">MOCK-UP</div>
 
-<header class="site-header">
-  <div class="wrap">
-    <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true">G</span>Greenhaven Landscapes</a>
-    <nav class="nav" aria-label="Main">
-      <a href="#services">Services</a>
-      <a href="#process">Our process</a>
-      <a href="#projects">Gardens</a>
-      <a href="#reviews">Reviews</a>
-      <a class="btn btn-primary" href="#quote">Free design chat</a>
-    </nav>
+<header class="m-head"><div class="m-wrap">
+  <a class="m-logo" href="#top"><span class="mark" aria-hidden="true">G</span><span class="nm">Greenhaven Landscapes</span></a>
+  <nav aria-label="Main"><a href="#work">The work</a><a href="#services">Services</a><a href="#process">How it works</a><a href="#contact">Contact</a></nav>
+  <a class="m-pill" href="tel:0400000000"><span class="wd">Call </span>0400 000 000</a>
+</div></header>
+
+<main id="top">
+<section class="m-hero" data-hero>
+  <div class="hero-media"><canvas id="m-hero-c" aria-label="Finished job"></canvas><div class="shade"></div></div>
+  <div class="hero-copy m-wrap">
+    <span class="m-label">Backyards, pool surrounds and turf &middot; Sydney and surrounds</span>
+    <h1>Backyards built <span>from bare dirt.</span></h1>
+    <p class="lede">Full backyard builds: dig-out, drainage, paving, decks, pool surrounds and turf. Drawn up on paper first, so you see it before we dig.</p>
+    <div class="m-row"><a class="m-pill" href="#contact">Get a backyard plan &rarr;</a><a class="m-ghost" href="#work">Watch the job &darr;</a></div>
   </div>
-</header>
+</section>
 
-<main id="main">
-  <section class="hero" id="top" data-hero data-parallax-scope>
-    <div class="hero-media" aria-hidden="true">
-      <div class="sky"></div>
-      <div class="sun" data-parallax="0.6"></div>
-      <div class="layer" data-parallax="0.5"><svg viewBox="0 0 1440 420" preserveAspectRatio="none"><path fill="#c79a7e" d="M0 260 C200 160 360 210 520 170 C700 120 860 220 1040 160 C1200 110 1320 170 1440 140 V420 H0Z"/></svg></div>
-      <div class="layer" data-parallax="0.35"><svg viewBox="0 0 1440 420" preserveAspectRatio="none"><path fill="#8c9a6d" d="M0 300 C180 230 320 280 500 240 C680 200 820 300 1000 250 C1180 200 1300 260 1440 230 V420 H0Z"/></svg></div>
-      <div class="layer" data-parallax="0.2"><svg viewBox="0 0 1440 420" preserveAspectRatio="none"><path fill="#557a4c" d="M0 330 C240 280 400 340 640 300 C860 265 1040 350 1240 310 C1340 290 1400 300 1440 300 V420 H0Z"/><g fill="#3d6238"><circle cx="180" cy="300" r="34"/><circle cx="215" cy="288" r="26"/><circle cx="1180" cy="300" r="40"/><circle cx="1225" cy="285" r="30"/></g></svg></div>
-      <div class="layer" data-parallax="0.05"><svg viewBox="0 0 1440 420" preserveAspectRatio="none"><path fill="#2f4f2c" d="M0 370 C300 330 520 390 800 360 C1060 332 1260 380 1440 360 V420 H0Z"/></svg></div>
-    </div>
-    <div class="wrap hero-copy">
-      <span class="eyebrow">Garden design · Landscaping · Maintenance</span>
-      <h1>Your backyard,<br><em>only better.</em></h1>
-      <p class="lead">We design, build and look after gardens you'll actually want to spend your weekends in.</p>
-      <div class="btn-row">
-        <a class="btn btn-primary" href="#quote">Book a free design chat</a>
-        <a class="btn btn-ghost" href="#projects">See our gardens</a>
-      </div>
-      <div class="hero-badges"><span>Fully insured</span><span>Plants guaranteed for 12 months</span><span>Local family business</span></div>
-    </div>
-  </section>
+<div class="m-band" data-marquee="34" aria-hidden="true"><div class="marquee-row"><span>Designed before we dig</span><span>Fixed prices</span><span>Same crew start to finish</span><span>Pools, decks and turf</span><span>Licensed and insured</span><span>Designed before we dig</span><span>Fixed prices</span><span>Same crew start to finish</span><span>Pools, decks and turf</span><span>Licensed and insured</span></div></div>
 
-  <div class="marquee leaf-band" data-marquee="34" aria-hidden="true">
-    <div class="marquee-row"><span>Garden design</span><span>Turf and irrigation</span><span>Retaining walls</span><span>Paving and decks</span><span>Native gardens</span><span>Ongoing maintenance</span></div>
+<section class="m-story" id="work"><div id="m-story" data-mode="dissolve" data-unit="Week" data-frames="../../story/l/0.jpg|../../story/l/1.jpg|../../story/l/2.jpg|../../story/l/3.jpg|../../story/l/4.jpg|../../story/l/5.jpg" style="height:100%">
+  <div class="stick">
+    <div class="bar"><div class="m-wrap"><div><span class="m-label">The work</span><h2>One backyard, start to finish</h2></div><span class="day" id="m-day"></span></div></div>
+    <div class="screen"><canvas id="m-story-c" aria-label="Time-lapse of the job"></canvas><div class="grain"></div><div class="sub"><b id="m-sub-b"></b><span id="m-sub-s"></span></div></div>
+    <div class="bar bot"><div class="m-wrap" style="flex-direction:column;align-items:stretch"><div class="m-ticks"><div><b>Dig-out</b><span>Machines in, levels set, drainage trenched.</span></div><div><b>Turf goes down</b><span>Soil prepped and rolled, turf laid the same day.</span></div><div><b>Pool and deck</b><span>Hardwood deck and coping around the pool.</span></div><div><b>Handover</b><span>Planting, lighting and a walk-through.</span></div><div><b>Kept sharp</b><span>Fortnightly mow and edge, if you want it.</span></div></div><span class="m-label" style="font-weight:500;letter-spacing:.06em;text-transform:none">Stand-in photos from several jobs. For your site we use photos of your own work.</span></div></div>
   </div>
+</div></section>
 
-  <section class="scene" id="transform" data-scene="yard" data-scene-fit="980,700,720,560,0.68,760,0.55" data-scene-length="750" style="--scene-bg:#9aa3a6; --scene-accent:#b9dba0" aria-label="Watch a messy backyard get transformed as you scroll">
-    <svg class="scene-svg" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-      <defs>
-        <linearGradient id="l-over" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7d878c"/><stop offset="1" stop-color="#c3c8c7"/></linearGradient>
-        <linearGradient id="l-sun" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4f9fd6"/><stop offset="1" stop-color="#cde9f5"/></linearGradient>
-        <linearGradient id="l-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3e3b6e"/><stop offset="0.5" stop-color="#d77b62"/><stop offset="1" stop-color="#f6c47a"/></linearGradient>
-        <linearGradient id="l-soil" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8d6a49"/><stop offset="0.35" stop-color="#6e5038"/><stop offset="1" stop-color="#4a3626"/></linearGradient>
-        <clipPath id="l-mound-cp"><rect id="mound-clip" x="-220" y="-2000" width="4000" height="4000"/></clipPath>
-        <clipPath id="l-water-cp"><rect id="water-clip" x="530" y="566" width="310" height="84"/></clipPath>
-      </defs>
+<section class="m-field m-sec"><div class="m-wrap m-split">
+  <div><span class="m-label">Before and after</span><h2 data-split>See the difference</h2><p style="margin-top:18px">Dig-out, week 1 on the left, handover, week 7 on the right.</p></div>
+  <div class="m-compare" data-reveal><canvas id="m-before" aria-label="Before"></canvas><canvas class="after" id="m-after" aria-label="After"></canvas><div class="handle"></div>
+    <span class="tag l">Before</span><span class="tag r">After</span><input type="range" min="0" max="100" value="50" aria-label="Drag to compare before and after"
+    oninput="this.parentNode.style.setProperty('--pos', this.value + '%')"></div>
+</div></section>
 
-      <rect x="-1200" y="-2000" width="3600" height="2600" fill="url(#l-over)"/>
-      <g fill="#a3aaad" opacity="0.9"><ellipse cx="260" cy="120" rx="160" ry="44"/><ellipse cx="760" cy="80" rx="220" ry="54"/><ellipse cx="1120" cy="170" rx="150" ry="40"/></g>
-      <g id="sunny" opacity="0">
-        <rect x="-1200" y="-2000" width="3600" height="2600" fill="url(#l-sun)"/>
-        <circle cx="980" cy="140" r="54" fill="#fff3c4"/>
-        <g fill="#ffffff" opacity="0.9"><ellipse cx="300" cy="130" rx="90" ry="26"/><ellipse cx="640" cy="90" rx="70" ry="20"/></g>
-      </g>
-      <g id="golden" opacity="0">
-        <rect x="-1200" y="-2000" width="3600" height="2600" fill="url(#l-gold)"/>
-        <circle cx="980" cy="420" r="70" fill="#ffd89a" opacity="0.9"/>
-      </g>
+<section class="m-field m-sec" id="services" style="padding-top:0"><div class="m-wrap">
+  <span class="m-label">Services</span><h2 data-split>What we take on</h2>
+  <div class="m-cards" data-stagger><article class="m-card" data-reveal><span class="m-label">4 to 8 weeks</span><h3>Full backyard build</h3><p>Design, dig-out, paving, planting and turf.</p></article><article class="m-card" data-reveal><span class="m-label">2 to 4 weeks</span><h3>Pool surrounds</h3><p>Decks, coping, glass fencing and garden beds.</p></article><article class="m-card" data-reveal><span class="m-label">2 to 5 days</span><h3>Turf and irrigation</h3><p>New lawn with a timer system that suits the soil.</p></article><article class="m-card" data-reveal><span class="m-label">Fortnightly</span><h3>Maintenance</h3><p>Mowing, hedging and seasonal tidy-ups.</p></article></div>
+</div></section>
 
-      <g id="trees">
-        <g><rect x="295" y="380" width="12" height="180" fill="#6b4a32"/><circle cx="301" cy="360" r="62" fill="#3f6d38"/><circle cx="262" cy="392" r="40" fill="#4d7f43"/><circle cx="342" cy="388" r="44" fill="#4d7f43"/></g>
-        <g><rect x="684" y="340" width="14" height="220" fill="#6b4a32"/><circle cx="691" cy="318" r="76" fill="#3a6634"/><circle cx="640" cy="356" r="48" fill="#4d7f43"/><circle cx="744" cy="352" r="50" fill="#4d7f43"/></g>
-        <g><path d="M1080 560c-4-80 0-150 10-210" stroke="#7a5a3d" stroke-width="12" fill="none"/><path d="M1090 352c-40-30-90-24-120 4M1090 352c40-34 92-26 118 0M1090 352c-20-40-10-80 18-100M1090 352c-50 0-84 24-96 58M1090 352c52 4 82 30 92 62" stroke="#3f7a4f" stroke-width="16" stroke-linecap="round" fill="none"/></g>
-      </g>
-      <g id="new-fence"></g>
-      <g id="old-fence"></g>
+<section class="m-cream m-sec" id="process"><div class="m-wrap">
+  <span class="m-label">How it works</span><h2 data-split>Four steps, no surprises</h2>
+  <div class="m-steps" data-stagger><div data-reveal><span class="n">01</span><h3>Measure-up</h3><p>We come out, measure, and ask how you use the yard.</p></div><div data-reveal><span class="n">02</span><h3>Plan on paper</h3><p>A drawn plan and a fixed price before anything moves.</p></div><div data-reveal><span class="n">03</span><h3>Build</h3><p>The same crew from dig-out to the last plant.</p></div><div data-reveal><span class="n">04</span><h3>Look after it</h3><p>Optional maintenance so it stays like day one.</p></div></div>
+</div></section>
 
-      <g id="house">
-        <rect x="-800" y="320" width="1000" height="240" fill="#efe7d8"/>
-        <rect x="-800" y="306" width="1022" height="18" fill="#59645c"/>
-        <rect x="112" y="420" width="70" height="140" fill="#3b4a52"/><path d="M147 420v140" stroke="#efe7d8" stroke-width="4"/>
-        <rect x="-30" y="400" width="90" height="70" fill="#3b4a52"/>
-      </g>
+<section class="m-quote m-sec"><div class="m-wrap">
+  <span class="m-label">Reviews</span>
+  <p class="q" data-reveal>&ldquo;Your best Google review goes here, word for word, with the customer&rsquo;s first name and suburb.&rdquo;</p>
+  <small>Placeholder. Only real reviews go on the finished site.</small>
+</div></section>
 
-      <rect x="-1200" y="560" width="3600" height="700" fill="url(#l-soil)"/>
-      <g stroke="#5a412c" stroke-width="3" fill="none" opacity="0.5"><path d="M-1200 668C-600 660 0 676 600 666S1800 672 2400 664M-1200 760C-400 752 400 770 1200 758S2000 766 2400 756"/></g>
-      <g fill="#9b8a76" opacity="0.6"><ellipse cx="140" cy="700" rx="9" ry="6"/><ellipse cx="380" cy="640" rx="6" ry="4"/><ellipse cx="460" cy="730" rx="11" ry="7"/><ellipse cx="930" cy="690" rx="8" ry="5"/><ellipse cx="1060" cy="620" rx="6" ry="4"/><ellipse cx="760" cy="720" rx="10" ry="6"/><ellipse cx="1150" cy="740" rx="9" ry="6"/><ellipse cx="260" cy="790" rx="12" ry="7"/><ellipse cx="640" cy="800" rx="9" ry="5"/></g>
-      <g stroke="#3f6d38" stroke-width="2" fill="none" opacity="0.35"><path d="M301 562c-6 20-20 30-34 34M301 562c8 22 24 30 40 30M691 562c-10 26-30 38-50 40M691 562c12 24 34 34 56 34"/></g>
-
-      <g clip-path="url(#l-mound-cp)">
-        <path d="M200 562C250 526 300 530 350 556C410 498 500 506 560 550C610 520 660 524 700 556C760 490 860 500 920 552C980 520 1040 530 1080 558C1120 534 1170 540 1210 560V580H200Z" fill="#8f6c4a"/>
-        <g id="weeds"></g>
-      </g>
-
-      <rect id="pool-hole" x="520" y="560" width="330" height="96" fill="#4a3624"/>
-      <g id="pool-shell"><rect x="524" y="560" width="322" height="90" fill="#e9eff1"/><path d="M524 590h322M524 620h322M564 560v90M604 560v90M644 560v90M684 560v90M724 560v90M764 560v90M804 560v90" stroke="#cfdade" stroke-width="2"/></g>
-      <g clip-path="url(#l-water-cp)">
-        <rect x="530" y="566" width="310" height="84" fill="#3fb0d4"/>
-        <rect id="pool-glow" x="530" y="566" width="310" height="84" fill="#a9f1ff" opacity="0"/>
-        <g id="ripples" stroke="#bdf0ff" stroke-width="3" fill="none" stroke-linecap="round"><path d="M560 580q20-6 40 0t40 0M690 598q20-6 40 0t40 0M600 620q20-6 40 0t40 0"/></g>
-      </g>
-
-      <g id="turf" fill="#6aa84f"><rect x="200" y="552" width="320" height="10"/><rect x="850" y="552" width="360" height="10"/></g>
-      <g id="pavers"></g>
-      <g id="planks"></g>
-      <g id="bricks"></g>
-      <g id="flowers"></g>
-      <g id="shrubs">
-        <circle cx="440" cy="540" r="16" fill="#4d7f43"/><circle cx="470" cy="542" r="12" fill="#3f6d38"/>
-        <circle cx="1185" cy="536" r="20" fill="#3f6d38"/><circle cx="255" cy="430" r="0" fill="none"/>
-      </g>
-      <g id="lights" fill="#2d3338"><rect x="508" y="500" width="4" height="52"/><rect x="858" y="500" width="4" height="52"/><rect x="420" y="500" width="4" height="52"/></g>
-      <g id="lamp-glow" opacity="0" fill="#ffe08a"><circle cx="510" cy="498" r="9"/><circle cx="860" cy="498" r="9"/><circle cx="422" cy="498" r="9"/><circle cx="510" cy="498" r="26" opacity="0.25"/><circle cx="860" cy="498" r="26" opacity="0.25"/><circle cx="422" cy="498" r="26" opacity="0.25"/></g>
-      <g id="umbrella"><rect x="918" y="470" width="4" height="82" fill="#2d3338"/><path d="M866 476q54-46 108 0z" fill="#f2f0ea"/><path d="M866 476q54-46 108 0" fill="none" stroke="#e8622c" stroke-width="5"/></g>
-      <g id="people">
-        <g><rect x="880" y="536" width="84" height="8" rx="3" fill="#ffffff"/><rect x="884" y="544" width="4" height="8" fill="#2d3338"/><rect x="956" y="544" width="4" height="8" fill="#2d3338"/><circle cx="952" cy="526" r="8" fill="#c98e6b"/><rect x="894" y="528" width="52" height="10" rx="5" fill="#3f7a4f"/></g>
-        <g><circle cx="700" cy="572" r="9" fill="#8a5a3c"/><path d="M686 584q14-10 28 0" stroke="#8a5a3c" stroke-width="5" fill="none" stroke-linecap="round"/></g>
-        <g><circle cx="300" cy="514" r="7" fill="#e6b48f"/><rect x="294" y="521" width="12" height="20" rx="5" fill="#f2c14e"/><rect x="295" y="539" width="4" height="13" fill="#2d3338"/><rect x="301" y="539" width="4" height="13" fill="#2d3338"/><circle cx="324" cy="546" r="6" fill="#e8622c"/></g>
-      </g>
-
-      <g id="crew">
-        <g transform="translate(470 0)"><circle cx="0" cy="510" r="8" fill="#e6b48f"/><path d="M-10 506a10 8 0 0 1 20 0z" fill="#f28c28"/><rect x="-9" y="518" width="18" height="24" rx="5" fill="#3f7a4f"/><rect x="-7" y="540" width="5" height="20" fill="#33414d"/><rect x="2" y="540" width="5" height="20" fill="#33414d"/><path d="M12 520l18 38" stroke="#6b4a32" stroke-width="4"/><path d="M26 552l10 8-8 4z" fill="#9aa4ab"/></g>
-        <g transform="translate(900 0)"><circle cx="0" cy="510" r="8" fill="#8a5a3c"/><path d="M-10 506a10 8 0 0 1 20 0z" fill="#f28c28"/><rect x="-9" y="518" width="18" height="24" rx="5" fill="#f2c14e"/><rect x="-7" y="540" width="5" height="20" fill="#33414d"/><rect x="2" y="540" width="5" height="20" fill="#33414d"/><rect x="-26" y="526" width="18" height="12" rx="2" fill="#b56a48"/></g>
-        <g transform="translate(1010 0)"><circle cx="0" cy="510" r="8" fill="#e6b48f"/><path d="M-10 506a10 8 0 0 1 20 0z" fill="#f28c28"/><rect x="-9" y="518" width="18" height="24" rx="5" fill="#3f7a4f"/><rect x="-7" y="540" width="5" height="20" fill="#33414d"/><rect x="2" y="540" width="5" height="20" fill="#33414d"/></g>
-      </g>
-
-      <g id="mess">
-        <g data-x="420"><circle cx="420" cy="540" r="20" fill="none" stroke="#2d2d2d" stroke-width="10"/></g>
-        <g data-x="640"><rect x="610" y="526" width="34" height="26" fill="#8e8a82" transform="rotate(-8 627 552)"/><rect x="640" y="534" width="26" height="22" fill="#6e6a62"/><path d="M620 520l40 6" stroke="#5b4a3a" stroke-width="6"/></g>
-        <g data-x="830"><path d="M800 526h56l-8 22h-40z" fill="#9b3e2e"/><circle cx="846" cy="552" r="8" fill="#2d2d2d"/><path d="M800 528l-22 12" stroke="#555" stroke-width="5"/></g>
-        <g data-x="1010"><rect x="996" y="520" width="26" height="40" fill="#5c4632"/><path d="M1004 520l-14-26M1014 520l10-30" stroke="#5c4632" stroke-width="6" stroke-linecap="round"/></g>
-      </g>
-
-      <g id="dozer">
-        <rect x="0" y="528" width="190" height="32" rx="16" fill="#2d3338"/><g fill="#555d63"><circle cx="24" cy="544" r="10"/><circle cx="95" cy="544" r="10"/><circle cx="166" cy="544" r="10"/></g>
-        <rect x="16" y="474" width="150" height="56" rx="6" fill="#f2b632"/>
-        <rect x="36" y="428" width="70" height="50" rx="4" fill="#f2b632"/><rect x="44" y="436" width="54" height="30" fill="#a9d3ee"/>
-        <rect x="132" y="452" width="10" height="24" fill="#2d3338"/>
-        <path d="M166 500h24" stroke="#2d3338" stroke-width="10"/>
-        <path d="M192 470q22 45 4 92h-12q14-46-2-92z" fill="#3d4449"/>
-      </g>
-
-      <g id="rain" stroke="#dde3e6" stroke-width="2" stroke-linecap="round" opacity="0.6">
-        <line x1="120" y1="40" x2="110" y2="70"/><line x1="260" y1="200" x2="250" y2="230"/><line x1="380" y1="90" x2="370" y2="120"/><line x1="520" y1="260" x2="510" y2="290"/><line x1="640" y1="140" x2="630" y2="170"/><line x1="780" y1="300" x2="770" y2="330"/><line x1="900" y1="60" x2="890" y2="90"/><line x1="1040" y1="240" x2="1030" y2="270"/><line x1="1150" y1="120" x2="1140" y2="150"/><line x1="200" y1="380" x2="190" y2="410"/><line x1="460" y1="400" x2="450" y2="430"/><line x1="980" y1="380" x2="970" y2="410"/><line x1="720" y1="-60" x2="710" y2="-30"/><line x1="320" y1="-120" x2="310" y2="-90"/>
-      </g>
-    </svg>
-    <div class="scene-ui">
-      <div class="scene-captions">
-        <div class="scene-caption" data-scene-caption="before"><span class="eyebrow">Before</span><h2>The yard nobody uses.</h2><p>Bumpy dirt, weeds and a fence held up by hope. Sound familiar?</p></div>
-        <div class="scene-caption" data-scene-caption="clear"><span class="eyebrow">Step 1 · Clear and level</span><h2>A clean slate.</h2><p>We clear the rubbish, level the ground and fix the drainage first.</p></div>
-        <div class="scene-caption" data-scene-caption="pool"><span class="eyebrow">Step 2 · Pool, paving and fencing</span><h2>The big stuff goes in.</h2><p>Pool, paving and a new fence, built by one crew in the right order.</p></div>
-        <div class="scene-caption" data-scene-caption="plant"><span class="eyebrow">Step 3 · Turf and planting</span><h2>Then it comes alive.</h2><p>Lawn, deck, garden beds and plants chosen to thrive in your yard.</p></div>
-        <div class="scene-caption" data-scene-caption="enjoy"><span class="eyebrow">After</span><h2>Your new favourite place.</h2><p>Lights on, feet up. This is what weekends are for.</p></div>
-      </div>
-      <div class="scene-steps" aria-hidden="true"><span data-scene-dot></span><span data-scene-dot></span><span data-scene-dot></span><span data-scene-dot></span><span data-scene-dot></span></div>
-      <div class="scene-hint">Keep scrolling</div>
-    </div>
-  </section>
-
-  <section class="section" id="services">
-    <div class="wrap">
-      <div class="section-head">
-        <div>
-          <span class="eyebrow">What we do</span>
-          <h2 data-split>Gardens that look good <em>and</em> stay that way.</h2>
-        </div>
-        <p class="lead" data-reveal>Drought-tolerant planting, smart irrigation and honest advice about what will actually grow in your yard.</p>
-      </div>
-      <div class="grid">
-        <article class="card" data-reveal><div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22V12M12 12C12 7 8 4 3 4c0 5 4 8 9 8zM12 14c0-4 3-7 9-7 0 5-4 7-9 7z"/></svg></div><h3>Garden design</h3><p class="muted">A plan drawn for your block, your budget and how much time you want to spend on it.</p></article>
-        <article class="card" data-reveal><div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 20h18M5 20v-6h14v6M7 14v-4h10v4"/></svg></div><h3>Walls and paving</h3><p class="muted">Retaining walls, steps, paths and entertaining areas built to handle real weather.</p></article>
-        <article class="card" data-reveal><div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg></div><h3>Turf and irrigation</h3><p class="muted">The right grass for your shade and soil, watered automatically so it stays green.</p></article>
-        <article class="card" data-reveal><div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20l6-6M14 4l6 6-8 8-6-6z"/></svg></div><h3>Maintenance</h3><p class="muted">Fortnightly or monthly visits so your garden keeps looking like the day we finished.</p></article>
-      </div>
-    </div>
-  </section>
-
-  <section class="steps section-dark" id="process" data-pin-steps>
-    <div class="wrap steps-layout">
-      <div>
-        <span class="eyebrow">Our process</span>
-        <h2>From bare dirt to <em>backyard oasis.</em></h2>
-        <p class="lead">Clear steps, a written quote and one team the whole way through.</p>
-        <div class="steps-rail" aria-hidden="true"><span class="step-dot is-active"></span><span class="step-dot"></span><span class="step-dot"></span><span class="step-dot"></span></div>
-      </div>
-      <div class="steps-stage">
-        <div class="step" data-step><div class="step-num">01</div><h3>Free design chat</h3><p class="muted">We walk the yard with you, talk about how you want to use it and what you want to spend.</p></div>
-        <div class="step" data-step><div class="step-num">02</div><h3>Your garden plan</h3><p class="muted">A drawn plan with plant choices and a fixed quote, so you know exactly what you're getting.</p></div>
-        <div class="step" data-step><div class="step-num">03</div><h3>We build it</h3><p class="muted">Earthworks, walls, paving, irrigation and planting, done in the right order with a tidy site.</p></div>
-        <div class="step" data-step><div class="step-num">04</div><h3>We look after it</h3><p class="muted">Optional maintenance visits, and every plant is guaranteed for 12 months.</p></div>
-      </div>
-    </div>
-  </section>
-
-  <section class="hscroll" id="projects" data-hscroll>
-    <div class="wrap hscroll-intro">
-      <span class="eyebrow">Recent gardens</span>
-      <h2>Take a <em>walk</em> through our work.</h2>
-    </div>
-    <div class="hscroll-track">
-      <figure class="project"><div class="project-frame"><div class="card-art proj-a"><svg viewBox="0 0 300 160" fill="rgba(255,255,255,0.35)"><circle cx="60" cy="110" r="50"/><circle cx="230" cy="120" r="60"/><path fill="rgba(255,255,255,0.7)" d="M0 140h300v20H0z"/></svg></div><span class="project-tag">Native garden</span></div><figcaption><strong>Low-water native front yard</strong><span class="muted">3 weeks</span></figcaption></figure>
-      <figure class="project"><div class="project-frame"><div class="card-art proj-b"><svg viewBox="0 0 300 160" fill="rgba(255,255,255,0.6)"><path d="M0 160V100h80v-30h80v-30h140v120z"/></svg></div><span class="project-tag">Retaining walls</span></div><figcaption><strong>Terraced sloping block</strong><span class="muted">5 weeks</span></figcaption></figure>
-      <figure class="project"><div class="project-frame"><div class="card-art proj-c"><svg viewBox="0 0 300 160" fill="rgba(255,255,255,0.55)"><rect x="40" y="90" width="220" height="50" rx="10"/><circle cx="40" cy="70" r="30" fill="rgba(255,255,255,0.3)"/></svg></div><span class="project-tag">Pool surrounds</span></div><figcaption><strong>Pool garden and paving</strong><span class="muted">4 weeks</span></figcaption></figure>
-      <figure class="project"><div class="project-frame"><div class="card-art proj-d"><svg viewBox="0 0 300 160" fill="rgba(255,255,255,0.5)"><path d="M0 160V120h300v40zM30 120V70h40v50zM230 120V60h40v60z"/></svg></div><span class="project-tag">Entertaining</span></div><figcaption><strong>Deck, fire pit and lawn</strong><span class="muted">6 weeks</span></figcaption></figure>
-      <figure class="project"><div class="project-frame"><div class="card-art proj-e"><svg viewBox="0 0 300 160" fill="rgba(255,255,255,0.4)"><circle cx="150" cy="100" r="70"/><path fill="rgba(255,255,255,0.7)" d="M0 150h300v10H0z"/></svg></div><span class="project-tag">Courtyard</span></div><figcaption><strong>Small courtyard makeover</strong><span class="muted">10 days</span></figcaption></figure>
-    </div>
-  </section>
-
-  <section class="section">
-    <div class="wrap">
-      <div class="section-head">
-        <div>
-          <span class="eyebrow">Before and after</span>
-          <h2 data-split>Drag to see the <em>transformation.</em></h2>
-        </div>
-        <p class="lead" data-reveal>A patchy, sloping backyard turned into a level lawn, garden beds and a paved area for the barbecue.</p>
-      </div>
-      <div class="compare" data-compare data-reveal="scale">
-        <div class="compare-layer compare-before" aria-hidden="true"><svg viewBox="0 0 400 250"><path fill="#9c8c70" d="M0 250V150l400 40v60z"/><g fill="#8a7c62"><circle cx="70" cy="170" r="6"/><circle cx="210" cy="185" r="8"/><circle cx="320" cy="190" r="5"/></g></svg></div>
-        <div class="compare-layer compare-after" aria-hidden="true"><svg viewBox="0 0 400 250"><path fill="#5d8c4b" d="M0 250V140h400v110z"/><rect x="240" y="150" width="140" height="70" rx="6" fill="#d9d2c3"/><g fill="#355f34"><circle cx="40" cy="135" r="28"/><circle cx="85" cy="128" r="22"/><circle cx="380" cy="132" r="26"/></g></svg></div>
-        <div class="compare-handle" aria-hidden="true"></div>
-        <span class="compare-label before">Before</span><span class="compare-label after">After</span>
-        <input type="range" min="0" max="100" value="50" aria-label="Drag to compare before and after">
-      </div>
-    </div>
-  </section>
-
-  <section class="section section-dark">
-    <div class="wrap stats">
-      <div data-reveal><div class="stat-num" data-counter="12" data-suffix=" yrs">12 yrs</div><div class="stat-label">designing local gardens</div></div>
-      <div data-reveal><div class="stat-num" data-counter="430" data-suffix="+">430+</div><div class="stat-label">gardens built</div></div>
-      <div data-reveal><div class="stat-num" data-counter="18000" data-suffix="+">18,000+</div><div class="stat-label">plants in the ground</div></div>
-      <div data-reveal><div class="stat-num" data-counter="5" data-suffix=".0 ★">5.0 ★</div><div class="stat-label">average Google rating</div></div>
-    </div>
-  </section>
-
-  <section class="section" id="reviews">
-    <div class="wrap">
-      <div class="section-head"><div><span class="eyebrow">Reviews</span><h2 data-split>Happy gardens, <em>happy people.</em></h2></div></div>
-      <div class="grid">
-        <article class="card review" data-reveal><div class="stars" aria-label="5 stars">★★★★★</div><blockquote>"We finally use our backyard. The kids are out there every afternoon."</blockquote><cite>Sample review<span>Backyard makeover</span></cite></article>
-        <article class="card review" data-reveal><div class="stars" aria-label="5 stars">★★★★★</div><blockquote>"They told us honestly what would survive our clay soil. Everything's thriving a year on."</blockquote><cite>Sample review<span>Native garden</span></cite></article>
-        <article class="card review" data-reveal><div class="stars" aria-label="5 stars">★★★★★</div><blockquote>"On time, on budget, and the team cleaned up better than they found it."</blockquote><cite>Sample review<span>Retaining walls</span></cite></article>
-      </div>
-    </div>
-  </section>
-
-  <section class="section section-dark" id="quote">
-    <div class="wrap quote-grid">
-      <div>
-        <span class="eyebrow">Free design chat</span>
-        <h2 data-split>Let's talk about <em>your yard.</em></h2>
-        <p class="lead">Send a few details and we'll call to book a time to come out. No cost, no pressure.</p>
-        <div class="contact-lines">
-          <a href="tel:0400000000">Call 0400 000 000</a>
-          <a href="mailto:hello@example.com">hello@example.com</a>
-          <span class="muted">Mon to Sat, 7am to 5pm</span>
-        </div>
-      </div>
-      <form class="form" data-reveal onsubmit="event.preventDefault(); this.querySelector('button').textContent = 'Demo only: this form is not connected';">
-        <label>Name<input name="name" autocomplete="name" required></label>
-        <label>Phone<input name="phone" type="tel" autocomplete="tel" required></label>
-        <label>What are you after?<select name="type"><option>Full garden design and build</option><option>Retaining walls or paving</option><option>Turf and irrigation</option><option>Regular maintenance</option><option>Not sure yet</option></select></label>
-        <label>Rough budget<select name="budget"><option>Under $5,000</option><option>$5,000 to $15,000</option><option>$15,000 to $40,000</option><option>$40,000 plus</option></select></label>
-        <button class="btn btn-primary" type="submit">Book my free design chat</button>
-      </form>
-    </div>
-  </section>
+<section class="m-cta m-sec" id="contact"><div class="m-wrap">
+  <h2 data-split>Let&rsquo;s get<br>it booked.</h2>
+  <div><span class="m-label">Call or text</span><a class="num" href="tel:0400000000">0400 000 000</a><a class="m-pill" href="tel:0400000000">Get a backyard plan &rarr;</a><a class="mail" href="mailto:hello@example.com">hello@example.com</a></div>
+</div></section>
 </main>
 
-<footer class="site-footer">
-  <div class="wrap">
-    <span>© 2026 Greenhaven Landscapes</span>
-    <span class="demo-note">Demo site by Benji Price Web Design. Greenhaven is a made-up business; reviews and numbers are samples.</span>
-  </div>
-</footer>
+<footer class="m-foot"><div class="m-wrap">
+  <span class="demo-note">Demo site by Benji Price Web Design. Greenhaven is a made-up business; photos, reviews and numbers are samples.</span>
+  <span>Photos: Pexels (free licence). Dig-out frame from the Van Wey Homes time-lapse, CC BY 3.0.</span>
+</div></footer>
 
-<div class="callbar">
-  <a class="btn btn-primary" href="tel:0400000000">Call now</a>
-  <a class="btn btn-ghost" href="#quote">Free design chat</a>
-</div>
+<script type="application/json" id="m-stages">[[0.0, 1, "Dig-out", "Machines in, levels set, drainage trenched."], [0.2, 3, "Turf goes down", "Soil prepped and rolled, turf laid the same day."], [0.4, 5, "Pool and deck", "Hardwood deck and coping around the pool."], [0.6, 7, "Handover", "Planting, lighting and a walk-through."], [0.8, 8, "Kept sharp", "Fortnightly mow and edge, if you want it."]]</script>
+<script>
+(function () {
+  'use strict';
+  var REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  var stages = JSON.parse(document.getElementById('m-stages').textContent);
+  var cfg = document.getElementById('m-story');
+  var mode = cfg.getAttribute('data-mode'), unit = cfg.getAttribute('data-unit');
+  var srcs = cfg.getAttribute('data-frames').split('|');
+  var imgs = srcs.map(function (s) { var im = new Image(); im.onload = function () { im.ok = true; redraw(); }; im.src = s; return im; });
+  var views = [];
+  function nearest(i) { for (var d = 0; d < imgs.length; d++) { if (imgs[i - d] && imgs[i - d].ok) return imgs[i - d]; if (imgs[i + d] && imgs[i + d].ok) return imgs[i + d]; } return null; }
+  function cover(ctx, im, w, h, z, a) {
+    if (!im || !im.ok) return;
+    var r = Math.max(w / im.naturalWidth, h / im.naturalHeight) * (z || 1), dw = im.naturalWidth * r, dh = im.naturalHeight * r;
+    ctx.globalAlpha = a == null ? 1 : a; ctx.drawImage(im, (w - dw) / 2, (h - dh) * 0.5, dw, dh); ctx.globalAlpha = 1;
+  }
+  function View(canvas, p, grade) { this.c = canvas; this.ctx = canvas.getContext('2d'); this.p = p; this.grade = grade; views.push(this); this.size(); }
+  View.prototype.size = function () {
+    var dpr = Math.min(window.devicePixelRatio || 1, 2), r = this.c.getBoundingClientRect();
+    this.c.width = Math.max(1, Math.round(r.width * dpr)); this.c.height = Math.max(1, Math.round(r.height * dpr)); this.draw(this.p);
+  };
+  View.prototype.draw = function (p) {
+    this.p = p = clamp(p, 0, 1);
+    var ctx = this.ctx, w = this.c.width, h = this.c.height, n = imgs.length;
+    if (this.grade) ctx.filter = 'sepia(0.14) saturate(1.08) contrast(1.06) brightness(0.97)';
+    ctx.clearRect(0, 0, w, h);
+    if (mode === 'scrub') { cover(ctx, nearest(Math.round(p * (n - 1))), w, h, 1.02 + 0.04 * p); return; }
+    var f = p * (n - 1), k = Math.floor(f), t = f - k, fade = clamp((t - 0.72) / 0.28, 0, 1);
+    fade = fade * fade * (3 - 2 * fade);
+    cover(ctx, nearest(k), w, h, 1 + 0.07 * t);
+    if (k + 1 < n && fade > 0) cover(ctx, imgs[k + 1], w, h, 1, fade);
+  };
+  function redraw() { views.forEach(function (v) { v.draw(v.p); }); }
+  window.addEventListener('resize', function () { views.forEach(function (v) { v.size(); }); });
+  function stamp(s) { if (unit === 'Min') return Math.floor(s[1] / 60) + ':' + ('0' + s[1] % 60).slice(-2); return unit + ' ' + ('00' + s[1]).slice(-3); }
 
+  new View(document.getElementById('m-hero-c'), 1, true);
+  new View(document.getElementById('m-before'), 0, false);
+  new View(document.getElementById('m-after'), 1, false);
+  var story = new View(document.getElementById('m-story-c'), 0, true);
+  var ticks = document.querySelectorAll('.m-ticks div'), sb = document.getElementById('m-sub-b'), ss = document.getElementById('m-sub-s'), day = document.getElementById('m-day'), cur = -1;
+  function tick() {
+    var r = cfg.getBoundingClientRect(), span = r.height - window.innerHeight;
+    var p = REDUCED ? 1 : (span > 0 ? clamp(-r.top / span, 0, 1) : 1);
+    story.draw(p);
+    var i = 0; stages.forEach(function (s, j) { if (p >= s[0]) i = j; });
+    if (i !== cur) { cur = i; sb.textContent = stages[i][2]; ss.textContent = stages[i][3]; day.textContent = stamp(stages[i]);
+      ticks.forEach(function (t, j) { t.classList.toggle('on', j <= i); }); }
+  }
+  window.addEventListener('scroll', tick, { passive: true }); window.addEventListener('resize', tick); tick();
+})();
+</script>
 <script src="../../kit/vendor/gsap.min.js" defer></script>
 <script src="../../kit/vendor/ScrollTrigger.min.js" defer></script>
 <script src="../../kit/vendor/SplitText.min.js" defer></script>
 <script src="../../kit/vendor/lenis.min.js" defer></script>
-<script src="scene.js" defer></script>
 <script src="../../kit/motion.js" defer></script>
 </body>
 </html>
