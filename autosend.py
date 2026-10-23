@@ -3,8 +3,11 @@
 Every limit is checked again right before every single send:
 - Only drafts the CEO passed (ceo_status 'ready') that still pass the playbook: they name the business, carry the
   owner's name and keep the "no thanks" opt-out.
-- At most 20 a day (never more than the Deliverability Guard's safe number), one at a time, at least 25 minutes apart.
-- Weekdays 8 am to 5 pm Sydney time only.
+- Every day of the week, 6 am to 10 pm Sydney time, spread evenly so it looks like a person sending.
+- A daily cap that warms the inbox up: 20 a day in the first week, 10 more each week (the Deliverability Guard's
+  number), but held at 20 whenever more than 3 in 100 recent emails bounce.
+- Bounces: Gmail's "address not found" notices mark that business and count against the inbox. Too many bounces
+  (5 in a day, or over 5 in 100 across the last week) switch auto-send off before Gmail flags the account.
 - Never the same business twice: first emails only, and one ever per email address, per business name and suburb,
   and per business email domain. Follow-ups stay the owner's tap.
 - Opt-outs: any reply saying "no thanks", unsubscribe and the like marks the business "Do not contact" as soon as the
@@ -29,9 +32,11 @@ import sales_email
 import smart_writer
 
 TZ=ZoneInfo('Australia/Sydney')
-DAILY_MAX=20
-START_HOUR,END_HOUR=8,17  # 8:00 am up to 5:00 pm
-GAP=timedelta(minutes=25)  # 20 emails spread over the 9-hour day, not in one burst
+START_HOUR,END_HOUR=6,22  # 6:00 am up to 10:00 pm, every day
+MIN_GAP,MAX_GAP=timedelta(minutes=5),timedelta(minutes=25)  # the day's emails spread over the window, never in a burst
+HOLD_RATE,STOP_RATE,STOP_DAY=0.03,0.05,5  # bounce rate that holds the cap at 20; rate and daily count that stop sending
+BOUNCE_FROM=re.compile(r'^(mailer-daemon|postmaster)@',re.I)
+BOUNCE_SUBJECT=re.compile(r'(delivery status notification|undeliver|mail delivery (failed|subsystem)|address not found|returned mail|failure notice)',re.I)
 INBOX_FRESH=timedelta(hours=2)
 # Shared mail services: two businesses on gmail.com are not the same business.
 FREE_MAIL={'gmail.com','googlemail.com','outlook.com','hotmail.com','live.com','live.com.au','msn.com','yahoo.com','yahoo.com.au',
@@ -74,9 +79,9 @@ def _save(conn,owner,**values):
 
 
 def in_window(at=None):
-    """Weekdays, 8 am to 5 pm Sydney time."""
+    """Every day, 6 am to 10 pm Sydney time."""
     at=(at or now_local()).astimezone(TZ)
-    return at.weekday()<5 and START_HOUR<=at.hour<END_HOUR
+    return START_HOUR<=at.hour<END_HOUR
 
 
 def domain_of(email):
@@ -121,10 +126,58 @@ def process_optouts(conn,owner):
         cursor=m['id']
         try:content=gmail_agent.unseal(m['content_cipher'])
         except WorkflowError:continue
+        if is_bounce(m['sender'],content.get('subject','')):
+            bounced(conn,owner,content.get('body',''));continue
         if is_opt_out(content.get('subject','')+'\n'+content.get('body','')):
             found+=opt_out(conn,owner,m['sender'],'Reply: '+own_words(content.get('body',''))[:200])
     if cursor!=s['optout_cursor']:_save(conn,owner,optout_cursor=cursor)
     return found
+
+
+def is_bounce(sender,subject):
+    return bool(BOUNCE_FROM.match(sender or '') or BOUNCE_SUBJECT.search(subject or ''))
+
+
+def bounced(conn,owner,body):
+    """A "could not deliver" notice: find which auto-sent address it is about, mark it, and stop if the inbox is at risk."""
+    text=body.casefold();hits=0
+    for r in conn.execute("SELECT * FROM autosend_log WHERE owner_id=? AND status='Sent' ORDER BY id DESC LIMIT 500",(owner,)).fetchall():
+        if r['email'] in text:
+            conn.execute("UPDATE autosend_log SET status='Bounced' WHERE id=?",(r['id'],))
+            conn.execute("UPDATE prospects SET stage='No reply',next_on='',ceo_note='Email address bounced' WHERE id=? AND owner_id=?",(r['prospect_id'],owner))
+            p=conn.execute('SELECT * FROM prospects WHERE id=?',(r['prospect_id'],)).fetchone()
+            if p:lead_engine.record(conn,owner,p,'bounced',r['email'])
+            hits+=1
+    if hits and settings(conn,owner)['enabled']:
+        today,rate=bounces_today(conn,owner),bounce_rate(conn,owner)
+        if today>=STOP_DAY or rate>STOP_RATE:
+            _save(conn,owner,enabled=0,changed_at=stamp(),note='Switched itself off: too many emails bounced ('+str(today)+' today, '+str(round(rate*100))+' in 100 this week). Sending more could get Gmail to block the account.')
+            log(conn,owner,'CEO auto-send stopped: too many bounced emails.')
+    return hits
+
+
+def bounces_today(conn,owner,on=None):
+    return conn.execute("SELECT COUNT(*) FROM autosend_log WHERE owner_id=? AND status='Bounced' AND local_date=?",(owner,(on or now_local().date()).isoformat())).fetchone()[0]
+
+
+def bounce_rate(conn,owner,on=None):
+    """Share of the last 7 days' auto-sent emails that bounced. Needs 10 sends before it counts."""
+    since=((on or now_local().date())-timedelta(days=6)).isoformat()
+    row=conn.execute("SELECT COUNT(*) n,SUM(status='Bounced') b FROM autosend_log WHERE owner_id=? AND local_date>=?",(owner,since)).fetchone()
+    return (row['b'] or 0)/row['n'] if row['n']>=10 else 0.0
+
+
+def daily_cap(conn,owner,on=None):
+    """Emails auto-send may send today: the Deliverability Guard's warm-up number, held at the starting 20 while bounces are high."""
+    import team
+    safe=team.safe_daily(conn,owner,on)
+    return min(safe,team.WARM_START) if bounce_rate(conn,owner,on)>HOLD_RATE else safe
+
+
+def gap(cap):
+    """Time between emails: the sending window shared out over the day's cap, between 5 and 25 minutes."""
+    share=timedelta(hours=END_HOUR-START_HOUR)/max(cap,1)
+    return max(MIN_GAP,min(MAX_GAP,share))
 
 
 def sent_today(conn,owner,on=None):
@@ -141,17 +194,18 @@ def blocked(conn,owner,at=None):
     at=at or now_local();s=settings(conn,owner)
     if not s['enabled']:return 'Auto-send is off.'
     if paused(conn):return 'AgencyOS is paused.'
-    if not in_window(at):return 'Outside sending hours (weekdays 8 am to 5 pm Sydney time).'
+    if not in_window(at):return 'Outside sending hours (6 am to 10 pm Sydney time, every day). It starts again at 6 am.'
     try:
         if not gmail_agent.can_send(conn,owner):return 'Gmail send permission is missing. Press Reconnect with the sending box ticked.'
     except WorkflowError:return 'Gmail is not readable on this Mac.'
     if not inbox_fresh(conn,owner):return 'The inbox check has not worked in the last 2 hours, so opt-outs could be missed. Turn on inbox checking.'
     day=at.astimezone(TZ).date()
-    if sent_today(conn,owner,day)>=DAILY_MAX:return 'Today\'s 20 are sent.'
-    import team
+    cap=daily_cap(conn,owner,day)
+    if sent_today(conn,owner,day)>=cap:return 'Today\'s '+str(cap)+' are sent. More tomorrow from 6 am.'
     total=conn.execute("SELECT COUNT(DISTINCT prospect_id) FROM prospect_log WHERE owner_id=? AND on_date=? AND action='sent'",(owner,day.isoformat())).fetchone()[0]
-    if total>=team.safe_daily(conn,owner,day):return 'Today\'s safe email number is reached.'
-    if time.time()-s['last_attempt']<GAP.total_seconds():return 'Spacing emails out: the next one goes about 25 minutes after the last.'
+    if total>=cap:return 'Today\'s safe email number is reached (counting the ones you sent yourself).'
+    wait=gap(cap)
+    if time.time()-s['last_attempt']<wait.total_seconds():return 'Spacing emails out: the next one goes about '+str(int(wait.total_seconds()//60))+' minutes after the last.'
     return ''
 
 
@@ -237,7 +291,7 @@ def status(conn,owner):
     week=conn.execute("SELECT local_date,COUNT(*) n FROM autosend_log WHERE owner_id=? AND local_date>=? GROUP BY local_date ORDER BY local_date DESC",
       (owner,(day-timedelta(days=6)).isoformat())).fetchall()
     return dict(s,enabled=bool(s['enabled']),can_send=can,polling=bool(row and row['polling']),inbox_fresh=inbox_fresh(conn,owner),
-      waiting=blocked(conn,owner) if s['enabled'] else '',sent_today=sent_today(conn,owner,day),daily_max=DAILY_MAX,
+      waiting=blocked(conn,owner) if s['enabled'] else '',sent_today=sent_today(conn,owner,day),daily_max=daily_cap(conn,owner,day),bounces=bounces_today(conn,owner,day),bounce_rate=round(bounce_rate(conn,owner,day)*100),
       today=[dict(r,time=_clock(r['sent_at'])) for r in conn.execute('SELECT * FROM autosend_log WHERE owner_id=? AND local_date=? ORDER BY id DESC',(owner,day.isoformat()))],
       week=week,ready=len(candidates(conn,owner)),
       optouts=conn.execute("SELECT l.*,p.name FROM prospect_log l JOIN prospects p ON p.id=l.prospect_id WHERE l.owner_id=? AND l.action='opted_out' ORDER BY l.id DESC LIMIT 10",(owner,)).fetchall())
@@ -266,5 +320,5 @@ def register(app,get_db,login_required):
     def gmail_autosend():
         on=request.form.get('enable')=='yes'
         switch(get_db(),session['user_id'],on,request.form.get('confirm')=='yes')
-        flash('CEO auto-send is on. It sends at most 20 a day, weekdays 8 am to 5 pm.' if on else 'CEO auto-send is off. Nothing will be sent by itself.','success')
+        flash('CEO auto-send is on. It sends every day from 6 am to 10 pm, up to today\'s safe number.' if on else 'CEO auto-send is off. Nothing will be sent by itself.','success')
         return redirect(url_for('gmail_home')+'#autosend')

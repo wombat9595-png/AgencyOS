@@ -90,22 +90,61 @@ class AutoSendTest(unittest.TestCase):
         self.post('/gmail/autosend',dict(enable='no'))
         with self.conn() as conn:self.assertFalse(autosend.settings(conn,1)['enabled'])
 
-    def test_only_weekdays_8am_to_5pm_sydney(self):
-        self.assertTrue(autosend.in_window(datetime(2026,10,21,8,0,tzinfo=TZ)))
-        self.assertTrue(autosend.in_window(datetime(2026,10,23,16,59,tzinfo=TZ)))  # Friday
-        self.assertFalse(autosend.in_window(datetime(2026,10,21,7,59,tzinfo=TZ)))
-        self.assertFalse(autosend.in_window(datetime(2026,10,21,17,0,tzinfo=TZ)))
-        self.assertFalse(autosend.in_window(datetime(2026,10,24,10,0,tzinfo=TZ)))  # Saturday
-        self.assertFalse(autosend.in_window(datetime(2026,10,25,10,0,tzinfo=TZ)))  # Sunday
-        # 9 pm in London is 8 am next day in Sydney: the window follows Sydney time, whatever the clock's zone.
-        self.assertTrue(autosend.in_window(datetime(2026,10,20,21,0,tzinfo=ZoneInfo('UTC'))))
+    def test_every_day_6am_to_10pm_sydney(self):
+        self.assertTrue(autosend.in_window(datetime(2026,10,21,6,0,tzinfo=TZ)))
+        self.assertTrue(autosend.in_window(datetime(2026,10,24,10,0,tzinfo=TZ)))  # Saturday
+        self.assertTrue(autosend.in_window(datetime(2026,10,25,21,59,tzinfo=TZ)))  # Sunday night
+        self.assertFalse(autosend.in_window(datetime(2026,10,21,5,59,tzinfo=TZ)))
+        self.assertFalse(autosend.in_window(datetime(2026,10,21,22,0,tzinfo=TZ)))
+        self.assertFalse(autosend.in_window(datetime(2026,10,24,3,0,tzinfo=TZ)))
+        # 7 pm UTC is 6 am next day in Sydney: the window follows Sydney time, whatever the clock's zone.
+        self.assertTrue(autosend.in_window(datetime(2026,10,20,19,0,tzinfo=ZoneInfo('UTC'))))
         with self.conn() as conn:
             self.switch_on(conn);self.add(conn,'Fictional Builds','hello@fictionalbuilds.example')
-            self.assertIn('Outside sending hours',self.tick(conn,at=datetime(2026,10,24,10,0,tzinfo=TZ))['reason'])
-            self.assertIn('Outside sending hours',self.tick(conn,at=datetime(2026,10,21,18,0,tzinfo=TZ))['reason'])
+            self.assertIn('Outside sending hours',self.tick(conn,at=datetime(2026,10,24,23,0,tzinfo=TZ))['reason'])
             self.assertEqual(self.sent,[])
-            self.assertTrue(self.tick(conn)['sent'])
+            self.assertTrue(self.tick(conn,at=datetime(2026,10,24,10,0,tzinfo=TZ))['sent'])  # Saturday morning sends
         self.assertEqual(len(self.sent),1)
+
+    def test_cap_warms_up_and_spacing_follows_it(self):
+        self.assertEqual(autosend.gap(20).total_seconds(),25*60)
+        self.assertEqual(autosend.gap(60).total_seconds(),16*60)
+        self.assertEqual(autosend.gap(500).total_seconds(),5*60)
+        with self.conn() as conn:
+            conn.execute('INSERT OR REPLACE INTO team_settings(owner_id,daily_drafts) VALUES(1,60)')
+            conn.execute("INSERT INTO prospects(owner_id,source_id,name,created_at) VALUES(1,'old','Old Lead','x')")
+            conn.execute("INSERT INTO prospect_log(owner_id,prospect_id,on_date,action,detail,created_at) VALUES(1,last_insert_rowid(),'2026-10-01','sent','','x')");conn.commit()
+            self.assertEqual(autosend.daily_cap(conn,1,WED_10AM.date()),40)  # third week of sending: 20 + 10 + 10
+
+    def test_five_bounces_in_a_day_switch_it_off(self):
+        with self.conn() as conn:
+            self.switch_on(conn)
+            for i in range(5):
+                conn.execute("INSERT INTO autosend_log(owner_id,prospect_id,business,email,business_key,local_date,sent_at,subject,status) VALUES(1,0,?,?,?,?,?,'s','Sent')",
+                  ('B'+str(i),'b'+str(i)+'@x.example','k'+str(i),WED_10AM.date().isoformat(),'2026-10-20T23:00:00+00:00'))
+            for i in range(95):  # a big week, so the rate stays low and only the daily count trips
+                conn.execute("INSERT INTO autosend_log(owner_id,prospect_id,business,email,business_key,local_date,sent_at,subject,status) VALUES(1,0,?,?,?,'2026-10-19','x','s','Sent')",('O'+str(i),'o'+str(i)+'@y.example','o'+str(i)))
+            conn.commit()
+            for i in range(4):self.incoming(conn,'mailer-daemon@googlemail.com','Failed: b'+str(i)+'@x.example',subject='Undeliverable')
+            with patch('autosend.now_local',return_value=WED_10AM):self.tick(conn)
+            self.assertTrue(autosend.settings(conn,1)['enabled'])  # 4 today, 4 in 100: keeps going, cap held at 20
+            self.incoming(conn,'mailer-daemon@googlemail.com','Failed: b4@x.example',subject='Undeliverable')
+            with patch('autosend.now_local',return_value=WED_10AM):self.tick(conn)
+            self.assertFalse(autosend.settings(conn,1)['enabled'])
+
+    def test_bounces_hold_the_cap_and_too_many_switch_it_off(self):
+        with self.conn() as conn:
+            self.switch_on(conn)
+            for i in range(12):self.add(conn,'Fictional Trade '+str(i),'hi@trade'+str(i)+'.example')
+            for _ in range(12):self.tick(conn)
+            self.assertEqual(len(self.sent),12)
+            self.incoming(conn,'mailer-daemon@googlemail.com','Address not found. Your message wasn\'t delivered to hi@trade0.example because the address couldn\'t be found.',subject='Delivery Status Notification (Failure)')
+            self.tick(conn)
+            self.assertEqual(conn.execute("SELECT status FROM autosend_log WHERE email='hi@trade0.example'").fetchone()[0],'Bounced')
+            self.assertEqual(conn.execute("SELECT stage FROM prospects WHERE email='hi@trade0.example'").fetchone()[0],'No reply')
+            self.assertEqual(autosend.daily_cap(conn,1,WED_10AM.date()),20)  # 1 in 12 bounced: the cap is held at 20
+            self.assertFalse(autosend.settings(conn,1)['enabled'])  # and over 5 in 100 switches it off
+            self.assertIn('bounced',autosend.settings(conn,1)['note'])
 
     def test_at_most_20_a_day_spaced_out_and_logged(self):
         with self.conn() as conn:
@@ -115,7 +154,7 @@ class AutoSendTest(unittest.TestCase):
             self.assertIn('25 minutes',self.tick(conn,spaced=False)['reason'])  # straight after: wait
             for _ in range(30):self.tick(conn)
             self.assertEqual(len(self.sent),20)
-            self.assertEqual(self.tick(conn)['reason'],"Today's 20 are sent.")
+            self.assertIn("Today's 20 are sent",self.tick(conn)['reason'])
             self.assertEqual(autosend.sent_today(conn,1,WED_10AM.date()),20)
             thursday=datetime(2026,10,22,9,0,tzinfo=TZ)
             self.assertTrue(self.tick(conn,at=thursday)['sent'])  # a new day, a new 20
@@ -158,10 +197,10 @@ class AutoSendTest(unittest.TestCase):
                 self.assertIn('Benji Price',text);self.assertIn('no thanks',text)
             for pid in (no_optout,no_name):self.assertEqual(conn.execute('SELECT ceo_status FROM prospects WHERE id=?',(pid,)).fetchone()[0],'held')
 
-    def incoming(self,conn,sender,body,n=[0]):
+    def incoming(self,conn,sender,body,subject='Re: Website for you?',n=[0]):
         n[0]+=1
         conn.execute("INSERT INTO gmail_mail(owner_id,external_id,thread_id,sender,content_cipher,intent_json,received_at,direction) VALUES(1,?,?,?,?,'{}',?,'incoming')",
-          ('m'+str(n[0]),'t'+str(n[0]),sender,gmail.seal(dict(subject='Re: Website for you?',body=body)),'2026-10-21T01:00:00+00:00'));conn.commit()
+          ('m'+str(n[0]),'t'+str(n[0]),sender,gmail.seal(dict(subject=subject,body=body)),'2026-10-21T01:00:00+00:00'));conn.commit()
 
     def test_opt_out_replies_stop_all_future_emails_even_with_auto_send_off(self):
         with self.conn() as conn:
