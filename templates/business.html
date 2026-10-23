@@ -8,6 +8,7 @@
       {% elif worker %}<span class="b-dot"></span><strong>Your agency is running.</strong> <span class="muted">Work happens while the AgencyOS launcher is open on this Mac.</span>
       {% else %}<span class="b-dot is-idle"></span><strong>Your agency is ready.</strong> <span class="muted">Open the AgencyOS launcher to start the background worker.</span>{% endif %}
     </div>
+    <a class="b-btn b-btn-yellow" href="{{ url_for('ceo_live') }}">● Watch your CEO work</a>
     <form method="post" action="{{ url_for('agency_pause') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="next" value="home">
       {% if paused %}<input type="hidden" name="paused" value="0"><button class="b-btn b-btn-yellow">▶ Start agency</button>
       {% else %}<input type="hidden" name="paused" value="1"><button class="b-btn b-btn-ghost">❚❚ Pause</button>{% endif %}

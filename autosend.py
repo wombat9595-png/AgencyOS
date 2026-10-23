@@ -321,4 +321,4 @@ def register(app,get_db,login_required):
         on=request.form.get('enable')=='yes'
         switch(get_db(),session['user_id'],on,request.form.get('confirm')=='yes')
         flash('CEO auto-send is on. It sends every day from 6 am to 10 pm, up to today\'s safe number.' if on else 'CEO auto-send is off. Nothing will be sent by itself.','success')
-        return redirect(url_for('gmail_home')+'#autosend')
+        return redirect(url_for('ceo_live') if request.form.get('next')=='ceo' else url_for('gmail_home')+'#autosend')

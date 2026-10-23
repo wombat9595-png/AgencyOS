@@ -157,6 +157,10 @@ def worker_tick(path):
             import team
             try:lead_engine.sync_gmail(conn,owner[0])  # approved drafts that Benji sent: schedule their follow-ups
             except Exception:conn.rollback()
+            try:
+                import ceo_live
+                ceo_live.budget_alert(conn,owner[0])  # AI budget used up: one email a month with how to top it up
+            except Exception:conn.rollback()
             try:team.notify(conn,owner[0])  # drafts ready: buzz the owner's phone (7 am to 9 pm, at most 3 a day)
             except Exception:conn.rollback()
             try:
@@ -237,7 +241,7 @@ def register(app,get_db,login_required):
         conn=get_db();owner=session['user_id'];on=request.form.get('enabled')=='1'
         conn.execute('INSERT INTO night_shift_settings(owner_id,enabled) VALUES(?,?) ON CONFLICT(owner_id) DO UPDATE SET enabled=excluded.enabled',(owner,int(on)));conn.commit()
         flash('Shifts are on. The team works every 2 hours, day and night, while AgencyOS is open.' if on else 'Shifts are off. The team is not working.','success')
-        return redirect(url_for('night_shift_home'))
+        return redirect(url_for('ceo_live') if request.form.get('next')=='ceo' else url_for('night_shift_home'))
 
     @app.post('/night-shift/run')
     @login_required
@@ -245,5 +249,5 @@ def register(app,get_db,login_required):
         conn=get_db();owner=session['user_id']
         if paused(conn):raise WorkflowError('The agency is paused. Press Start on Home first.')
         c=run(conn,owner,source='manual')
-        flash('Shift done: found '+str(c['found'])+', checked '+str(c['checked'])+' websites, drafted '+str(c['drafts'])+' messages. Nothing was sent.','success')
-        return redirect(url_for('business_home')+'#ready')
+        flash('Shift done: found '+str(c['found'])+', checked '+str(c['checked'])+' websites, drafted '+str(c['drafts'])+' messages, CEO passed '+str(c.get('ceo_ready',0))+'.','success')
+        return redirect(url_for('ceo_live') if request.form.get('next')=='ceo' else url_for('business_home')+'#ready')
