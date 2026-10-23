@@ -77,6 +77,17 @@ class AutoSendTest(unittest.TestCase):
         page=self.client.get('/gmail').get_data(as_text=True)
         self.assertIn('Let the CEO send first emails: OFF',page);self.assertIn('Turn auto-send ON',page)
 
+    def test_switching_on_turns_shifts_on_and_keeps_a_days_batch_ready(self):
+        import team
+        with self.conn() as conn:
+            conn.execute('INSERT OR REPLACE INTO night_shift_settings(owner_id,enabled) VALUES(1,0)')
+            conn.execute("INSERT INTO night_shift_runs(owner_id,local_date,started_at,source,counts_json,finished_at) VALUES(1,?,'x','night','{\"mockups\": 20}','y')",(team.now_local().date().isoformat(),));conn.commit()
+            self.assertEqual(team.plan(conn,1)['drafts'],0)  # auto-send off: 20 already drafted today, so no more
+            self.switch_on(conn)
+            self.assertEqual(conn.execute('SELECT enabled FROM night_shift_settings WHERE owner_id=1').fetchone()[0],1)
+            for i in range(5):self.add(conn,'Fictional Trade '+str(i),'hi@trade'+str(i)+'.example')
+            self.assertEqual(team.plan(conn,1)['drafts'],15)  # auto-send on: top the ready pile back up to the day's 20
+
     def test_switching_on_needs_the_send_permission_inbox_checking_and_a_tick(self):
         with self.conn() as conn:
             self.connect_gmail(conn,send=False)

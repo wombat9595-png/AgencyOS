@@ -309,6 +309,8 @@ def switch(conn,owner,on,confirmed=False):
         row=conn.execute('SELECT polling FROM gmail_accounts WHERE owner_id=?',(owner,)).fetchone()
         if not (row and row['polling']):raise WorkflowError('Turn on inbox checking first, so opt-out replies are seen.')
     _save(conn,owner,enabled=int(on),changed_at=stamp(),note='')
+    if on:  # the team has to keep writing, or the CEO runs out of emails to send
+        conn.execute('INSERT INTO night_shift_settings(owner_id,enabled) VALUES(?,1) ON CONFLICT(owner_id) DO UPDATE SET enabled=1',(owner,))
     audit(conn,'autosend_switched',owner,{'enabled':bool(on)})
     log(conn,owner,'CEO auto-send switched '+('on' if on else 'off')+'.')
     conn.commit()
