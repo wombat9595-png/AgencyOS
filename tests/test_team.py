@@ -76,7 +76,7 @@ class TeamTest(unittest.TestCase):
         page=self.client.get('/team').get_data(as_text=True)
         for name in ('CEO','Chief of Staff','Growth Manager','Sales Manager','Delivery Manager','Scout','Inspector','SEO Checker','Writer','Deliverability Guard','Designer',
                      'Chaser','Reply Handler','Closer','Site Builder','Client Care','Bookkeeper'):self.assertIn(name,page)
-        self.assertIn('Teach',page);self.assertIn('Quote helper',page);self.assertIn('Sydney (first)',page);self.assertIn('every business with no website in Australia',page)
+        self.assertIn('Teach',page);self.assertIn('Quote helper',page);self.assertIn('Sydney (first)',page);self.assertIn('no website or a weak one',page)
         self.assertEqual(len(team.AGENTS),17);self.assertEqual(len(team.WORKERS),12)
         self.assertEqual({a[3] for a in team.AGENTS if a[0] in team.WORKERS},{'growth','sales','delivery'})
         self.assertIn('href="/team"',self.client.get('/business').get_data(as_text=True))
@@ -169,7 +169,7 @@ class TeamTest(unittest.TestCase):
         squares=sweep.tiles(sweep.REGIONS[0])
         self.assertEqual(len(squares),165);self.assertEqual(sweep.REGIONS[0][1],'Sydney')
         q=sweep.tile_query(squares[0])
-        self.assertIn('[!"website"]',q);self.assertIn('"craft"~"^(',q);self.assertIn('plumber',q);self.assertIn('hairdresser',q)
+        self.assertNotIn('[!"website"]',q);self.assertIn('"craft"~"^(',q);self.assertIn('plumber',q);self.assertIn('hairdresser',q)
         sleeps=[]
         with self.conn() as conn,patch('lead_engine.http_json',side_effect=[TILE,{'elements':[]}]):
             owner=self.owner(conn)
@@ -194,7 +194,7 @@ class TeamTest(unittest.TestCase):
         self.assertEqual([c[2] for c in sweep.CATCH_ALL],list(sweep.STATES))
         self.assertEqual(len(sweep.jobs(sweep.CATCH_ALL[0])),len(lead_engine.TRADES))
         q=sweep.state_query('WA','Plumbers')
-        self.assertIn('area["ISO3166-2"="AU-WA"]',q);self.assertIn('"craft"="plumber"',q);self.assertIn('[!"website"]',q)
+        self.assertIn('area["ISO3166-2"="AU-WA"]',q);self.assertIn('"craft"="plumber"',q);self.assertNotIn('[!"website"]',q)
         self.assertEqual(sum(len(sweep.jobs(r)) for r in sweep.plan()),1863)
         self.assertEqual(sweep.plan(False),sweep.REGIONS[:1])
         with self.conn() as conn:
@@ -206,6 +206,20 @@ class TeamTest(unittest.TestCase):
             with patch('lead_engine.http_json',side_effect=lead_engine.WorkflowError('The map service sent back too much data. Try a smaller radius.')):
                 found,searched,notes=sweep.run(conn,owner,1)
             self.assertEqual(searched,1);self.assertIn('too big for one search',notes[0])  # a huge state search never blocks the sweep
+
+    def test_sweep_searches_old_squares_again_once_and_waits_for_the_website_check(self):
+        with self.conn() as conn:
+            owner=self.owner(conn)
+            conn.execute("INSERT INTO sweep_tiles VALUES(?,'sydney',0,'x',0)",(owner,));conn.execute('UPDATE sweep_meta SET version=1');conn.commit()
+            sweep.migrate(conn);conn.commit()
+            self.assertEqual(conn.execute('SELECT COUNT(*) FROM sweep_tiles').fetchone()[0],0)  # version 1 squares searched again
+            conn.execute("INSERT INTO sweep_tiles VALUES(?,'sydney',0,'x',0)",(owner,));conn.commit()
+            sweep.migrate(conn);conn.commit()
+            self.assertEqual(conn.execute('SELECT COUNT(*) FROM sweep_tiles').fetchone()[0],1)  # only once
+            conn.execute("INSERT INTO prospects(owner_id,source_id,name,email,website,score,created_at) VALUES(?,'osm:w1','Has Site Plumbing','jo@hassite.com.au','https://hassite.com.au',55,'x')",(owner,));conn.commit()
+            self.assertFalse([p for p in lead_engine.queue(conn,owner) if p['name']=='Has Site Plumbing'])  # not drafted before its site is checked
+            conn.execute("UPDATE prospects SET checked_at='x',reason='not_mobile',score=85 WHERE name='Has Site Plumbing'");conn.commit()
+            self.assertTrue([p for p in lead_engine.queue(conn,owner) if p['name']=='Has Site Plumbing'])
 
     def test_sweep_stops_politely_when_the_map_is_busy(self):
         with self.conn() as conn,patch('lead_engine.http_json',side_effect=lead_engine.WorkflowError('busy')):

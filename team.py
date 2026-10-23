@@ -60,7 +60,7 @@ AGENTS=(
    'Change requests get a drafted reply the same day.',
    'Chase overdue money politely, and only after checking the bank.')),
  ('scout','Scout','Finds businesses','growth',
-  'Sweeps all of Australia for local businesses with no website listed, Sydney first, plus your saved search areas.',
+  'Sweeps all of Australia for local businesses with no website or a weak one, Sydney first, plus your saved search areas.',
   ('Sydney first, then every capital and big city, then regional towns in every state, then the rest of each state.',
    'Use free OpenStreetMap data only. Search slowly so the free service is never overloaded.',
    'Skip any business already in the list, and never re-add one marked "Do not contact".',
