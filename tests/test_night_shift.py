@@ -91,6 +91,17 @@ class NightShiftTest(unittest.TestCase):
             self.assertFalse(night_shift.due(conn,owner,at+timedelta(hours=2)))
         self.assertIn('No search areas set and the map sweep is off',self.rows('night_shift_runs')[0]['notes'])
 
+    def test_idle_agents_add_website_checks_to_the_shift(self):
+        with self.conn() as conn:
+            owner=conn.execute('SELECT id FROM users').fetchone()[0]
+            conn.execute('INSERT INTO team_settings(owner_id,tiles_per_night) VALUES(?,0)',(owner,))
+            conn.execute("INSERT INTO prospects(owner_id,source_id,name,website,score,stage,created_at) VALUES(?,'x','Fictional Site','https://fictional.example.test',40,'New','2026-10-19')",(owner,));conn.commit()
+            with patch('lead_engine.check_websites',return_value=1) as check:
+                counts=night_shift.run(conn,owner,on=TODAY)
+            import brain
+            self.assertGreater(counts['helpers'],0)
+            self.assertEqual(check.call_args.kwargs['limit'],night_shift.CHECKS_PER_NIGHT+brain.HELP_CHECKS*counts['helpers'])
+
     def test_worker_tick_runs_the_shift(self):
         with patch('night_shift.now_local',return_value=datetime(2026,10,19,3,0,tzinfo=night_shift.TZ)),patch('sweep.run',return_value=(0,0,[])):
             self.assertTrue(night_shift.worker_tick(application.DB_PATH))

@@ -52,6 +52,22 @@ class OfficeTest(unittest.TestCase):
         self.assertEqual(sectors['find']['agents'][0]['items'],3)
         self.assertEqual(sectors['outreach']['agents'][0]['state'],'waiting')
 
+    def test_idle_agents_help_check_websites_and_home_shows_new_order(self):
+        stamp=brain.datetime.now(brain.timezone.utc).isoformat()
+        for i in range(2):
+            self.sql("INSERT INTO prospects(owner_id,source_id,name,website,score,stage,created_at) VALUES(1,?,?,?,40,'New',?)",('w'+str(i),'Fictional site '+str(i),'https://site'+str(i)+'.example.test',stamp))
+        sectors,snap=self.state()
+        self.assertIn('Builder',snap['helpers']);self.assertIn('Carer',snap['helpers']);self.assertEqual(snap['unchecked'],2)
+        builder=sectors['websites']['agents'][1]
+        self.assertEqual((builder['state'],builder['why']),('working','helping the Checker find emails on websites'))
+        self.assertNotIn('Scout',snap['helpers'])
+        page=self.client.get('/business').get_data(as_text=True)
+        order=[page.index(s) for s in ('Watch your CEO work','Money and leads','Ready for you','What matters now','Talk to your CEO','Your agents right now','Where do I go to')]
+        self.assertEqual(order,sorted(order))
+        self.assertIn('Helping out:',page)
+        self.sql('UPDATE p4_control SET paused=1 WHERE id=1')
+        self.assertEqual(self.state()[1]['helpers'],[])
+
     def test_pause_puts_everyone_to_rest(self):
         self.sql('UPDATE p4_control SET paused=1 WHERE id=1')
         sectors,snap=self.state()
