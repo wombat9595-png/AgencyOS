@@ -225,10 +225,7 @@ def register(app,get_db,login_required):
         todo=priorities(conn,owner,m,gmail,conn.execute('SELECT * FROM p5_control WHERE id=1').fetchone())
         question=request.args.get('ask','').strip()[:300]
         answer=ceo_answer(question,m,todo,paused(conn),runtime,brain.describe(brain.snapshot(conn,owner,worker=bool(runtime['workers'])))) if question else ''
-        import autosend,ceo_live
-        auto=autosend.status(conn,owner);numbers=ceo_live.leads(conn,owner)
-        ceo=dict(auto=auto,leads=numbers,next=ceo_live.next_email(conn,owner,auto),finish=ceo_live.finish_date(conn,owner,numbers['left']),feed=ceo_live.feed(conn,owner,limit=4))
-        return render_template('business_classic.html' if request.cookies.get('look')=='classic' else 'business.html',metrics=m,ceo=ceo,paused=paused(conn),worker=bool(runtime['workers']),todo=todo,
+        return render_template('business_classic.html' if request.cookies.get('look')=='classic' else 'business.html',metrics=m,paused=paused(conn),worker=bool(runtime['workers']),todo=todo,
           configured=configured(conn,owner),question=question,answer=answer,suggestions=CEO_SUGGESTIONS,
           money=money_in(conn,owner),milestone=next_milestone(m['received_cents']),office=office.state(conn,owner),morning=night_shift.morning(conn,owner))
 

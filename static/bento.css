@@ -111,37 +111,3 @@ h1{font-weight:800;letter-spacing:-.04em}h2{font-weight:700}
 .b-score-row>*{display:flex;flex-direction:column;gap:2px;text-decoration:none;color:inherit;background:rgba(255,255,255,.06);border-radius:12px;padding:10px 12px}
 .b-score-row strong{font-size:24px;line-height:1.1}
 .b-score-row span span,.b-score-row a span{font-size:13px;opacity:.75}
-
-/* Bento Glow: coloured tiles glow in their own colour; small tiles tilt toward the mouse (Home script) */
-.bento .glow{--glow:#ffd43b;transition:box-shadow .3s,transform .15s}
-.bento .tile-violet.glow{--glow:#5b3df5}.bento .tile-orange.glow{--glow:#ff7a3d}
-.bento .glow:hover{box-shadow:0 18px 60px -14px var(--glow)}
-.bento .b-stats .tile{transition:transform .15s,box-shadow .3s}
-.bento .b-stats .tile-mint:hover{box-shadow:0 14px 44px -12px #b9f2d4}.bento .b-stats .tile-dark:hover{box-shadow:0 14px 44px -12px #ffffff40}.bento .b-stats .tile-cream:hover{box-shadow:0 14px 44px -12px #f4f1ea}
-.b-section{font:800 15px/1 var(--b-font);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:10px 0 -4px 6px}
-
-/* Your CEO, live, at the top of Home */
-.b-ceo-live h2{font-size:clamp(22px,3vw,30px);letter-spacing:-.02em;display:flex;align-items:center;gap:12px}
-.b-live{width:14px;height:14px;flex:none;border-radius:50%;background:#14131166}
-.b-live.is-on{background:#1f9d5c;animation:live-ping 1.6s infinite}
-@keyframes live-ping{0%{box-shadow:0 0 0 0 #1f9d5caa}100%{box-shadow:0 0 0 14px #1f9d5c00}}
-.b-btn-ink{background:var(--ink);color:var(--accent)}.b-btn-ink:hover{background:#2a2825;opacity:1}
-.b-ceo-next{margin:0;font-size:17px;font-weight:600}
-.b-ceo-nums{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
-.b-ceo-nums a{background:#1413110f;border:1px solid #14131122;border-radius:18px;padding:12px 14px;color:var(--ink);text-decoration:none;display:grid;gap:2px;transition:transform .15s,background .2s}
-.b-ceo-nums a:hover{background:#14131119;opacity:1}
-.b-ceo-nums strong{font:800 clamp(24px,3vw,34px)/1 var(--b-font);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
-.b-ceo-nums span{font-size:13px;font-weight:600}
-.b-ceo-feed{list-style:none;margin:0;padding:0;display:grid;gap:4px;font-size:14px}
-.b-ceo-feed span{display:inline-block;min-width:8.5em;opacity:.7;font-variant-numeric:tabular-nums}
-.b-ceo-next a{color:var(--ink);font-weight:700}
-
-/* Agents helping out, and the "Where do I go" guide */
-.b-helpers{margin:0;font-size:14px;color:var(--muted)}.b-helpers b{color:var(--mint)}
-.b-guide-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
-.b-guide-grid a{--glow:#ffd43b;border:1px solid var(--line);background:var(--bg);border-radius:18px;padding:14px;color:var(--text);text-decoration:none;display:grid;gap:4px;align-content:start;min-height:88px;transition:transform .15s,box-shadow .3s,border-color .2s}
-.b-guide-grid a:hover{border-color:var(--glow);box-shadow:0 12px 36px -14px var(--glow);opacity:1}
-.b-guide-grid b{font-size:15px;line-height:1.2}.b-guide-grid span{font-size:12px;color:var(--glow);font-weight:700}
-@media(max-width:900px){.b-ceo-nums{grid-template-columns:repeat(3,minmax(0,1fr))}.b-guide-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:520px){.b-ceo-nums{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (prefers-reduced-motion:reduce){.b-live.is-on{animation:none}.bento .glow,.b-guide-grid a,.b-ceo-nums a{transition:none}}
