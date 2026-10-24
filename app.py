@@ -30,6 +30,8 @@ import production_ops
 import production_portal
 import email_preparation
 import gmail_agent
+import autosend
+import ceo_live
 import first_sale
 import client_plans
 import lead_engine
@@ -131,6 +133,8 @@ def init_db():
     getpaid.migrate(conn)
     grow.migrate(conn)
     team.migrate(conn)
+    autosend.migrate(conn)
+    ceo_live.migrate(conn)
     conn.commit()
     conn.close()
 
@@ -551,6 +555,8 @@ getpaid.register(app,db,login_required)
 pitch.register(app,db,login_required)
 grow.register(app,db,login_required)
 team.register(app,db,login_required)
+autosend.register(app,db,login_required)
+ceo_live.register(app,db,login_required)
 register_phase3(app, db, login_required, insert_lead)
 register_phase4(app, db, login_required, insert_lead)
 register_sales(app, db, login_required)

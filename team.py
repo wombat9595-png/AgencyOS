@@ -60,7 +60,7 @@ AGENTS=(
    'Change requests get a drafted reply the same day.',
    'Chase overdue money politely, and only after checking the bank.')),
  ('scout','Scout','Finds businesses','growth',
-  'Sweeps all of Australia for local businesses with no website listed, Sydney first, plus your saved search areas.',
+  'Sweeps all of Australia for local businesses with no website or a weak one, Sydney first, plus your saved search areas.',
   ('Sydney first, then every capital and big city, then regional towns in every state, then the rest of each state.',
    'Use free OpenStreetMap data only. Search slowly so the free service is never overloaded.',
    'Skip any business already in the list, and never re-add one marked "Do not contact".',
@@ -286,7 +286,10 @@ def plan(conn,owner):
     today=night_shift.drafted_today(conn,owner)
     nxt=sweep.next_tiles(conn,owner,1,bool(t['all_australia']))
     per_day=max(0,min(MAX_SEARCHES,t['tiles_per_night']))
-    return dict(tiles=-(-per_day//night_shift.SHIFTS_A_DAY),per_day=per_day,drafts=max(0,min(60,safe-waiting,safe-today)),waiting=waiting,safe=safe,
+    import autosend
+    # With CEO auto-send on, keep a full day's batch checked and ready: as the CEO sends, the next shift drafts more.
+    drafts=max(0,min(60,safe-waiting)) if autosend.settings(conn,owner)['enabled'] else max(0,min(60,safe-waiting,safe-today))
+    return dict(tiles=-(-per_day//night_shift.SHIFTS_A_DAY),per_day=per_day,drafts=drafts,waiting=waiting,safe=safe,
       region=nxt[0][0][1] if nxt else '',writer=smart_writer.ai_status(conn,owner),all_australia=bool(t['all_australia']))
 
 

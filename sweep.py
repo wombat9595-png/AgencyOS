@@ -1,10 +1,15 @@
-"""The Scout's big job: sweep ALL of Australia for businesses with no website, starting with Sydney.
+"""The Scout's big job: sweep ALL of Australia for local businesses, starting with Sydney.
+
+It collects businesses with no website AND businesses with one. A business with a website usually lists its
+email there, so the Inspector reads it off their homepage and checks the site (broken, not on phones, "Not
+secure", out of date). Sites that look fine score too low to be drafted. Without these, almost no lead had an
+email, so there was nothing the CEO could send.
 
 Order: Sydney first, then every capital and big city, then regional towns in every state and territory,
 then a catch-all per state for everything in between (country towns and rural areas). Free OpenStreetMap
 data only (Overpass): the Scout searches a set number of map squares a night, slowly, so the free service is
 never hammered. OpenStreetMap does not list every business and "no website listed" is not proof they have
-none, so every lead still gets a quick Google check by the owner before anything is sent.
+none.
 """
 import time
 from urllib import parse
@@ -71,7 +76,7 @@ def _town_region(name,state,lat,lon):
 # Every area the Scout works through, in order: grids of map squares, then one catch-all per state.
 REGIONS=CITIES+tuple(_town_region(*t) for t in TOWNS)
 CATCH_ALL=tuple(('state-'+s.casefold(),'Rest of '+s,s) for s in STATES)
-NO_SITE='[!"website"][!"contact:website"][!"url"]'
+SWEEP_VERSION=2  # 2: businesses with a website too. Squares searched under version 1 are searched again once.
 
 
 def migrate(conn):
@@ -79,7 +84,13 @@ def migrate(conn):
     CREATE TABLE IF NOT EXISTS sweep_tiles (
       owner_id INTEGER NOT NULL, region TEXT NOT NULL, idx INTEGER NOT NULL, done_at TEXT NOT NULL, found INTEGER NOT NULL DEFAULT 0,
       PRIMARY KEY(owner_id,region,idx));
+    CREATE TABLE IF NOT EXISTS sweep_meta (id INTEGER PRIMARY KEY CHECK(id=1), version INTEGER NOT NULL);
     ''')
+    row=conn.execute('SELECT version FROM sweep_meta WHERE id=1').fetchone()
+    if not row or row[0]<SWEEP_VERSION:
+        # Version 1 only fetched businesses with no website, so search every square again. Leads already found are never added twice.
+        conn.execute('DELETE FROM sweep_tiles')
+        conn.execute('INSERT OR REPLACE INTO sweep_meta(id,version) VALUES(1,?)',(SWEEP_VERSION,))
 
 
 def tiles(region):
@@ -101,13 +112,13 @@ def tile_query(box):
     by_key={}
     for pairs in lead_engine.TRADES.values():
         for k,v in pairs:by_key.setdefault(k,[]).append(v)
-    parts=''.join(f'nwr["{k}"~"^({"|".join(sorted(set(v)))})$"]["name"]{NO_SITE}{bbox};' for k,v in sorted(by_key.items()))
+    parts=''.join(f'nwr["{k}"~"^({"|".join(sorted(set(v)))})$"]["name"]{bbox};' for k,v in sorted(by_key.items()))
     return f'[out:json][timeout:60];({parts});out center tags 500;'
 
 
 def state_query(state,trade):
-    """Catch-all for one state: every business of one trade with no website, anywhere in the state."""
-    pairs=''.join(f'nwr["{k}"="{v}"]["name"]{NO_SITE}(area.s);' for k,v in lead_engine.TRADES[trade])
+    """Catch-all for one state: every business of one trade, anywhere in the state."""
+    pairs=''.join(f'nwr["{k}"="{v}"]["name"](area.s);' for k,v in lead_engine.TRADES[trade])
     return f'[out:json][timeout:120];area["ISO3166-2"="AU-{state}"]->.s;({pairs});out center tags 3000;'
 
 
@@ -176,6 +187,6 @@ def run(conn,owner,count,all_australia=True,pause=2.0,sleep=time.sleep,budget=18
         added,_=lead_engine.add_rows(conn,owner,rows,region[1] if kind=='box' else region[2])
         conn.execute('INSERT OR REPLACE INTO sweep_tiles(owner_id,region,idx,done_at,found) VALUES(?,?,?,?,?)',(owner,region[0],i,stamp(),len(added)))
         conn.commit();found+=len(added);searched+=1
-    if searched:log(conn,owner,'Scout swept '+str(searched)+' map squares and found '+str(found)+' businesses with no website listed. Nothing was sent.')
+    if searched:log(conn,owner,'Scout swept '+str(searched)+' map squares and found '+str(found)+' new businesses. Nothing was sent.')
     conn.commit()
     return found,searched,notes

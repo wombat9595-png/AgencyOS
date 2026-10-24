@@ -29,6 +29,10 @@ def _agent(name,state,items=0,why=''):
     return dict(name=name,state=state,items=max(0,min(int(items),5)),why=why)
 
 
+HELPERS=('Designer','Builder','Replier','Collector','Carer','Fixer','Bookkeeper')  # delivery and money agents: idle until client one
+HELP_CHECKS=10  # extra websites each idle helper checks per shift
+
+
 def snapshot(conn,owner,now=None,worker=True):
     """Everything the agents know right now, from local records only."""
     now=now or datetime.now(timezone.utc)
@@ -76,11 +80,18 @@ def snapshot(conn,owner,now=None,worker=True):
            a('Fixer','waiting' if plans['requests'] else 'idle',plans['requests'],
              str(plans['requests'])+' change requests' if plans['requests'] else 'no change requests')],
     )
+    # Nobody sits idle: while there are websites to check, idle helpers pitch in on the Checker's job (finding emails, the bottleneck before client one).
+    helpers=[]
+    if unchecked and not is_paused:
+        for agents in sectors.values():
+            for agent in agents:
+                if agent['name'] in HELPERS and agent['state'] in ('idle','asleep'):
+                    helpers.append(agent['name']);agent.update(state='working',items=1,why='helping the Checker find emails on websites')
     if is_paused:
         for agents in sectors.values():
             for agent in agents:agent.update(state='off',why='the agency is paused')
     active=any(ag['state'] in ('working','waiting','cheering') for ags in sectors.values() for ag in ags)
-    return dict(paused=is_paused,worker=bool(worker),active=active,gmail=bool(gmail),
+    return dict(paused=is_paused,worker=bool(worker),active=active,gmail=bool(gmail),helpers=helpers,unchecked=unchecked,
                 sectors=[dict(key=k,label=label,endpoint=endpoint,agents=sectors[k]) for k,label,endpoint,_ in SECTORS])
 
 
@@ -90,7 +101,7 @@ def sample():
     agents=dict(find=[a('Scout','working',3),a('Checker','working',4)],outreach=[a('Writer','waiting',5),a('Follow-up','working',2)],
       websites=[a('Designer','waiting',1),a('Builder','working',2)],inbox=[a('Sorter','working',2),a('Replier','waiting',1)],
       money=[a('Bookkeeper','cheering',3),a('Collector','idle')],clients=[a('Carer','working',2),a('Fixer','waiting',1)])
-    return dict(paused=False,worker=True,active=True,gmail=True,sample=True,
+    return dict(paused=False,worker=True,active=True,gmail=True,sample=True,helpers=[],unchecked=0,
                 sectors=[dict(key=k,label=label,endpoint=endpoint,agents=agents[k]) for k,label,endpoint,_ in SECTORS])
 
 

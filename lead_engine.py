@@ -271,12 +271,29 @@ def check_site(url,get=None):
     years=[int(y) for y in re.findall(r'(?:©|&copy;|copyright)\s*(?:\d{4}\s*(?:-|–|&ndash;)\s*)?((?:19|20)\d\d)',lower)]
     result['year']=max(years) if years else 0
     result['seo']=seo_notes(html,lower)
-    result['email']=find_email(html,host)
+    result['email']=find_email(html,host) or contact_email(html,final,host,follow)
     if not result['https']:result['findings'].append('not_secure')
     if not result['mobile']:result['findings'].append('not_mobile')
     if result['year'] and result['year']<=today().year-4:result['findings'].append('old')
     if not result['findings']:result['findings']=['ok']
     return result
+
+
+CONTACT_LINK=re.compile(r'<a[^>]+href=["\']([^"\'#]*contact[^"\'#]*)["\']',re.I)
+
+
+def contact_email(html,base,host,follow):
+    """Most small business sites keep their email on the Contact page, not the homepage. Reads that one page only."""
+    own=(host or '').casefold().removeprefix('www.')
+    links=[urljoin(base,h) for h in CONTACT_LINK.findall(html)]
+    links=[u for u in links if urlsplit(u).scheme in ('http','https') and (urlsplit(u).hostname or '').casefold().removeprefix('www.')==own]
+    for url in (links[:1] or [urljoin(base,'/contact'),urljoin(base,'/contact-us')]):
+        try:status,final,body=follow(url)
+        except (OSError,ssl.SSLError,http.client.HTTPException,ValueError):continue
+        if status<400:
+            email=find_email(body.decode('utf-8','replace'),host)
+            if email:return email
+    return ''
 
 
 EMAIL_IN_PAGE=re.compile(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+')
@@ -477,7 +494,7 @@ def queue(conn,owner,on=None,limit=12):
     """Today's work, most urgent first: follow-ups due, approved drafts to send, then the best new leads."""
     iso=(on or today()).isoformat()
     return conn.execute("""SELECT * FROM prospects WHERE owner_id=? AND (
-        (stage='Contacted' AND replied_at!='') OR (stage='Contacted' AND next_on!='' AND next_on<=? AND email!='' AND replied_at='') OR stage IN ('Approved','Interested') OR (stage='New' AND score>=50 AND email!='' AND ceo_status NOT IN ('held','redo')))
+        (stage='Contacted' AND replied_at!='') OR (stage='Contacted' AND next_on!='' AND next_on<=? AND email!='' AND replied_at='') OR stage IN ('Approved','Interested') OR (stage='New' AND score>=50 AND email!='' AND ceo_status NOT IN ('held','redo') AND (website='' OR checked_at!='')))
       ORDER BY CASE WHEN stage='Interested' OR replied_at!='' THEN 0 WHEN stage='Contacted' THEN 1 WHEN stage='Approved' THEN 2 ELSE 3 END, score DESC, id LIMIT ?""",(owner,iso,limit)).fetchall()
 
 

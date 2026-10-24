@@ -87,14 +87,20 @@ def run(conn,owner,source='night',on=None):
           (owner,s['enabled'],(start+BEATS_PER_NIGHT)%len(all_beats)))
     import team,sweep
     the_plan=team.plan(conn,owner);conn.commit()
-    # Scout's big job: sweep the map square by square for businesses with no website (Sydney first).
-    if the_plan['tiles']:
+    # Inspector first: read the websites already found (finding emails is the bottleneck, not finding businesses).
+    # Idle agents (no clients yet for the Builder, Carer, Bookkeeper...) help the Inspector, so more leads get an email address each shift.
+    import brain
+    helping=brain.snapshot(conn,owner)['helpers'];counts['helpers']=len(helping)
+    counts['checked']=lead_engine.check_websites(conn,owner,limit=CHECKS_PER_NIGHT+brain.HELP_CHECKS*len(helping))
+    # Scout's big job: sweep the map square by square (Sydney first). It waits while the Inspector has a backlog of websites to read,
+    # so leads never pile up faster than their emails can be found.
+    backlog=unchecked(conn,owner);counts['backlog']=backlog
+    if backlog>=BACKLOG:notes.append('Scout waited: '+str(backlog)+' websites still to read first.')
+    elif the_plan['tiles']:
         try:swept,squares,sweep_notes=sweep.run(conn,owner,the_plan['tiles'],the_plan['all_australia'])
         except Exception:conn.rollback();swept,squares,sweep_notes=0,0,['The map sweep stopped early; it carries on next shift.']
         counts['swept']=swept;counts['squares']=squares;notes+=sweep_notes
     elif not all_beats:notes.append('No search areas set and the map sweep is off, so Scout had nothing to search.')
-    # Inspector: check websites found by the Scout (and any left over from manual searches).
-    counts['checked']=lead_engine.check_websites(conn,owner,limit=CHECKS_PER_NIGHT)
     # Chaser: retire leads that never replied, then count follow-ups due today.
     lead_engine.expire(conn,owner,local)
     counts['follow_ups']=conn.execute("SELECT COUNT(*) FROM prospects WHERE owner_id=? AND stage='Contacted' AND next_on!='' AND next_on<=?",(owner,local.isoformat())).fetchone()[0]
@@ -151,20 +157,49 @@ def worker_tick(path):
             import pitch
             try:pitch.detect_replies(conn,owner[0])  # a lead wrote back: stop chasing them and buzz the owner's phone
             except Exception:conn.rollback()
+            import autosend
+            try:autosend.tick(conn,owner[0])  # opt-out replies always; sends only if Benji switched CEO auto-send on
+            except Exception:conn.rollback()
             import team
             try:lead_engine.sync_gmail(conn,owner[0])  # approved drafts that Benji sent: schedule their follow-ups
+            except Exception:conn.rollback()
+            try:
+                import ceo_live
+                ceo_live.budget_alert(conn,owner[0])  # AI budget used up: one email a month with how to top it up
             except Exception:conn.rollback()
             try:team.notify(conn,owner[0])  # drafts ready: buzz the owner's phone (7 am to 9 pm, at most 3 a day)
             except Exception:conn.rollback()
             try:
                 if team.settings(conn,owner[0])['keep_awake']:keep_awake()
             except Exception:pass
+            try:inspect(conn,owner[0])  # between shifts too: a few websites a minute, so emails are found all day, not 40 every 2 hours
+            except Exception:conn.rollback()
         if not owner or not due(conn,owner[0]):return False
         awake=_stay_awake()
         try:run(conn,owner[0])
         finally:
             if awake:awake.terminate()
         return True
+
+
+BACKLOG=300  # websites waiting to be read: at or above this, the Scout stops adding new businesses until the Inspector catches up
+
+
+def unchecked(conn,owner):
+    return conn.execute("SELECT COUNT(*) FROM prospects WHERE owner_id=? AND website!='' AND checked_at='' AND stage='New'",(owner,)).fetchone()[0]
+
+
+INSPECT_EVERY,INSPECT_BATCH=60,5  # seconds, websites: about 7,000 a day, one quick homepage (and Contact page) visit each
+_LAST_INSPECT=[0.0]
+
+
+def inspect(conn,owner,clock=None):
+    """The Inspector keeps working between shifts while shifts are on: a few websites a minute, reading each business's email. Returns how many it checked."""
+    import time
+    now=(clock or time.monotonic)()
+    if now-_LAST_INSPECT[0]<INSPECT_EVERY or paused(conn) or not settings(conn,owner)['enabled']:return 0
+    _LAST_INSPECT[0]=now
+    return lead_engine.check_websites(conn,owner,limit=INSPECT_BATCH)
 
 
 _AWAKE=None
@@ -234,7 +269,7 @@ def register(app,get_db,login_required):
         conn=get_db();owner=session['user_id'];on=request.form.get('enabled')=='1'
         conn.execute('INSERT INTO night_shift_settings(owner_id,enabled) VALUES(?,?) ON CONFLICT(owner_id) DO UPDATE SET enabled=excluded.enabled',(owner,int(on)));conn.commit()
         flash('Shifts are on. The team works every 2 hours, day and night, while AgencyOS is open.' if on else 'Shifts are off. The team is not working.','success')
-        return redirect(url_for('night_shift_home'))
+        return redirect(url_for('ceo_live') if request.form.get('next')=='ceo' else url_for('night_shift_home'))
 
     @app.post('/night-shift/run')
     @login_required
@@ -242,5 +277,5 @@ def register(app,get_db,login_required):
         conn=get_db();owner=session['user_id']
         if paused(conn):raise WorkflowError('The agency is paused. Press Start on Home first.')
         c=run(conn,owner,source='manual')
-        flash('Shift done: found '+str(c['found'])+', checked '+str(c['checked'])+' websites, drafted '+str(c['drafts'])+' messages. Nothing was sent.','success')
-        return redirect(url_for('business_home')+'#ready')
+        flash('Shift done: found '+str(c['found'])+', checked '+str(c['checked'])+' websites, drafted '+str(c['drafts'])+' messages, CEO passed '+str(c.get('ceo_ready',0))+'.','success')
+        return redirect(url_for('ceo_live') if request.form.get('next')=='ceo' else url_for('business_home')+'#ready')

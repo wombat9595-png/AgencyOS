@@ -200,6 +200,24 @@ def create_outreach_draft(conn, owner, recipient, subject, body):
     return result['id']
 
 
+def can_send(conn, owner):
+    """True once the owner has granted Gmail's separate sending permission (Reconnect with the sending box ticked)."""
+    row=conn.execute('SELECT * FROM gmail_accounts WHERE owner_id=?',(owner,)).fetchone()
+    return bool(row and row['email']==ACCOUNT and SEND in unseal(row['token_cipher']).get('scope','').split())
+
+
+def send_outreach(conn, owner, recipient, subject, body):
+    """CEO auto-send only (autosend.py does every check first). One message, no retries. Returns Gmail's message id."""
+    if re.search(r'[\r\n]',subject):raise WorkflowError('The subject must be one line.')
+    token=access_token(conn,owner,sending=True)
+    message=EmailMessage();message['From']=formataddr((DISPLAY,ACCOUNT));message['To']=sales_email.address(recipient)
+    message['Subject']=subject;message.set_content(body)
+    receipt=google_request(API+'messages/send',token=token,data=dict(raw=base64.urlsafe_b64encode(message.as_bytes()).decode()))
+    if not isinstance(receipt.get('id'),str):raise WorkflowError('Gmail did not confirm the send. Check Sent in Gmail before doing anything else.')
+    audit(conn,'gmail_autosend_submitted',owner,{'gmail_id':receipt['id'],'delivery_verified':False})
+    return receipt['id']
+
+
 def sent_since(conn, owner, recipient, since):
     """True when Gmail's Sent folder has a message to this address after the given Unix time."""
     query='in:sent to:'+sales_email.address(recipient)+' after:'+str(int(since))
@@ -404,7 +422,8 @@ def register(app,get_db,login_required):
         return render_template('gmail.html',account=account,mails=mails,drafts=drafts,configured=configured,email=ACCOUNT,
             flows=conn.execute('SELECT * FROM p5_flows WHERE user_id=? ORDER BY id DESC LIMIT 100',(owner,)).fetchall(),
             jobs=conn.execute('SELECT * FROM gmail_jobs WHERE owner_id=? ORDER BY id DESC LIMIT 10',(owner,)).fetchall(),
-            policy=conn.execute('SELECT * FROM gmail_policy WHERE owner_id=?',(owner,)).fetchone(),sending=os.environ.get('AGENCYOS_GMAIL_SEND_ENABLED')=='1')
+            policy=conn.execute('SELECT * FROM gmail_policy WHERE owner_id=?',(owner,)).fetchone(),sending=os.environ.get('AGENCYOS_GMAIL_SEND_ENABLED')=='1',
+            auto=__import__('autosend').status(conn,owner))
 
     @app.post('/gmail/client')
     @login_required

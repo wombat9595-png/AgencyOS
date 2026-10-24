@@ -64,7 +64,7 @@
 
 <section class="panel"><div class="panel-heading"><div><span class="eyebrow">CHIEF OF STAFF</span><h2>The plan</h2></div></div>
 <p>Every 2 hours, day and night: sweep <strong>{{ plan.tiles }}</strong> map squares{% if plan.region %} in <strong>{{ plan.region }}</strong>{% endif %} ({{ plan.per_day }} a day), check new websites for problems and email addresses, and write new drafts up to the safe limit of <strong>{{ plan.safe }}</strong> emails a day ({{ plan.waiting }} already waiting for you). Writer: {{ plan.writer.reason }}</p>
-<p><strong>Target: every business with no website in Australia.</strong> Sydney first, then every capital and big city, then 73 regional towns across every state and territory, then a catch-all for the rest of each state.</p>
+<p><strong>Target: every local business in Australia with no website or a weak one.</strong> Sydney first, then every capital and big city, then 73 regional towns across every state and territory, then a catch-all for the rest of each state.</p>
 <div class="regions">{% for r in org.states %}<div><small>{{ r.name }} · {{ r.done }}/{{ r.total }} searches · {{ r.found }} found</small><div class="bar"><i style="width:{{ r.pct }}%"></i></div></div>{% endfor %}</div>
 <p class="tiny muted">Free OpenStreetMap data. It does not list every business, and "no website listed" is not proof they have none, so tap the Google link on a card before you send. Business data © OpenStreetMap contributors (ODbL).</p>
 </section>
