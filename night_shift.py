@@ -87,17 +87,20 @@ def run(conn,owner,source='night',on=None):
           (owner,s['enabled'],(start+BEATS_PER_NIGHT)%len(all_beats)))
     import team,sweep
     the_plan=team.plan(conn,owner);conn.commit()
-    # Scout's big job: sweep the map square by square for businesses with no website (Sydney first).
-    if the_plan['tiles']:
-        try:swept,squares,sweep_notes=sweep.run(conn,owner,the_plan['tiles'],the_plan['all_australia'])
-        except Exception:conn.rollback();swept,squares,sweep_notes=0,0,['The map sweep stopped early; it carries on next shift.']
-        counts['swept']=swept;counts['squares']=squares;notes+=sweep_notes
-    elif not all_beats:notes.append('No search areas set and the map sweep is off, so Scout had nothing to search.')
-    # Inspector: check websites found by the Scout (and any left over from manual searches).
+    # Inspector first: read the websites already found (finding emails is the bottleneck, not finding businesses).
     # Idle agents (no clients yet for the Builder, Carer, Bookkeeper...) help the Inspector, so more leads get an email address each shift.
     import brain
     helping=brain.snapshot(conn,owner)['helpers'];counts['helpers']=len(helping)
     counts['checked']=lead_engine.check_websites(conn,owner,limit=CHECKS_PER_NIGHT+brain.HELP_CHECKS*len(helping))
+    # Scout's big job: sweep the map square by square (Sydney first). It waits while the Inspector has a backlog of websites to read,
+    # so leads never pile up faster than their emails can be found.
+    backlog=unchecked(conn,owner);counts['backlog']=backlog
+    if backlog>=BACKLOG:notes.append('Scout waited: '+str(backlog)+' websites still to read first.')
+    elif the_plan['tiles']:
+        try:swept,squares,sweep_notes=sweep.run(conn,owner,the_plan['tiles'],the_plan['all_australia'])
+        except Exception:conn.rollback();swept,squares,sweep_notes=0,0,['The map sweep stopped early; it carries on next shift.']
+        counts['swept']=swept;counts['squares']=squares;notes+=sweep_notes
+    elif not all_beats:notes.append('No search areas set and the map sweep is off, so Scout had nothing to search.')
     # Chaser: retire leads that never replied, then count follow-ups due today.
     lead_engine.expire(conn,owner,local)
     counts['follow_ups']=conn.execute("SELECT COUNT(*) FROM prospects WHERE owner_id=? AND stage='Contacted' AND next_on!='' AND next_on<=?",(owner,local.isoformat())).fetchone()[0]
@@ -177,6 +180,13 @@ def worker_tick(path):
         finally:
             if awake:awake.terminate()
         return True
+
+
+BACKLOG=300  # websites waiting to be read: at or above this, the Scout stops adding new businesses until the Inspector catches up
+
+
+def unchecked(conn,owner):
+    return conn.execute("SELECT COUNT(*) FROM prospects WHERE owner_id=? AND website!='' AND checked_at='' AND stage='New'",(owner,)).fetchone()[0]
 
 
 INSPECT_EVERY,INSPECT_BATCH=60,5  # seconds, websites: about 7,000 a day, one quick homepage (and Contact page) visit each

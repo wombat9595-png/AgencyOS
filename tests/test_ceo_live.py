@@ -88,5 +88,17 @@ class CeoLiveTest(unittest.TestCase):
             self.assertEqual(conn.execute("SELECT email FROM prospects WHERE source_id='w0'").fetchone()[0],'hello@site0.example')  # found on the Contact page
 
 
+    def test_scout_waits_while_websites_are_still_to_read(self):
+        import night_shift,sweep
+        with self.conn() as conn:
+            conn.executemany("INSERT INTO prospects(owner_id,source_id,name,website,created_at) VALUES(1,?,?,?,'x')",[('b'+str(i),'Site '+str(i),'https://s'+str(i)+'.example') for i in range(night_shift.BACKLOG)]);conn.commit()
+            with patch('lead_engine.check_websites',return_value=0),patch('sweep.run',return_value=(0,0,[])) as scout,patch('team.plan',return_value=dict(tiles=10,all_australia=True,drafts=0,safe=0)):
+                counts=night_shift.run(conn,1,source='manual')
+                self.assertFalse(scout.called);self.assertEqual(counts['backlog'],night_shift.BACKLOG)
+                conn.execute("UPDATE prospects SET checked_at='x'");conn.commit()
+                night_shift.run(conn,1,source='manual')
+                self.assertTrue(scout.called)  # backlog cleared: the Scout searches again
+
+
 if __name__=='__main__':
     unittest.main()
