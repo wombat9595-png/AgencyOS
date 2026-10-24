@@ -39,6 +39,18 @@
 </section>
 
 <section class="panel">
+  <div class="live-head"><h2>See it in Gmail</h2>
+    <div class="row">
+      <a class="btn primary" href="{{ gmail.sent }}" target="_blank" rel="noopener">Open Sent</a>
+      <a class="btn secondary" href="{{ gmail.inbox }}" target="_blank" rel="noopener">Open Inbox</a>
+      <a class="btn secondary" href="{{ gmail.spam }}" target="_blank" rel="noopener">Open Spam</a>
+    </div>
+  </div>
+  <p>Every email goes out from <strong>{{ gmail.account }}</strong>. If Gmail opens your personal inbox instead, switch accounts with your picture at the top right. Press any "CEO emailed" line below to open that exact email.</p>
+  <p class="muted">{{ gmail.replied }} lead{{ '' if gmail.replied==1 else 's' }} wrote back so far. Usually 1 to 3 in every 100 cold emails get a reply, often days later.</p>
+</section>
+
+<section class="panel">
   <h2>Your leads</h2>
   <div class="nums">
     <div class="num"><b>{{ '{:,}'.format(leads.total) }}</b><span>leads found</span></div>
@@ -71,7 +83,7 @@
 
 <section class="panel">
   <h2>Live activity</h2>
-  {% if feed %}<ul class="feed">{% for e in feed %}<li><span class="t">{{ e.time }}</span><span class="w">{{ e.what }}</span><span>{{ e.who }}{% if e.detail %} · <span class="muted">{{ e.detail }}</span>{% endif %}</span></li>{% endfor %}</ul>
+  {% if feed %}<ul class="feed">{% for e in feed %}<li><span class="t">{{ e.time }}</span><span class="w">{% if e.link %}<a href="{{ e.link }}" target="_blank" rel="noopener">{{ e.what }} ↗</a>{% else %}{{ e.what }}{% endif %}</span><span>{{ e.who }}{% if e.detail %} · <span class="muted">{{ e.detail }}</span>{% endif %}</span></li>{% endfor %}</ul>
   {% else %}<p class="muted">Nothing yet. Once shifts run and auto-send is on, every email the CEO sends shows up here.</p>{% endif %}
 </section>
 {% endblock %}

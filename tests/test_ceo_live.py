@@ -30,7 +30,8 @@ class CeoLiveTest(unittest.TestCase):
         self.assertIn('Auto-send is ON',page);self.assertIn('Next email at about',page)
         self.assertIn('CEO emailed',page);self.assertIn('Fictional Builds',page)
         self.assertIn('leads found',page);self.assertIn('have no website and no email',page)
-        self.assertNotIn('You emailed',page)  # an auto-send shows once, as "CEO emailed"
+        self.assertNotIn('You emailed',page)
+        self.assertIn('authuser=benji.price.webdesign@gmail.com#sent',page);self.assertIn('#all/',page)  # Gmail buttons and a link to the exact email  # an auto-send shows once, as "CEO emailed"
         self.assertIn('Watch your CEO work',self.client.get('/business').get_data(as_text=True))
         with self.conn() as conn:
             n=ceo_live.leads(conn,1)
