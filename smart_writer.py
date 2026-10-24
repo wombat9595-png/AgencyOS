@@ -133,18 +133,19 @@ def current_kind(p):
 def write(conn,owner,p,s,ask=None,coaching='',short=False):
     """Draft the next message for this business and store it on the record. Returns the source ('ai' or 'rules').
     coaching: lessons and approved examples for the AI. short: the owner keeps saying drafts are too long."""
-    kind=current_kind(p)
-    subject,body=lead_engine.draft(p,s,kind,short=short)
+    import campaign
+    kind=current_kind(p);extra=campaign.extras(conn,owner,p,kind) if kind!='call' else {}
+    subject,body=lead_engine.draft(p,s,kind,short=short,**extra)
     source='rules'
     if kind!='call' and ai_status(conn,owner)['ready']:
         try:
-            text,tokens_in,tokens_out=(ask or _ask_haiku)(playbook.brief(p,s,kind,coaching))
+            text,tokens_in,tokens_out=(ask or _ask_haiku)(playbook.brief(p,s,kind,coaching,**extra))
             _record(conn,owner,tokens_in,tokens_out)
             parsed=_parse(text)
             if parsed:
                 sign=body[body.index('\n\nCheers,'):] if '\n\nCheers,' in body else ''
                 ai_subject,ai_body=parsed[0],parsed[1].rstrip()+sign
-                if not playbook.review(ai_subject,ai_body,p,s,kind):subject,body,source=ai_subject,ai_body,'ai'
+                if not playbook.review(ai_subject,ai_body,p,s,kind) and (not extra.get('preview') or extra['preview'] in ai_body):subject,body,source=ai_subject,ai_body,'ai'
         except Exception:  # Network, key or provider trouble: fall back to the free rules, never block the shift.
             pass
     conn.execute("UPDATE prospects SET draft_subject=?,draft_body=?,draft_kind=?,draft_source=?,ceo_status='',ceo_note='' WHERE id=?",(subject,body,kind,source,p['id']))

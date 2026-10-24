@@ -266,7 +266,8 @@ def ceo_review(conn,owner,ids,ask=None,write_ask=None):
             except Exception:  # Offline or provider trouble: the rules check above still stands.
                 pass
         if problems and p['draft_source']=='ai':
-            subject,body=lead_engine.draft(p,s,kind,short=learned(conn,owner)['short'])
+            import campaign
+            subject,body=lead_engine.draft(p,s,kind,short=learned(conn,owner)['short'],**campaign.extras(conn,owner,p,kind))
             conn.execute("UPDATE prospects SET draft_subject=?,draft_body=?,draft_source='rules' WHERE id=?",(subject,body,pid))
             problems=playbook.review(subject,body,p,s,kind)+playbook.review_words(subject,body,words)
             note='Swapped the AI draft for the safe version'

@@ -70,6 +70,25 @@
 </section>
 
 <section class="panel">
+  <h2>This week's plan</h2>
+  {% if batch %}<p><strong>Now emailing: {{ batch.trade }} in {{ batch.suburb }}</strong>, {{ batch.sent }} of up to {{ batch.size }}. The CEO finishes one trade in one area before moving on, because small batches about one kind of business get more replies.</p>
+  <div class="bar" aria-hidden="true"><i style="width:{{ [100, (100*batch.sent/batch.size)|round(1)]|min }}%"></i></div>
+  {% else %}<p>The first batch starts with the CEO's first email: the best lead's trade and area, up to 50 businesses.</p>{% endif %}
+  <h3>Today's {{ videos|length or 3 }} videos</h3>
+  {% if videos %}<p class="muted">These leads got email one and their follow-up is due. Record a 60-second screen recording of their site on your phone, then send it as the follow-up.</p>
+  <ul>{% for p in videos %}<li><a href="{{ url_for('pitch_video', prospect_id=p.id) }}">{{ p.name }}</a> · {{ p.trade or 'business' }}{% if p.suburb %} in {{ p.suburb }}{% endif %} · <span class="muted">script ready</span></li>{% endfor %}</ul>
+  {% else %}<p class="muted">None due yet. Leads show up here once their first follow-up is due.</p>{% endif %}
+  <h3>What's working</h3>
+  {% if not results.ready %}<p class="muted">{{ results.total }} of {{ results.judge_after }} businesses emailed. Reply rates mean little before about {{ results.judge_after }}, so nothing changes until then.</p>{% endif %}
+  {% if results.trades %}<div class="table-wrap"><table><thead><tr><th>Trade</th><th>Emailed</th><th>Replied</th><th>Said yes</th><th>Reply rate</th></tr></thead><tbody>
+  {% for t in results.trades %}<tr><td>{{ t.name }}</td><td>{{ t.sent }}</td><td>{{ t.replied }}</td><td>{{ t.yes }}</td><td>{{ t.rate }}%</td></tr>{% endfor %}</tbody></table></div>{% endif %}
+  {% if results.subjects %}<div class="table-wrap"><table><thead><tr><th>First-email subject</th><th>Emailed</th><th>Replied</th><th>Reply rate</th></tr></thead><tbody>
+  {% for t in results.subjects %}<tr><td>{{ t.name }}</td><td>{{ t.sent }}</td><td>{{ t.replied }}</td><td>{{ t.rate }}%</td></tr>{% endfor %}</tbody></table></div>
+  <p class="muted">Once every subject has had 15 or more emails, the Writer uses the one with the most yeses for most new leads.</p>{% endif %}
+  {% if results.ready and results.best %}<p><strong>Best trade so far: {{ results.best.name }} ({{ results.best.rate }}% replied).</strong> Search for more {{ results.best.name|lower }} across Sydney, then other cities, on <a href="{{ url_for('prospects_home') }}">Find customers</a>.</p>{% endif %}
+</section>
+
+<section class="panel">
   <div class="live-head"><h2>The team</h2>
     <div class="row">
       <form method="post" action="{{ url_for('night_shift_toggle') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="next" value="ceo"><input type="hidden" name="enabled" value="{{ '0' if shifts.enabled else '1' }}"><button class="btn {{ 'secondary' if shifts.enabled else 'primary' }}">{{ 'Switch shifts off' if shifts.enabled else 'Switch shifts on' }}</button></form>

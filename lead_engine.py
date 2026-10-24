@@ -271,7 +271,11 @@ def check_site(url,get=None):
     years=[int(y) for y in re.findall(r'(?:©|&copy;|copyright)\s*(?:\d{4}\s*(?:-|–|&ndash;)\s*)?((?:19|20)\d\d)',lower)]
     result['year']=max(years) if years else 0
     result['seo']=seo_notes(html,lower)
-    result['email']=find_email(html,host) or contact_email(html,final,host,follow)
+    result['email']=find_email(html,host)
+    if result['email']:result['email_page']=final
+    else:result['email'],result['email_page'],page_says_no=contact_email(html,final,host,follow);result['no_marketing']=page_says_no
+    result['no_marketing']=result.get('no_marketing') or says_no_marketing(lower)
+    if result['no_marketing']:result['email']=''  # Spam Act: a published address only counts as consent if the site doesn't refuse marketing emails
     if not result['https']:result['findings'].append('not_secure')
     if not result['mobile']:result['findings'].append('not_mobile')
     if result['year'] and result['year']<=today().year-4:result['findings'].append('old')
@@ -280,20 +284,33 @@ def check_site(url,get=None):
 
 
 CONTACT_LINK=re.compile(r'<a[^>]+href=["\']([^"\'#]*contact[^"\'#]*)["\']',re.I)
+ABOUT_LINK=re.compile(r'<a[^>]+href=["\']([^"\'#]*about[^"\'#]*)["\']',re.I)
+NO_MARKETING=re.compile(r"\b(?:no|not accept\w*|do not (?:send|want)|don't (?:send|want)|please do not send)\s+(?:any\s+)?"
+                      r"(?:unsolicited\b|solicit\w*|(?:marketing|sales|spam|cold|advertising)\s+(?:e-?mails?|messages?|offers?|enquiries|pitch\w*))"
+                      r"|\bunsolicited\s+(?:\w+\s+){0,2}(?:e-?mails?|messages?|offers?)\s+(?:\w+\s+){0,2}(?:not|never)\s+(?:be\s+)?(?:accepted|welcome|wanted|read|answered)",re.I)
+
+
+def says_no_marketing(text):
+    """True when a page asks for no unsolicited or marketing emails, e.g. "No unsolicited emails please"."""
+    return bool(NO_MARKETING.search(re.sub(r'<[^>]+>',' ',text)))
 
 
 def contact_email(html,base,host,follow):
-    """Most small business sites keep their email on the Contact page, not the homepage. Reads that one page only."""
+    """Most small business sites keep their email on the Contact page, else the About page. Reads at most two pages.
+    Returns (email, page it was published on, whether that page refuses marketing emails)."""
     own=(host or '').casefold().removeprefix('www.')
-    links=[urljoin(base,h) for h in CONTACT_LINK.findall(html)]
-    links=[u for u in links if urlsplit(u).scheme in ('http','https') and (urlsplit(u).hostname or '').casefold().removeprefix('www.')==own]
-    for url in (links[:1] or [urljoin(base,'/contact'),urljoin(base,'/contact-us')]):
+    def same_site(links):
+        links=[urljoin(base,h) for h in links]
+        return [u for u in links if urlsplit(u).scheme in ('http','https') and (urlsplit(u).hostname or '').casefold().removeprefix('www.')==own]
+    contact=same_site(CONTACT_LINK.findall(html))[:1] or [urljoin(base,'/contact'),urljoin(base,'/contact-us')]
+    for url in contact+same_site(ABOUT_LINK.findall(html))[:1]:
         try:status,final,body=follow(url)
         except (OSError,ssl.SSLError,http.client.HTTPException,ValueError):continue
         if status<400:
-            email=find_email(body.decode('utf-8','replace'),host)
-            if email:return email
-    return ''
+            page=body.decode('utf-8','replace')
+            email=find_email(page,host)
+            if email:return email,final,says_no_marketing(page)
+    return '','',False
 
 
 EMAIL_IN_PAGE=re.compile(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+')
@@ -348,7 +365,8 @@ def check_websites(conn,owner,limit=15,get=None):
         results=list(pool.map(lambda r:check_site(r['website'],get),rows))
     for row,result in zip(rows,results):
         conn.execute('UPDATE prospects SET site_check=?,checked_at=? WHERE id=?',(json.dumps(result),stamp(),row['id']))
-        if not row['email'] and result.get('email'):conn.execute('UPDATE prospects SET email=? WHERE id=?',(result['email'],row['id']))  # the Inspector found their email on their own site
+        if not row['email'] and result.get('email'):conn.execute('UPDATE prospects SET email=? WHERE id=?',(result['email'],row['id']))  # the Inspector found their email on their own site; site_check keeps the page and date as proof
+        if result.get('no_marketing'):conn.execute("UPDATE prospects SET stage='Do not contact',notes=TRIM(notes||' Their website asks for no unsolicited emails.') WHERE id=?",(row['id'],))
         rescore(conn,row['id'])
     conn.commit()
     return len(rows)
@@ -395,8 +413,10 @@ def variant_of(subject,name):
     return 'Your own subject'
 
 
-def draft(p,s,kind=None,short=False):
-    """Return (subject, body). kind: first, followup1, followup2. short: the owner taught the Writer to keep it brief."""
+def draft(p,s,kind=None,short=False,preview='',proof=''):
+    """Return (subject, body). kind: first, followup1, followup2. short: the owner taught the Writer to keep it brief.
+    The first line names the problem found on their site. preview: online preview link, only used in the first follow-up.
+    proof: a client quote for first emails (campaign.extras)."""
     kind=kind or ('first','followup1','followup2')[min(p['touches'],2)]
     me=s['name'].split()[0];area=' based in '+s['area'] if s['area'] else ' here in Australia'
     sign='\n\nCheers,\n'+s['name']+'\n'+s['business']+'\n'+s['email']+('\n'+s['phone'] if s['phone'] else '')
@@ -404,17 +424,17 @@ def draft(p,s,kind=None,short=False):
     hello='Hi '+p['name']+' team,'
     if kind=='first' and short:
         return (subject_for(p,s),
-          hello+'\n\nI am '+me+', a web designer'+area+'. '+problem_line(p)+'\n\n'
+          hello+'\n\n'+problem_line(p)+' I am '+me+', a web designer'+area+'.\n\n'
           'Can I make '+p['name']+' a free one-page mock-up? No cost, no obligation. Just reply "yes".'+sign+optout)
     if kind=='first':
         return (subject_for(p,s),
-          hello+'\n\nI am '+me+', a web designer'+area+'. '+problem_line(p)+'\n\n'+why_it_matters(p)+'\n\n'
+          hello+'\n\n'+problem_line(p)+' I am '+me+', a web designer'+area+'.\n\n'+why_it_matters(p)+'\n\n'+('A recent client said: '+proof+'\n\n' if proof else '')+
           'I would be happy to put together a free one-page mock-up for '+p['name']+' so you can see what it would look like. No cost and no obligation.\n\n'
           'Worth a look? Just reply "yes" and I will send it over this week.'+sign+optout)
     if kind=='followup1':
         return ('Re: Website for '+p['name']+'?',
-          hello+'\n\nJust following up on my note from last week. The offer of a free one-page mock-up for '+p['name']+' still stands, and it only takes me a couple of days.\n\n'
-          'Reply "yes" and I will get started.'+sign+optout)
+          hello+'\n\nJust following up on my note from last week. '+('I went ahead and made '+p['name']+' a free preview, have a look: '+preview+'\n\nIf you like it, reply "yes" and I will tailor it to your business.'
+          if preview else 'The offer of a free one-page mock-up for '+p['name']+' still stands, and it only takes me a couple of days.\n\nReply "yes" and I will get started.')+sign+optout)
     return ('Re: Website for '+p['name']+'?',
       hello+'\n\nLast note from me, I promise. If a new website is not a priority right now, no worries at all. If it ever is, reply to this email and I will put that free mock-up together.'+sign+optout)
 

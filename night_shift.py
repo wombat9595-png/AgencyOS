@@ -66,6 +66,9 @@ def _due_drafts(conn,owner,on):
     rows=conn.execute("""SELECT * FROM prospects WHERE owner_id=? AND (
         (stage='New' AND score>=50 AND email!='') OR (stage='Contacted' AND next_on!='' AND next_on<=? AND email!='' AND replied_at=''))
       ORDER BY stage='Contacted' DESC, score DESC, id""",(owner,on.isoformat())).fetchall()
+    import campaign
+    # Follow-ups first, then new leads in batch order (one trade in one area at a time).
+    rows=[p for p in rows if p['stage']=='Contacted']+campaign.order(conn,owner,[p for p in rows if p['stage']!='Contacted'])
     return [p for p in rows if not smart_writer.stored(p)]
 
 

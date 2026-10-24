@@ -233,8 +233,11 @@ def problems(conn,owner,p,s):
 
 
 def candidates(conn,owner):
-    return conn.execute("""SELECT * FROM prospects WHERE owner_id=? AND stage='New' AND touches=0 AND ceo_status='ready' AND draft_body!=''
-      AND draft_kind='first' AND email!='' AND replied_at='' ORDER BY score DESC,id LIMIT 50""",(owner,)).fetchall()
+    """CEO-passed first emails in batch order: one trade in one area at a time, 50 or fewer per batch (campaign.order)."""
+    import campaign
+    rows=conn.execute("""SELECT * FROM prospects WHERE owner_id=? AND stage='New' AND touches=0 AND ceo_status='ready' AND draft_body!=''
+      AND draft_kind='first' AND email!='' AND replied_at='' ORDER BY score DESC,id LIMIT 500""",(owner,)).fetchall()
+    return campaign.order(conn,owner,rows)[:50]
 
 
 def tick(conn,owner,at=None,send=None):

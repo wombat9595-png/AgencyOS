@@ -175,5 +175,33 @@ class LeadEngineTest(unittest.TestCase):
         self.assertEqual(result['findings'],['down'])
 
 
+    def test_email_from_about_page_keeps_proof(self):
+        pages={'https://tiles.example/':b'<a href="/about-us">About</a>','https://tiles.example/about-us':b'Say hi: jo@tiles.example'}
+        result=lead_engine.check_site('https://tiles.example',get=lambda url,timeout=8:(200,'',pages[url]) if url in pages else (404,'',b''))
+        self.assertEqual(result['email'],'jo@tiles.example')
+        self.assertEqual(result['email_page'],'https://tiles.example/about-us')  # where they published it, for the Spam Act record
+        self.assertFalse(result['no_marketing'])
+
+    def test_site_that_refuses_marketing_email_is_never_contacted(self):
+        pages={'https://quiet.example/':b'<a href="/contact">Contact</a>','https://quiet.example/contact':b'office@quiet.example <p>No unsolicited emails please.</p>'}
+        get=lambda url,timeout=8:(200,'',pages[url]) if url in pages else (404,'',b'')
+        result=lead_engine.check_site('https://quiet.example',get=get)
+        self.assertTrue(result['no_marketing']);self.assertEqual(result['email'],'')
+        import app as application,sqlite3
+        from contextlib import closing
+        with closing(sqlite3.connect(application.DB_PATH)) as conn:
+            conn.row_factory=sqlite3.Row
+            conn.execute("INSERT INTO prospects(owner_id,source_id,name,website,created_at) VALUES(1,'q1','Quiet Co','https://quiet.example','x')");conn.commit()
+            self.assertEqual(lead_engine.check_websites(conn,1,get=get),1)
+            row=conn.execute("SELECT email,stage,notes FROM prospects WHERE source_id='q1'").fetchone()
+        self.assertEqual((row[0],row[1]),('','Do not contact'));self.assertIn('no unsolicited',row[2])
+
+    def test_no_marketing_wording(self):
+        for text in ('No unsolicited emails please','We do not accept unsolicited sales emails','Unsolicited marketing emails will not be answered','No soliciting'):
+            self.assertTrue(lead_engine.says_no_marketing(text),text)
+        for text in ('No sales pressure, just honest quotes','No marketing jargon','We promise no spam','Free quotes, no obligation'):
+            self.assertFalse(lead_engine.says_no_marketing(text),text)
+
+
 if __name__=='__main__':
     unittest.main()

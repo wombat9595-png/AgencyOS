@@ -9,6 +9,7 @@ from flask import render_template,session
 from phase3_store import WorkflowError,stamp
 from phase4_store import paused
 import autosend
+import campaign
 import gmail_agent
 import lead_engine
 import night_shift
@@ -124,4 +125,5 @@ def register(app,get_db,login_required):
         auto=autosend.status(conn,owner);numbers=leads(conn,owner)
         return render_template('ceo_live.html',auto=auto,leads=numbers,feed=feed(conn,owner),next_email=next_email(conn,owner,auto),
           finish=finish_date(conn,owner,numbers['left']),shifts=night_shift.settings(conn,owner),last_shift=night_shift.last_run(conn,owner),
-          paused=paused(conn),writer=smart_writer.ai_status(conn,owner),gmail=gmail_links(conn,owner))
+          paused=paused(conn),writer=smart_writer.ai_status(conn,owner),gmail=gmail_links(conn,owner),
+          batch=campaign.batch_now(conn,owner),videos=campaign.videos_today(conn,owner),results=campaign.results(conn,owner))
