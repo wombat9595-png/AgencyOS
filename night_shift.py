@@ -166,12 +166,27 @@ def worker_tick(path):
             try:
                 if team.settings(conn,owner[0])['keep_awake']:keep_awake()
             except Exception:pass
+            try:inspect(conn,owner[0])  # between shifts too: a few websites a minute, so emails are found all day, not 40 every 2 hours
+            except Exception:conn.rollback()
         if not owner or not due(conn,owner[0]):return False
         awake=_stay_awake()
         try:run(conn,owner[0])
         finally:
             if awake:awake.terminate()
         return True
+
+
+INSPECT_EVERY,INSPECT_BATCH=60,5  # seconds, websites: about 7,000 a day, one quick homepage (and Contact page) visit each
+_LAST_INSPECT=[0.0]
+
+
+def inspect(conn,owner,clock=None):
+    """The Inspector keeps working between shifts while shifts are on: a few websites a minute, reading each business's email. Returns how many it checked."""
+    import time
+    now=(clock or time.monotonic)()
+    if now-_LAST_INSPECT[0]<INSPECT_EVERY or paused(conn) or not settings(conn,owner)['enabled']:return 0
+    _LAST_INSPECT[0]=now
+    return lead_engine.check_websites(conn,owner,limit=INSPECT_BATCH)
 
 
 _AWAKE=None

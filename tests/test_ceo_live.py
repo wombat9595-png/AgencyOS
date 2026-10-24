@@ -29,11 +29,23 @@ class CeoLiveTest(unittest.TestCase):
             page=self.client.get('/ceo').get_data(as_text=True)
         self.assertIn('Auto-send is ON',page);self.assertIn('Next email at about',page)
         self.assertIn('CEO emailed',page);self.assertIn('Fictional Builds',page)
-        self.assertIn('leads found',page);self.assertIn('have no email address',page)
+        self.assertIn('leads found',page);self.assertIn('have no website and no email',page)
+        self.assertNotIn('You emailed',page)  # an auto-send shows once, as "CEO emailed"
         self.assertIn('Watch your CEO work',self.client.get('/business').get_data(as_text=True))
         with self.conn() as conn:
             n=ceo_live.leads(conn,1)
-        self.assertEqual((n['total'],n['with_email'],n['emailed'],n['left'],n['ready']),(3,2,1,1,1))
+        self.assertEqual((n['total'],n['with_email'],n['emailed'],n['left'],n['ready'],n['no_site']),(3,2,1,1,1,1))
+
+    def test_feed_shows_each_thing_once_and_approved_drafts_are_explained(self):
+        with self.conn() as conn:
+            self.add(conn,'Fictional Pipes','hi@pipes.example')
+            conn.execute("UPDATE prospects SET stage='Approved',gmail_draft_id='d1'");pid=conn.execute('SELECT id FROM prospects').fetchone()[0]
+            for _ in range(2):conn.execute("INSERT INTO prospect_log(owner_id,prospect_id,on_date,action,detail,created_at) VALUES(1,?,'2026-10-23','approved','','2026-10-23T02:50:00+00:00')",(pid,))
+            conn.commit()
+            items=ceo_live.feed(conn,1)
+        self.assertEqual([i['what'] for i in items],['You approved (in Gmail Drafts)'])
+        page=self.client.get('/ceo').get_data(as_text=True)
+        self.assertIn('1 emails you approved are sitting in Gmail Drafts',page)
 
     def test_finish_date_follows_the_warm_up(self):
         with self.conn() as conn:
@@ -57,6 +69,22 @@ class CeoLiveTest(unittest.TestCase):
         self.assertEqual(len(sent),2)
         _,_,to,subject,body=sent[0]
         self.assertIn('A$5.00',subject);self.assertIn(ceo_live.ANTHROPIC_BILLING,body);self.assertIn('/night-shift',body)
+
+
+    def test_inspector_reads_a_few_websites_a_minute_between_shifts(self):
+        import night_shift
+        with self.conn() as conn:
+            for i in range(7):conn.execute("INSERT INTO prospects(owner_id,source_id,name,website,created_at) VALUES(1,?,?,?,'x')",('w'+str(i),'Site Co '+str(i),'https://site'+str(i)+'.example'))
+            conn.execute('INSERT OR REPLACE INTO night_shift_settings(owner_id,enabled,next_beat) VALUES(1,0,0)');conn.commit()
+            night_shift._LAST_INSPECT[0]=0.0
+            page=lambda url:(200,'',b'<a href="/contact-us">Contact</a>') if url.endswith('example/') else (200,'',b'Email us: hello@site0.example')
+            with patch('lead_engine._get',side_effect=page):
+                self.assertEqual(night_shift.inspect(conn,1,clock=lambda:1000.0),0)  # shifts off: the Inspector rests
+                conn.execute('UPDATE night_shift_settings SET enabled=1');conn.commit()
+                self.assertEqual(night_shift.inspect(conn,1,clock=lambda:1000.0),5)
+                self.assertEqual(night_shift.inspect(conn,1,clock=lambda:1030.0),0)  # not again within the minute
+                self.assertEqual(night_shift.inspect(conn,1,clock=lambda:1061.0),2)
+            self.assertEqual(conn.execute("SELECT email FROM prospects WHERE source_id='w0'").fetchone()[0],'hello@site0.example')  # found on the Contact page
 
 
 if __name__=='__main__':

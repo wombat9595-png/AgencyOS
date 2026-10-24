@@ -48,7 +48,13 @@
   </div>
   {% if leads.with_email %}<div class="bar" aria-hidden="true"><i style="width:{{ (100*leads.emailed/leads.with_email)|round(1) }}%"></i></div>{% endif %}
   <p>{% if leads.left and finish %}At the safe pace (20 a day now, going up 10 a day each week, up to your Team page limit), every lead with an email gets one by <strong>{{ finish.strftime('%-d %B %Y') }}</strong>.{% elif not leads.left %}Every lead with an email address has been emailed.{% endif %}</p>
-  <p class="muted">{{ '{:,}'.format(leads.no_email) }} leads have no email address, so they can't be emailed yet. The Inspector picks up the email from each business's own website as it checks them{% if leads.unchecked %} ({{ '{:,}'.format(leads.unchecked) }} websites still to check){% endif %}.</p>
+  <h3>Why most leads can't be emailed yet</h3>
+  <ul>
+    <li><strong>{{ '{:,}'.format(leads.no_site) }}</strong> have no website and no email listed anywhere on the map. There is nothing to find for these, so the CEO can't email them.</li>
+    <li><strong>{{ '{:,}'.format(leads.unchecked) }}</strong> have a website the Inspector hasn't read yet. It reads a few every minute while shifts are on and pulls the email off their homepage or Contact page.</li>
+    <li><strong>{{ '{:,}'.format(leads.site_no_email) }}</strong> have a website with no email on it.</li>
+  </ul>
+  {% if leads.in_drafts %}<p><strong>{{ leads.in_drafts }} emails you approved are sitting in Gmail Drafts.</strong> Auto-send only sends the CEO's own picks, so these wait for you to press Send in <a href="https://mail.google.com/mail/u/0/#drafts" target="_blank" rel="noopener">Gmail Drafts</a>. AgencyOS notices once each one is sent.</p>{% endif %}
 </section>
 
 <section class="panel">

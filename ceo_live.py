@@ -15,7 +15,7 @@ import night_shift
 import smart_writer
 
 ANTHROPIC_BILLING='https://console.anthropic.com/settings/billing'
-EVENTS={'auto_sent':'CEO emailed','sent':'You emailed','approved':'You approved','replied':'Wrote back','opted_out':'Said no thanks',
+EVENTS={'auto_sent':'CEO emailed','sent':'You emailed','approved':'You approved (in Gmail Drafts)','replied':'Wrote back','opted_out':'Said no thanks',
   'bounced':'Email bounced','interested':'Interested','customer':'Became a customer'}
 
 
@@ -30,7 +30,8 @@ def leads(conn,owner):
     blocked=n("email!='' AND touches=0 AND stage IN ('Do not contact','Skipped')")
     return dict(total=total,with_email=with_email,no_email=total-with_email,emailed=emailed,
       left=max(0,with_email-emailed-blocked),ready=len(autosend.candidates(conn,owner)),
-      unchecked=n("website!='' AND checked_at='' AND stage='New'"))
+      unchecked=n("website!='' AND checked_at='' AND stage='New'"),no_site=n("email='' AND website=''"),
+      site_no_email=n("email='' AND website!='' AND checked_at!=''"),in_drafts=n("stage='Approved' AND gmail_draft_id!=''"))
 
 
 def finish_date(conn,owner,left,today=None):
@@ -50,7 +51,14 @@ def finish_date(conn,owner,left,today=None):
 def feed(conn,owner,limit=40):
     rows=conn.execute("""SELECT l.created_at,l.action,l.detail,p.name FROM prospect_log l JOIN prospects p ON p.id=l.prospect_id
       WHERE l.owner_id=? AND l.action IN ("""+','.join('?'*len(EVENTS))+""") ORDER BY l.id DESC LIMIT ?""",(owner,*EVENTS,limit)).fetchall()
-    items=[dict(at=r['created_at'],what=EVENTS[r['action']],who=r['name'],detail=r['detail'] if r['action'] in ('auto_sent','opted_out','bounced') else '') for r in rows]
+    items=[];seen=set()
+    auto={(r['name'],r['created_at'][:16]) for r in rows if r['action']=='auto_sent'}
+    for r in rows:
+        key=(r['action'],r['name'],r['created_at'][:16])
+        # One line per thing that happened: an auto-send is also logged as a send, and a re-approval as a second approval.
+        if key in seen or (r['action']=='sent' and (r['name'],r['created_at'][:16]) in auto):continue
+        seen.add(key)
+        items.append(dict(at=r['created_at'],what=EVENTS[r['action']],who=r['name'],detail=r['detail'] if r['action'] in ('auto_sent','opted_out','bounced') else ''))
     for r in conn.execute("SELECT started_at,counts_json FROM night_shift_runs WHERE owner_id=? AND finished_at!='' ORDER BY id DESC LIMIT 10",(owner,)).fetchall():
         try:c=json.loads(r['counts_json'] or '{}')
         except ValueError:c={}
