@@ -20,6 +20,13 @@
 <div class="page-intro"><div><span class="eyebrow">LIVE · REFRESHES EVERY 30 SECONDS</span><h1>What your CEO is doing</h1>
 <p class="muted">Everything the team and the CEO did, as it happens. The CEO emails businesses by itself while auto-send is on, every day from 6 am to 10 pm.</p></div></div>
 
+{% if latest %}{% set u=latest[0] %}
+<section class="panel">
+  <div class="live-head"><h2>Latest update · {{ u.time }}: {{ u.headline }}</h2><a class="btn secondary" href="{{ url_for('updates_home') }}">All updates</a></div>
+  <ul class="checklist">{% for line in u.lines %}<li>{{ line }}</li>{% endfor %}</ul>
+  <p class="muted">A new update every 35 minutes, day and night, covering {{ u.span }} this time.</p>
+</section>
+{% endif %}
 <section class="panel">
   <div class="live-head">
     <h2><span class="live-dot {{ 'on' if auto.enabled and not paused else 'off' }}"></span>{% if paused %}Paused{% elif auto.enabled %}Auto-send is ON{% else %}Auto-send is OFF{% endif %}</h2>
