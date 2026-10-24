@@ -413,8 +413,10 @@ def variant_of(subject,name):
     return 'Your own subject'
 
 
-def draft(p,s,kind=None,short=False):
-    """Return (subject, body). kind: first, followup1, followup2. short: the owner taught the Writer to keep it brief."""
+def draft(p,s,kind=None,short=False,preview='',proof=''):
+    """Return (subject, body). kind: first, followup1, followup2. short: the owner taught the Writer to keep it brief.
+    The first line names the problem found on their site. preview: online preview link, only used in the first follow-up.
+    proof: a client quote for first emails (campaign.extras)."""
     kind=kind or ('first','followup1','followup2')[min(p['touches'],2)]
     me=s['name'].split()[0];area=' based in '+s['area'] if s['area'] else ' here in Australia'
     sign='\n\nCheers,\n'+s['name']+'\n'+s['business']+'\n'+s['email']+('\n'+s['phone'] if s['phone'] else '')
@@ -422,17 +424,17 @@ def draft(p,s,kind=None,short=False):
     hello='Hi '+p['name']+' team,'
     if kind=='first' and short:
         return (subject_for(p,s),
-          hello+'\n\nI am '+me+', a web designer'+area+'. '+problem_line(p)+'\n\n'
+          hello+'\n\n'+problem_line(p)+' I am '+me+', a web designer'+area+'.\n\n'
           'Can I make '+p['name']+' a free one-page mock-up? No cost, no obligation. Just reply "yes".'+sign+optout)
     if kind=='first':
         return (subject_for(p,s),
-          hello+'\n\nI am '+me+', a web designer'+area+'. '+problem_line(p)+'\n\n'+why_it_matters(p)+'\n\n'
+          hello+'\n\n'+problem_line(p)+' I am '+me+', a web designer'+area+'.\n\n'+why_it_matters(p)+'\n\n'+('A recent client said: '+proof+'\n\n' if proof else '')+
           'I would be happy to put together a free one-page mock-up for '+p['name']+' so you can see what it would look like. No cost and no obligation.\n\n'
           'Worth a look? Just reply "yes" and I will send it over this week.'+sign+optout)
     if kind=='followup1':
         return ('Re: Website for '+p['name']+'?',
-          hello+'\n\nJust following up on my note from last week. The offer of a free one-page mock-up for '+p['name']+' still stands, and it only takes me a couple of days.\n\n'
-          'Reply "yes" and I will get started.'+sign+optout)
+          hello+'\n\nJust following up on my note from last week. '+('I went ahead and made '+p['name']+' a free preview, have a look: '+preview+'\n\nIf you like it, reply "yes" and I will tailor it to your business.'
+          if preview else 'The offer of a free one-page mock-up for '+p['name']+' still stands, and it only takes me a couple of days.\n\nReply "yes" and I will get started.')+sign+optout)
     return ('Re: Website for '+p['name']+'?',
       hello+'\n\nLast note from me, I promise. If a new website is not a priority right now, no worries at all. If it ever is, reply to this email and I will put that free mock-up together.'+sign+optout)
 

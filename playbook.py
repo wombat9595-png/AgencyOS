@@ -44,7 +44,7 @@ def story_for(trade):
     return STORIES.get(key)
 
 
-def brief(p,s,kind,coaching=''):
+def brief(p,s,kind,coaching='',preview='',proof=''):
     """Everything the AI Writer needs, from the playbook and the lead's own record. No secrets, no other leads.
     coaching: the owner's lessons and approved examples from team.coaching(); the Writer's 'memory'."""
     import json
@@ -58,6 +58,9 @@ def brief(p,s,kind,coaching=''):
       'Why it matters for this kind of business: '+niche_angle(p['trade'])+'.',
       'Message type: '+{'first':'first email','followup1':'short first follow-up (they have not replied)','followup2':'short last follow-up, friendly, no pressure'}[kind]+
         ', at most '+str(MAX_WORDS[kind])+' words in the body.',
+      *(['Open the email (right after the greeting) with the one most important problem we noticed on their website, in plain words. '
+         'Do not include any links: links in a first email from a new sender look like spam.']+(['You may quote this real client word for word: '+proof] if proof else []) if kind=='first' else []),
+      *(['Include this link to the free preview made for them, exactly as written: '+preview] if preview and kind=='followup1' else []),
       'Do not mention prices. Do not invent facts, reviews, awards or numbers about them. Do not use: '+', '.join(BANNED)+'.',
       'Start the body with "Hi '+p['name']+' team,". Do not write a sign-off, signature or opt-out line; those are added for you.',
       'Reply with exactly two parts: a first line "Subject: ..." then the body.'])
