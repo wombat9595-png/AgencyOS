@@ -271,7 +271,11 @@ def check_site(url,get=None):
     years=[int(y) for y in re.findall(r'(?:©|&copy;|copyright)\s*(?:\d{4}\s*(?:-|–|&ndash;)\s*)?((?:19|20)\d\d)',lower)]
     result['year']=max(years) if years else 0
     result['seo']=seo_notes(html,lower)
-    result['email']=find_email(html,host) or contact_email(html,final,host,follow)
+    result['email']=find_email(html,host)
+    if result['email']:result['email_page']=final
+    else:result['email'],result['email_page'],page_says_no=contact_email(html,final,host,follow);result['no_marketing']=page_says_no
+    result['no_marketing']=result.get('no_marketing') or says_no_marketing(lower)
+    if result['no_marketing']:result['email']=''  # Spam Act: a published address only counts as consent if the site doesn't refuse marketing emails
     if not result['https']:result['findings'].append('not_secure')
     if not result['mobile']:result['findings'].append('not_mobile')
     if result['year'] and result['year']<=today().year-4:result['findings'].append('old')
@@ -280,20 +284,33 @@ def check_site(url,get=None):
 
 
 CONTACT_LINK=re.compile(r'<a[^>]+href=["\']([^"\'#]*contact[^"\'#]*)["\']',re.I)
+ABOUT_LINK=re.compile(r'<a[^>]+href=["\']([^"\'#]*about[^"\'#]*)["\']',re.I)
+NO_MARKETING=re.compile(r"\b(?:no|not accept\w*|do not (?:send|want)|don't (?:send|want)|please do not send)\s+(?:any\s+)?"
+                      r"(?:unsolicited\b|solicit\w*|(?:marketing|sales|spam|cold|advertising)\s+(?:e-?mails?|messages?|offers?|enquiries|pitch\w*))"
+                      r"|\bunsolicited\s+(?:\w+\s+){0,2}(?:e-?mails?|messages?|offers?)\s+(?:\w+\s+){0,2}(?:not|never)\s+(?:be\s+)?(?:accepted|welcome|wanted|read|answered)",re.I)
+
+
+def says_no_marketing(text):
+    """True when a page asks for no unsolicited or marketing emails, e.g. "No unsolicited emails please"."""
+    return bool(NO_MARKETING.search(re.sub(r'<[^>]+>',' ',text)))
 
 
 def contact_email(html,base,host,follow):
-    """Most small business sites keep their email on the Contact page, not the homepage. Reads that one page only."""
+    """Most small business sites keep their email on the Contact page, else the About page. Reads at most two pages.
+    Returns (email, page it was published on, whether that page refuses marketing emails)."""
     own=(host or '').casefold().removeprefix('www.')
-    links=[urljoin(base,h) for h in CONTACT_LINK.findall(html)]
-    links=[u for u in links if urlsplit(u).scheme in ('http','https') and (urlsplit(u).hostname or '').casefold().removeprefix('www.')==own]
-    for url in (links[:1] or [urljoin(base,'/contact'),urljoin(base,'/contact-us')]):
+    def same_site(links):
+        links=[urljoin(base,h) for h in links]
+        return [u for u in links if urlsplit(u).scheme in ('http','https') and (urlsplit(u).hostname or '').casefold().removeprefix('www.')==own]
+    contact=same_site(CONTACT_LINK.findall(html))[:1] or [urljoin(base,'/contact'),urljoin(base,'/contact-us')]
+    for url in contact+same_site(ABOUT_LINK.findall(html))[:1]:
         try:status,final,body=follow(url)
         except (OSError,ssl.SSLError,http.client.HTTPException,ValueError):continue
         if status<400:
-            email=find_email(body.decode('utf-8','replace'),host)
-            if email:return email
-    return ''
+            page=body.decode('utf-8','replace')
+            email=find_email(page,host)
+            if email:return email,final,says_no_marketing(page)
+    return '','',False
 
 
 EMAIL_IN_PAGE=re.compile(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+')
@@ -348,7 +365,8 @@ def check_websites(conn,owner,limit=15,get=None):
         results=list(pool.map(lambda r:check_site(r['website'],get),rows))
     for row,result in zip(rows,results):
         conn.execute('UPDATE prospects SET site_check=?,checked_at=? WHERE id=?',(json.dumps(result),stamp(),row['id']))
-        if not row['email'] and result.get('email'):conn.execute('UPDATE prospects SET email=? WHERE id=?',(result['email'],row['id']))  # the Inspector found their email on their own site
+        if not row['email'] and result.get('email'):conn.execute('UPDATE prospects SET email=? WHERE id=?',(result['email'],row['id']))  # the Inspector found their email on their own site; site_check keeps the page and date as proof
+        if result.get('no_marketing'):conn.execute("UPDATE prospects SET stage='Do not contact',notes=TRIM(notes||' Their website asks for no unsolicited emails.') WHERE id=?",(row['id'],))
         rescore(conn,row['id'])
     conn.commit()
     return len(rows)
