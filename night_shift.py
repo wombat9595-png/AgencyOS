@@ -94,7 +94,10 @@ def run(conn,owner,source='night',on=None):
         counts['swept']=swept;counts['squares']=squares;notes+=sweep_notes
     elif not all_beats:notes.append('No search areas set and the map sweep is off, so Scout had nothing to search.')
     # Inspector: check websites found by the Scout (and any left over from manual searches).
-    counts['checked']=lead_engine.check_websites(conn,owner,limit=CHECKS_PER_NIGHT)
+    # Idle agents (no clients yet for the Builder, Carer, Bookkeeper...) help the Inspector, so more leads get an email address each shift.
+    import brain
+    helping=brain.snapshot(conn,owner)['helpers'];counts['helpers']=len(helping)
+    counts['checked']=lead_engine.check_websites(conn,owner,limit=CHECKS_PER_NIGHT+brain.HELP_CHECKS*len(helping))
     # Chaser: retire leads that never replied, then count follow-ups due today.
     lead_engine.expire(conn,owner,local)
     counts['follow_ups']=conn.execute("SELECT COUNT(*) FROM prospects WHERE owner_id=? AND stage='Contacted' AND next_on!='' AND next_on<=?",(owner,local.isoformat())).fetchone()[0]
