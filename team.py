@@ -80,7 +80,7 @@ AGENTS=(
    'First email up to '+str(playbook.MAX_WORDS['first'])+' words; follow-ups shorter.')),
  ('guard','Deliverability Guard','Keeps emails out of spam','growth',
   'Warms up the inbox, sets the safe daily email limit and checks every address before the Writer drafts.',
-  ('Start at 20 emails a day and add 10 a week, up to the limit Benji sets. Never jump.',
+  ('Start at 20 emails a day for a week, then add 5 a day, up to the limit Benji sets and never past 50 on free Gmail. Never jump.',
    'Every address must look real. Skip anything that looks like a placeholder or image file.',
    'Never email anyone who said "no thanks" or is marked "Do not contact".',
    'Every email says who Benji is and has the "no thanks" line, as the Spam Act requires.')),
@@ -112,7 +112,8 @@ NAMES={a[0]:a[1] for a in AGENTS}
 WORKERS=tuple(k for _,keys in DIVISIONS for k in keys)
 NO_REASONS={'too_long':'Too long','too_salesy':'Too salesy','wrong':'Got a fact wrong','not_me':'Does not sound like me','bad_fit':'Not a good business for us'}
 MAX_SEARCHES=480  # map searches a day; 2 s apart, a few minutes of the free service's time each shift
-WARM_START,WARM_STEP=20,10  # emails a day in week one, and how many more each week
+WARM_START,WARM_STEP=20,5  # emails a day in the first week, then this many more each day
+GMAIL_SAFE_MAX=50  # a free Gmail inbox stays safe at 20 to 50 cold emails a day; past this, Gmail starts to block or spam-folder
 LEARN_AFTER=3  # the same reason this many times in the last 20 no's becomes a standing rule
 
 
@@ -120,7 +121,7 @@ def migrate(conn):
     conn.executescript('''
     CREATE TABLE IF NOT EXISTS team_settings (
       owner_id INTEGER PRIMARY KEY, pings INTEGER NOT NULL DEFAULT 1, phone_url TEXT NOT NULL DEFAULT '',
-      tiles_per_night INTEGER NOT NULL DEFAULT 120, all_australia INTEGER NOT NULL DEFAULT 1, daily_drafts INTEGER NOT NULL DEFAULT 25,
+      tiles_per_night INTEGER NOT NULL DEFAULT 120, all_australia INTEGER NOT NULL DEFAULT 1, daily_drafts INTEGER NOT NULL DEFAULT 50,
       ping_day TEXT NOT NULL DEFAULT '', pings_today INTEGER NOT NULL DEFAULT 0, last_ping_at TEXT NOT NULL DEFAULT '', last_ping_count INTEGER NOT NULL DEFAULT 0, keep_awake INTEGER NOT NULL DEFAULT 1);
     CREATE TABLE IF NOT EXISTS team_lessons (
       id INTEGER PRIMARY KEY, owner_id INTEGER NOT NULL, agent TEXT NOT NULL, lesson TEXT NOT NULL, avoid TEXT NOT NULL DEFAULT '',
@@ -131,8 +132,12 @@ def migrate(conn):
       original TEXT NOT NULL DEFAULT '', final TEXT NOT NULL DEFAULT '', edited INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL);
     CREATE INDEX IF NOT EXISTS team_feedback_idx ON team_feedback(owner_id,agent,id);
     ''')
-    if 'keep_awake' not in {r[1] for r in conn.execute('PRAGMA table_info(team_settings)')}:
+    cols={r[1] for r in conn.execute('PRAGMA table_info(team_settings)')}
+    if 'keep_awake' not in cols:
         conn.execute('ALTER TABLE team_settings ADD COLUMN keep_awake INTEGER NOT NULL DEFAULT 1')
+    if 'daily_ramp' not in cols:  # once: the old 25 default becomes the new 50, so the daily warm-up can climb
+        conn.execute('ALTER TABLE team_settings ADD COLUMN daily_ramp INTEGER NOT NULL DEFAULT 1')
+        conn.execute('UPDATE team_settings SET daily_drafts=50 WHERE daily_drafts=25')
     sweep.migrate(conn)
 
 
@@ -140,7 +145,7 @@ def now_local():
     return datetime.now(TZ)
 
 
-DEFAULTS=dict(pings=1,phone_url='',keep_awake=1,tiles_per_night=120,all_australia=1,daily_drafts=25,ping_day='',pings_today=0,last_ping_at='',last_ping_count=0)
+DEFAULTS=dict(pings=1,phone_url='',keep_awake=1,tiles_per_night=120,all_australia=1,daily_drafts=50,ping_day='',pings_today=0,last_ping_at='',last_ping_count=0)
 
 
 def settings(conn,owner):
@@ -294,10 +299,11 @@ def plan(conn,owner):
 
 
 def safe_daily(conn,owner,on=None):
-    """Deliverability Guard: emails a day this inbox can safely send. 20 in the first week of sending, then 10 more a week, up to Benji's limit."""
-    first=conn.execute("SELECT MIN(on_date) FROM prospect_log WHERE owner_id=? AND action='sent'",(owner,)).fetchone()[0]
-    weeks=((on or lead_engine.today())-date.fromisoformat(first)).days//7 if first else 0
-    return min(settings(conn,owner)['daily_drafts'],WARM_START+WARM_STEP*max(0,weeks))
+    """Deliverability Guard: emails a day this inbox can safely send. 20 a day for the first week of sending, then 5 more
+    each day (25% at first, inside Google's 25% to 100% a day guide), up to Benji's limit and never past GMAIL_SAFE_MAX."""
+    first=conn.execute("SELECT MIN(on_date) FROM prospect_log WHERE owner_id=? AND action IN ('sent','auto_sent')",(owner,)).fetchone()[0]
+    days=((on or lead_engine.today())-date.fromisoformat(first)).days if first else 0
+    return min(settings(conn,owner)['daily_drafts'],GMAIL_SAFE_MAX,WARM_START+WARM_STEP*max(0,days-6))
 
 
 def ready_count(conn,owner):
@@ -394,7 +400,7 @@ def scorecards(conn,owner):
       inspector=dict(big=n("SELECT COUNT(*) FROM prospects WHERE owner_id=? AND checked_at!=''"),label='websites checked',small=str(n("SELECT COUNT(*) FROM prospects WHERE owner_id=? AND website='' AND facebook=''"))+' with no website listed'),
       seo=dict(big=seo,label='sites with Google gaps',small='used in the Writer\'s notes'),
       writer=dict(big=l['rate'] if l['total'] else '–',label='% of drafts you said yes to',small=str(l['yes'])+' yes · '+str(l['no'])+' no · '+str(l['edited'])+' edited'),
-      guard=dict(big=safe_daily(conn,owner),label='safe emails a day right now',small='rises 10 a week · '+str(n("SELECT COUNT(*) FROM prospects WHERE owner_id=? AND email!=''"))+' leads with an email'),
+      guard=dict(big=safe_daily(conn,owner),label='safe emails a day right now',small='rises 5 a day up to '+str(min(settings(conn,owner)['daily_drafts'],GMAIL_SAFE_MAX))+' · '+str(n("SELECT COUNT(*) FROM prospects WHERE owner_id=? AND email!=''"))+' leads with an email'),
       designer=dict(big=n('SELECT COUNT(*) FROM prospects WHERE owner_id=? AND trade IN ('+','.join('?'*len(stories))+')',stories) if stories else 0,label='get an animated story mock-up',small='others get the one-page mock-up'),
     ),prog
 

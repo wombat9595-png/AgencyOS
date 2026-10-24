@@ -42,16 +42,19 @@ def leads(conn,owner):
 
 
 def finish_date(conn,owner,left,today=None):
-    """When every lead that has an email address will have had one, at the warm-up pace (20 a day, +10 a week, up to the Team limit)."""
+    """When every lead that has an email address will have had one, at the warm-up pace (20 a day for a week, then +5 a day, up to the limit)."""
     import team
     today=today or autosend.now_local().date()
     if not left:return today
-    ceiling=team.settings(conn,owner)['daily_drafts'];day=today;cap=autosend.daily_cap(conn,owner,today)
+    held=autosend.daily_cap(conn,owner,today)<team.safe_daily(conn,owner,today)  # bounces are holding the cap at 20
+    started=conn.execute("SELECT 1 FROM prospect_log WHERE owner_id=? AND action IN ('sent','auto_sent') LIMIT 1",(owner,)).fetchone()
+    day=today;cap=autosend.daily_cap(conn,owner,today)
     for i in range(3650):
-        left-=min(cap,ceiling) if cap else 0
+        left-=cap
         if left<=0:return day
         day+=timedelta(days=1)
-        if i%7==6:cap=min(ceiling,cap+team.WARM_STEP)
+        if not held:cap=team.safe_daily(conn,owner,day) if started else min(team.settings(conn,owner)['daily_drafts'],team.GMAIL_SAFE_MAX,team.WARM_START+team.WARM_STEP*max(0,i-5))
+        if not cap:return None
     return None
 
 

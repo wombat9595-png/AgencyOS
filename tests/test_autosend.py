@@ -124,8 +124,10 @@ class AutoSendTest(unittest.TestCase):
         with self.conn() as conn:
             conn.execute('INSERT OR REPLACE INTO team_settings(owner_id,daily_drafts) VALUES(1,60)')
             conn.execute("INSERT INTO prospects(owner_id,source_id,name,created_at) VALUES(1,'old','Old Lead','x')")
-            conn.execute("INSERT INTO prospect_log(owner_id,prospect_id,on_date,action,detail,created_at) VALUES(1,last_insert_rowid(),'2026-10-01','sent','','x')");conn.commit()
-            self.assertEqual(autosend.daily_cap(conn,1,WED_10AM.date()),40)  # third week of sending: 20 + 10 + 10
+            conn.execute("INSERT INTO prospect_log(owner_id,prospect_id,on_date,action,detail,created_at) VALUES(1,last_insert_rowid(),'2026-10-12','sent','','x')");conn.commit()
+            self.assertEqual(autosend.daily_cap(conn,1,WED_10AM.date()),35)  # day 10 of sending: a week of 20, then +5 a day
+            conn.execute("UPDATE prospect_log SET on_date='2026-10-01'");conn.commit()
+            self.assertEqual(autosend.daily_cap(conn,1,WED_10AM.date()),50)  # never past the free Gmail safe limit, even with 60 set
 
     def test_five_bounces_in_a_day_switch_it_off(self):
         with self.conn() as conn:

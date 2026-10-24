@@ -53,7 +53,7 @@ class CeoLiveTest(unittest.TestCase):
             conn.execute('INSERT OR REPLACE INTO team_settings(owner_id,daily_drafts) VALUES(1,60)');conn.commit()
             d=date(2026,10,26)
             self.assertEqual(ceo_live.finish_date(conn,1,20,d),d)
-            self.assertEqual(ceo_live.finish_date(conn,1,140+30,d),date(2026,11,2))  # a week of 20, then 30 on day 8
+            self.assertEqual(ceo_live.finish_date(conn,1,140+30,d),date(2026,11,3))  # a week of 20, then 25 on day 8 and 30 on day 9
 
     def test_budget_alert_emails_once_a_month(self):
         sent=[]
