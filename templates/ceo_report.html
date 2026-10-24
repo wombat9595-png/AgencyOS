@@ -1,0 +1,46 @@
+{% extends "base.html" %}{% block title %}CEO report card · AgencyOS{% endblock %}{% block page_heading %}CEO report card{% endblock %}
+{% block content %}
+<style>
+.nums{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.num{border:1px solid rgba(127,127,127,.3);border-radius:14px;padding:12px 14px}
+.num b{display:block;font-size:1.7rem;line-height:1.1;font-variant-numeric:tabular-nums}.num span{font-size:.85rem;opacity:.75}
+.verdict{border-left:6px solid #9aa;padding:10px 14px;border-radius:8px;background:rgba(127,127,127,.08)}
+.verdict.good{border-color:#2fbf71}.verdict.watch{border-color:#e0a800}.verdict.bad{border-color:#d9534f}
+.days{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}.days th,.days td{padding:6px 8px;border-bottom:1px solid rgba(127,127,127,.2);text-align:right}
+.days th:first-child,.days td:first-child{text-align:left}.tablewrap{overflow-x:auto}
+</style>
+<div class="page-intro"><div><span class="eyebrow">LAST {{ r.days }} DAYS · {{ r.start.strftime('%-d %b') }} TO {{ r.end.strftime('%-d %b %Y') }}</span><h1>How your CEO is doing</h1>
+<p class="muted">From AgencyOS's own records: every email sent, every reply, bounce and "no thanks". Nothing here is estimated.</p></div></div>
+
+<section class="panel"><p class="verdict {{ r.verdict[0] }}"><strong>{{ r.verdict[1] }}</strong></p></section>
+
+<section class="panel">
+  <h2>Emails</h2>
+  <div class="nums">
+    <div class="num"><b>{{ r.totals.sent }}</b><span>sent ({{ r.totals.ceo }} by the CEO, {{ r.totals.you }} by you)</span></div>
+    <div class="num"><b>{{ r.totals.replied }}</b><span>wrote back · {{ (r.totals.reply_rate*100)|round(1) }}%</span></div>
+    <div class="num"><b>{{ r.totals.bounced }}</b><span>bounced · {{ (r.totals.bounce_rate*100)|round(1) }}%</span></div>
+    <div class="num"><b>{{ r.totals.opted_out }}</b><span>said no thanks · {{ (r.totals.optout_rate*100)|round(1) }}%</span></div>
+  </div>
+  <div class="tablewrap"><table class="days"><thead><tr><th>Day</th><th>CEO sent</th><th>You sent</th><th>Wrote back</th><th>Bounced</th><th>No thanks</th></tr></thead><tbody>
+  {% for d in r.daily|reverse %}<tr><td>{{ d.day }}</td><td>{{ d.ceo }}</td><td>{{ d.you }}</td><td>{{ d.replied }}</td><td>{{ d.bounced }}</td><td>{{ d.opted_out }}</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+
+<section class="panel">
+  <h2>What the CEO is holding back</h2>
+  <p>{{ r.leads.held }} drafts held back · {{ r.leads.ready }} passed and ready to send.</p>
+  {% if r.held %}<ul>{% for reason,count in r.held %}<li><strong>{{ count }}</strong> · {{ reason }}</li>{% endfor %}</ul>{% else %}<p class="muted">Nothing held back right now.</p>{% endif %}
+</section>
+
+<section class="panel">
+  <h2>Leads checked</h2>
+  <div class="nums">
+    <div class="num"><b>{{ '{:,}'.format(r.leads.checked) }}</b><span>websites checked ({{ '{:,}'.format(r.leads.checked_recent) }} in these {{ r.days }} days)</span></div>
+    <div class="num"><b>{{ '{:,}'.format(r.leads.unchecked) }}</b><span>websites not checked yet</span></div>
+    <div class="num"><b>{{ '{:,}'.format(r.leads.no_site) }}</b><span>no website and no email</span></div>
+    <div class="num"><b>{{ '{:,}'.format(r.leads.with_email) }}</b><span>of {{ '{:,}'.format(r.leads.total) }} leads have an email</span></div>
+  </div>
+</section>
+<p><a class="btn secondary" href="{{ url_for('ceo_live') }}">Back to CEO live</a></p>
+{% endblock %}

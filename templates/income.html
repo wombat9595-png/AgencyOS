@@ -1,0 +1,27 @@
+{% extends "base.html" %}{% block title %}Money in · AgencyOS{% endblock %}{% block page_heading %}Money in{% endblock %}
+{% block content %}
+<style>
+.nums{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.num{border:1px solid rgba(127,127,127,.3);border-radius:14px;padding:12px 14px}
+.num b{display:block;font-size:1.9rem;line-height:1.1;font-variant-numeric:tabular-nums}.num span{font-size:.85rem;opacity:.75}
+.months{list-style:none;margin:0;padding:0}.months li{display:grid;grid-template-columns:9rem 1fr 7rem;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid rgba(127,127,127,.2)}
+.months .bar{height:10px;border-radius:5px;background:rgba(127,127,127,.2);overflow:hidden}.months .bar i{display:block;height:100%;background:#2fbf71}
+.months .amt{text-align:right;font-variant-numeric:tabular-nums}.months small{grid-column:1/-1;opacity:.7}
+@media (max-width:640px){.months li{grid-template-columns:1fr 6rem}.months .bar{grid-column:1/-1;grid-row:2}}
+</style>
+<div class="page-intro"><div><span class="eyebrow">FROM PAYMENTS YOU RECORDED</span><h1>Money in</h1>
+<p class="muted">What clients actually paid, counted on the day it reached your bank. It adds paid invoices, monthly plan payments and first-sale receipts, and counts each payment once. Nothing is estimated.</p></div></div>
+<section class="panel">
+  <div class="nums">
+    <div class="num"><b>{{ money(s.last.cents) }}</b><span>last month ({{ s.last.label }})</span></div>
+    <div class="num"><b>{{ money(s.this.cents) }}</b><span>this month so far ({{ s.this.label }})</span></div>
+    <div class="num"><b>{{ money(s.year) }}</b><span>last 12 months</span></div>
+  </div>
+  {% if not s.any %}<p><strong>No payments recorded yet.</strong> When a client pays, open <a href="{{ url_for('get_paid') }}">Get paid</a> and mark the invoice Paid after you see the money in your bank. It shows up here straight away.</p>{% endif %}
+</section>
+<section class="panel">
+  <h2>Each month</h2>
+  <ul class="months">{% for m in s.months %}<li><span>{{ m.label }}</span><span class="bar" aria-hidden="true"><i style="width:{{ m.width }}%"></i></span><span class="amt">{{ money(m.cents) }}</span>{% if m.sources %}<small>{% for label,c in m.sources %}{{ label }} {{ money(c) }}{% if not loop.last %} · {% endif %}{% endfor %}</small>{% endif %}</li>{% endfor %}</ul>
+  <p class="muted">Invoice amounts include GST if you charge it.</p>
+</section>
+{% endblock %}

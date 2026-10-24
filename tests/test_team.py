@@ -65,8 +65,14 @@ class TeamTest(unittest.TestCase):
             owner=self.owner(conn)
             self.assertEqual(team.safe_daily(conn,owner,TODAY),20)
             conn.execute("INSERT INTO prospects(owner_id,source_id,name,created_at) VALUES(?,'t1','T','x')",(owner,));conn.execute("INSERT INTO prospect_log(owner_id,prospect_id,on_date,action,detail,created_at) VALUES(?,last_insert_rowid(),?,'sent','','x')",(owner,'2026-10-01'))
-            self.assertEqual(team.safe_daily(conn,owner,TODAY),25)  # 40 after 2 weeks, capped at the 25 limit
-            self.assertEqual(lead_engine.counts(conn,owner,TODAY)['target'],25)
+            self.assertEqual(team.safe_daily(conn,owner,date(2026,10,7)),20)  # the first week stays at 20
+            self.assertEqual(team.safe_daily(conn,owner,date(2026,10,8)),25)  # then 5 more each day
+            self.assertEqual(team.safe_daily(conn,owner,date(2026,10,10)),35)
+            self.assertEqual(team.safe_daily(conn,owner,TODAY),50)  # never past the free Gmail safe limit
+            conn.execute('INSERT OR REPLACE INTO team_settings(owner_id,daily_drafts) VALUES(?,30)',(owner,))
+            self.assertEqual(team.safe_daily(conn,owner,TODAY),30)  # and never past Benji's own limit
+            conn.execute('UPDATE team_settings SET daily_drafts=50 WHERE owner_id=?',(owner,))
+            self.assertEqual(lead_engine.counts(conn,owner,TODAY)['target'],50)
             ticks=iter([0,500,500,500,500])
             with patch('lead_engine.http_json',return_value={'elements':[]}):
                 found,searched,_=sweep.run(conn,owner,5,pause=0,sleep=lambda s:None,budget=180,clock=lambda:next(ticks))

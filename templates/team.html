@@ -72,13 +72,13 @@
 <section class="panel" id="settings"><div class="panel-heading"><div><span class="eyebrow">SETTINGS</span><h2>Pace and phone</h2></div></div>
 <form method="post" action="{{ url_for('team_settings') }}" class="stack"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 <label>Map searches a day (0 to 480)<input name="tiles_per_night" inputmode="numeric" value="{{ settings.tiles_per_night }}"></label>
-<label>Most emails a day, once warmed up (0 to 60)<input name="daily_drafts" inputmode="numeric" value="{{ settings.daily_drafts }}"></label>
+<label>Most emails a day, once warmed up (0 to 60; free Gmail stops at 50)<input name="daily_drafts" inputmode="numeric" value="{{ settings.daily_drafts }}"></label>
 <label>Where<select name="all_australia"><option value="1" {% if settings.all_australia %}selected{% endif %}>All of Australia, Sydney first</option><option value="0" {% if not settings.all_australia %}selected{% endif %}>Pause after Sydney</option></select></label>
 <label>Phone buzz when drafts are ready<select name="pings"><option value="1" {% if settings.pings %}selected{% endif %}>On (7 am to 9 pm, max 3 a day)</option><option value="0" {% if not settings.pings %}selected{% endif %}>Off</option></select></label>
 <label>Keep the Mac awake while plugged in<select name="keep_awake"><option value="1" {% if settings.keep_awake %}selected{% endif %}>On (so the team works all night)</option><option value="0" {% if not settings.keep_awake %}selected{% endif %}>Off</option></select></label>
 <label class="wide">Private phone address (Tailscale, optional)<input name="phone_url" maxlength="200" value="{{ settings.phone_url }}" placeholder="https://benjis-laptop.tail1234.ts.net"></label>
 <div class="wide"><button class="btn primary">Save</button>{% if not ntfy %} <small class="muted">Phone buzzes need the free ntfy app: switch them on under Studio, "Phone pings".</small>{% endif %}</div></form>
-<p class="tiny muted">Why the limit: a brand-new Gmail sending lots of cold emails at once gets flagged as spam, and then nothing lands. The Deliverability Guard starts at 20 a day and adds 10 a week up to your number. The Mac has to be plugged in with the lid open for the night shifts.</p>
+<p class="tiny muted">Why the limit: a brand-new Gmail sending lots of cold emails at once gets flagged as spam, and then nothing lands. The Deliverability Guard sends 20 a day for the first week, then adds 5 a day up to your number (50 at most on a free Gmail). The Mac has to be plugged in with the lid open for the night shifts.</p>
 </section>
 
 <section class="panel" id="airtasker"><div class="panel-heading"><div><span class="eyebrow">AIRTASKER</span><h2>Quote helper</h2></div></div>
