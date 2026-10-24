@@ -16,6 +16,7 @@
     <nav>
       <a href="{{ url_for('business_home') }}">◎ <span>Home</span></a>
       <a href="{{ url_for('ceo_live') }}">● <span>CEO live</span></a>
+      <a href="{{ url_for('updates_home') }}">✎ <span>Updates{% if updates_unread is defined %}{% set n=updates_unread() %}{% if n %} <b class="count">{{ n if n<100 else '99+' }}</b>{% endif %}{% endif %}</span></a>
       <a href="{{ url_for('office') }}">◉ <span>Office</span></a>
       <a href="{{ url_for('team_home') }}">♟ <span>Team</span></a>
       <a href="{{ url_for('prospects_home') }}">⌕ <span>Find customers</span></a>

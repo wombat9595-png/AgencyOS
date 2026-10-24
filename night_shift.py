@@ -164,6 +164,10 @@ def worker_tick(path):
                 import ceo_live
                 ceo_live.budget_alert(conn,owner[0])  # AI budget used up: one email a month with how to top it up
             except Exception:conn.rollback()
+            try:
+                import updates
+                updates.tick(conn,owner[0])  # every 35 minutes: a plain-English note of what happened, on the Updates page
+            except Exception:conn.rollback()
             try:team.notify(conn,owner[0])  # drafts ready: buzz the owner's phone (7 am to 9 pm, at most 3 a day)
             except Exception:conn.rollback()
             try:

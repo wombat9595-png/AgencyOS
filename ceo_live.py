@@ -13,6 +13,7 @@ import gmail_agent
 import lead_engine
 import night_shift
 import smart_writer
+import updates
 
 ANTHROPIC_BILLING='https://console.anthropic.com/settings/billing'
 GMAIL='https://mail.google.com/mail/?authuser='+gmail_agent.ACCOUNT  # always the business inbox, even when the browser's main Gmail is another account
@@ -124,4 +125,4 @@ def register(app,get_db,login_required):
         auto=autosend.status(conn,owner);numbers=leads(conn,owner)
         return render_template('ceo_live.html',auto=auto,leads=numbers,feed=feed(conn,owner),next_email=next_email(conn,owner,auto),
           finish=finish_date(conn,owner,numbers['left']),shifts=night_shift.settings(conn,owner),last_shift=night_shift.last_run(conn,owner),
-          paused=paused(conn),writer=smart_writer.ai_status(conn,owner),gmail=gmail_links(conn,owner))
+          paused=paused(conn),writer=smart_writer.ai_status(conn,owner),gmail=gmail_links(conn,owner),latest=updates.recent(conn,owner,1))

@@ -1,0 +1,24 @@
+{% extends "base.html" %}{% block title %}Updates · AgencyOS{% endblock %}{% block page_heading %}Updates{% endblock %}
+{% block content %}
+<meta http-equiv="refresh" content="300">
+<style>
+.upd{list-style:none;margin:0;padding:0}.upd>li{padding:14px 0;border-bottom:1px solid rgba(127,127,127,.2)}
+.upd h3{margin:0 0 6px;font-size:1rem}.upd .t{opacity:.65;font-variant-numeric:tabular-nums;font-weight:400;margin-right:6px}
+.upd ul{margin:0;padding-left:20px;line-height:1.7}.upd .new{display:inline-block;margin-left:6px;font-size:.75rem;padding:1px 7px;border-radius:9px;background:#2fbf71;color:#08130c;font-weight:700}
+</style>
+<div class="page-intro"><div><span class="eyebrow">EVERY 35 MINUTES · DAY AND NIGHT</span><h1>What happened</h1>
+<p class="muted">Every 35 minutes AgencyOS writes a short note of what the team and the CEO did since the last one: emails sent, replies, bounces, new leads, websites checked and emails found. It only reads the app's own logs, sends nothing and costs nothing. The last day is shown here.</p></div></div>
+<section class="panel">
+{% if items %}
+  <ul class="upd">
+  {% for u in items %}
+    <li><h3><span class="t">{{ u.time }}</span>{{ u.headline }}{% if u.unread %}<span class="new">new</span>{% endif %}</h3>
+      <ul>{% for line in u.lines %}<li>{{ line }}</li>{% endfor %}</ul>
+      <small class="muted">Covers {{ u.span }}.</small></li>
+  {% endfor %}
+  </ul>
+{% else %}
+  <div class="empty"><strong>No updates yet</strong><p>The first one arrives within 35 minutes of AgencyOS running. Keep AgencyOS open and the Mac awake.</p></div>
+{% endif %}
+</section>
+{% endblock %}

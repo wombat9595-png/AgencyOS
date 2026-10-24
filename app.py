@@ -32,6 +32,7 @@ import email_preparation
 import gmail_agent
 import autosend
 import ceo_live
+import updates
 import first_sale
 import client_plans
 import lead_engine
@@ -135,6 +136,7 @@ def init_db():
     team.migrate(conn)
     autosend.migrate(conn)
     ceo_live.migrate(conn)
+    updates.migrate(conn)
     conn.commit()
     conn.close()
 
@@ -557,6 +559,7 @@ grow.register(app,db,login_required)
 team.register(app,db,login_required)
 autosend.register(app,db,login_required)
 ceo_live.register(app,db,login_required)
+updates.register(app,db,login_required)
 register_phase3(app, db, login_required, insert_lead)
 register_phase4(app, db, login_required, insert_lead)
 register_sales(app, db, login_required)
