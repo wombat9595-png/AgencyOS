@@ -72,7 +72,7 @@ def summarise(conn,owner,start,end):
     if mine:lines.append('You emailed '+_names(mine)+'.')
     if approved:lines.append('You approved '+_plural(len(approved),'draft')+' (they wait in Gmail Drafts until you press Send).')
     if opted:lines.append(_names(opted)+' asked not to be emailed. They are on Do not contact now.')
-    if bounced:lines.append(_plural(len(bounced),'email')+' bounced ('+_names(bounced)+'). Those addresses will not be used again.');bits.append(_plural(len(bounced),'bounce'))
+    if bounced:lines.append(_plural(len(bounced),'email')+' bounced: '+_names(bounced)+'. '+('That address' if len(bounced)==1 else 'Those addresses')+' will not be used again.');bits.append(_plural(len(bounced),'bounce'))
     if new_leads:lines.append('The Scout added '+_plural(new_leads,'new lead')+'.');bits.append(_plural(new_leads,'new lead'))
     if checked:
         lines.append('The team checked '+_plural(len(checked),'website')+' and found '+('no new email addresses.' if not found else _plural(found,'new email address','new email addresses')+' on them.'))

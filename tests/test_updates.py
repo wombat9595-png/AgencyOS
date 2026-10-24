@@ -50,7 +50,7 @@ class UpdatesTest(unittest.TestCase):
         self.assertIn('1 business wrote back: Fictional Pipes (Dee Why).',text)
         self.assertIn('The CEO emailed 1 business: Fictional Builds (Manly).',text)
         self.assertNotIn('You emailed',text)
-        self.assertIn('1 email bounced (Fictional Gone (Manly))',text)
+        self.assertIn('1 email bounced: Fictional Gone (Manly). That address will not be used again.',text)
         self.assertIn('The Scout added 2 new leads.',text)
         self.assertIn('The team checked 2 websites and found 1 new email address on them.',text)
         self.assertIn('drafted 12, the CEO passed 10 and held 2.',text)
